@@ -748,50 +748,142 @@ struct SmartAgent {
 
 ### 10.4 Claude-CLI Parallel Execution Integration
 
-Support for Claude-CLI's built-in parallel execution capabilities:
+Support for Claude-CLI's built-in parallel execution capabilities through Task tool coordination:
 
 ```rust
-// Claude-CLI parallel execution pattern
-struct ParallelTaskHandler {
-    // Parse Claude-CLI parallel output format
-    fn parse_parallel_output(&self, line: &str) -> Option<(u32, String)> {
-        // Format: "Task(Patch Agent <n> ...)"
-        if line.starts_with("Task(Patch Agent ") {
-            let agent_id = self.extract_agent_id(line);
-            let content = self.extract_content(line);
-            Some((agent_id, content))
+// Enhanced Claude-CLI parallel execution pattern
+struct ClaudeTaskOutputParser {
+    task_regex: Regex,
+    nats_client: async_nats::Client,
+    metrics: ParallelExecutionMetrics,
+}
+
+impl ClaudeTaskOutputParser {
+    fn new(nats_client: async_nats::Client) -> Self {
+        let task_regex = Regex::new(r"● Task\((?:Patch Agent )?(\d+|[^)]+)\)").unwrap();
+
+        Self {
+            task_regex,
+            nats_client,
+            metrics: ParallelExecutionMetrics::new(),
+        }
+    }
+
+    // Parse multiple Claude-CLI task output formats
+    fn parse_task_output(&self, line: &str) -> Option<TaskInfo> {
+        if let Some(caps) = self.task_regex.captures(line) {
+            let task_identifier = caps.get(1).unwrap().as_str();
+
+            // Handle both numeric agent IDs and task descriptions
+            if let Ok(agent_id) = task_identifier.parse::<u32>() {
+                Some(TaskInfo::AgentId(agent_id))
+            } else {
+                Some(TaskInfo::Description(task_identifier.to_string()))
+            }
         } else {
             None
         }
     }
 
-    // Map parallel agent output to NATS subjects
-    async fn route_parallel_output(&self, agent_id: u32, content: String) {
-        let subject = format!("agent.{}.out", agent_id);
-        self.nats_client.publish(&subject, content).await;
+    // Route task output to appropriate NATS subjects
+    async fn route_task_output(&self, task_info: TaskInfo, line: &str) -> Result<(), RoutingError> {
+        let subject = match task_info {
+            TaskInfo::AgentId(id) => format!("agents.{}.output", id),
+            TaskInfo::Description(desc) => format!("tasks.{}.output", desc.replace(" ", "_")),
+        };
+
+        let event = TaskOutputEvent {
+            task_info,
+            output_line: line.to_string(),
+            timestamp: Utc::now(),
+        };
+
+        self.nats_client.publish(subject, serde_json::to_vec(&event)?).await?;
+        self.metrics.increment_routed_messages();
+
+        Ok(())
     }
 }
 
-// Integration with existing supervision patterns
-impl Supervisor {
-    async fn handle_claude_parallel(&self, parallel_flag: u32) {
-        // Claude-CLI spawns N internal Task/Patch agents
-        // Each agent outputs prefixed with "Task(Patch Agent <n> ...)"
-        // Map to existing agent.{id}.out subject taxonomy
+enum TaskInfo {
+    AgentId(u32),
+    Description(String),
+}
 
-        for agent_id in 0..parallel_flag {
-            let subject = format!("agent.{}.out", agent_id);
-            self.subscribe_to_parallel_agent(subject).await;
+struct TaskOutputEvent {
+    task_info: TaskInfo,
+    output_line: String,
+    timestamp: DateTime<Utc>,
+}
+```
+
+**Parallel Coordination Patterns:**
+
+```rust
+// Multi-agent coordination using Claude-CLI Task tool
+impl AgentOrchestrator {
+    async fn coordinate_parallel_claude_tasks(&mut self, tasks: Vec<TaskRequest>) -> Result<Vec<TaskResult>, CoordinationError> {
+        // Build parallel task prompt for Claude-CLI
+        let parallel_prompt = self.build_parallel_task_prompt(&tasks)?;
+
+        // Spawn Claude-CLI agent with task coordination
+        let claude_agent_id = self.spawn_claude_cli_agent(SpawnRequest {
+            prompt: parallel_prompt,
+            max_concurrent_tasks: tasks.len(),
+            coordination_mode: CoordinationMode::Parallel,
+        }).await?;
+
+        // Monitor parallel task execution
+        let task_results = self.monitor_parallel_execution(claude_agent_id, tasks.len()).await?;
+
+        Ok(task_results)
+    }
+
+    fn build_parallel_task_prompt(&self, tasks: &[TaskRequest]) -> Result<String, PromptError> {
+        let task_descriptions: Vec<String> = tasks.iter()
+            .enumerate()
+            .map(|(i, task)| format!("Task {}: {}", i + 1, task.description))
+            .collect();
+
+        Ok(format!(
+            "Execute these {} tasks in parallel using the Task tool:\n{}",
+            tasks.len(),
+            task_descriptions.join("\n")
+        ))
+    }
+
+    async fn monitor_parallel_execution(&self, claude_agent_id: AgentId, expected_tasks: usize) -> Result<Vec<TaskResult>, MonitoringError> {
+        let mut task_results = Vec::new();
+        let mut completed_tasks = 0;
+
+        // Subscribe to task output subjects
+        let mut task_subscriber = self.nats_client.subscribe("tasks.*.output").await?;
+
+        // Monitor until all tasks complete
+        while completed_tasks < expected_tasks {
+            if let Some(message) = task_subscriber.next().await {
+                let event: TaskOutputEvent = serde_json::from_slice(&message.payload)?;
+
+                // Check for task completion indicators
+                if self.is_task_complete(&event.output_line) {
+                    task_results.push(TaskResult::from_output_event(event));
+                    completed_tasks += 1;
+                }
+            }
         }
+
+        Ok(task_results)
     }
 }
 ```
 
 **Key Integration Points:**
-- **Output Parsing**: Parse `Task(Patch Agent <n> ...)` lines from Claude-CLI stdout
-- **Subject Mapping**: Route to `agent.{id}.out` subjects in NATS taxonomy
-- **Supervision Compatibility**: Works with existing Tokio task supervision
-- **Memory Layers**: Unaffected - Postgres/JetStream KV continue to work normally
+- **Task Tool Integration**: Leverages Claude-CLI's built-in Task tool for parallel execution
+- **Output Pattern Recognition**: Handles both `Task(Patch Agent <n>)` and `Task(Description)` formats
+- **NATS Subject Routing**: Routes to `agents.{id}.output` and `tasks.{name}.output` subjects
+- **Supervision Compatibility**: Integrates with existing Tokio supervision trees
+- **Resource Management**: Coordinates with agent pool limits (25-30 concurrent agents)
+- **Memory Persistence**: Compatible with existing Postgres/JetStream KV storage
 
 ## 11. Tool-Bus Integration Patterns
 

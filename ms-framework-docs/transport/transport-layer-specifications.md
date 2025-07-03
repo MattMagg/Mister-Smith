@@ -127,6 +127,48 @@ TOPIC_CONVENTIONS:
     hook.on_file_change.triggered # File change hook execution
 ```
 
+### 2.1.1 Claude CLI Hook Message Formats
+
+```pseudocode
+HOOK_EVENT_MESSAGE_FORMAT:
+    {
+        "hook_type": "startup" | "pre_task" | "post_task" | "on_error" | "on_file_change",
+        "agent_id": "string",
+        "tool_name": "optional_string",
+        "tool_input": "optional_json_object",
+        "tool_response": "optional_json_object",
+        "session_info": {
+            "agent_id": "string",
+            "session_id": "string",
+            "model": "string",
+            "start_time": "iso8601_timestamp"
+        },
+        "timestamp": "iso8601_timestamp",
+        "context_id": "optional_string"
+    }
+
+HOOK_RESPONSE_MESSAGE_FORMAT:
+    {
+        "decision": "approve" | "block" | "continue",
+        "reason": "optional_string",
+        "continue": "boolean",
+        "stop_reason": "optional_string",
+        "modifications": "optional_json_object"
+    }
+
+TASK_OUTPUT_MESSAGE_FORMAT:
+    {
+        "task_info": {
+            "type": "agent_id" | "description",
+            "value": "string_or_number"
+        },
+        "output_line": "string",
+        "task_status": "running" | "completed" | "failed",
+        "timestamp": "iso8601_timestamp",
+        "agent_id": "string"
+    }
+```
+
 ### 2.2 NATS Performance Characteristics
 
 ```pseudocode
