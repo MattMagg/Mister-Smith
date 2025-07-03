@@ -4,6 +4,9 @@
 # Internal operations directory
 internal-operations/
 
+# Jekyll site directory (private development)
+jekyll-site/
+
 # Claude configuration and cache
 .claude/
 
@@ -13,6 +16,52 @@ CLAUDE.md
 
 # Usage documentation
 superclaude-usage.md
+
+# IMPLEMENTATION CODE - Keep private
+# Rust source code
+src/
+lib/
+core/
+target/
+Cargo.toml
+Cargo.lock
+
+# Python implementation
+*.py
+__pycache__/
+*.pyc
+venv/
+.venv/
+requirements.txt
+poetry.lock
+
+# Configuration files with sensitive details
+config/
+secrets/
+.env*
+*.key
+*.pem
+*.toml
+*.ini
+
+# Database and data files
+*.db
+*.sqlite
+*.sql
+data/
+database/
+
+# Build and deployment artifacts
+build/
+dist/
+release/
+deployment/
+
+# Private documentation and notes
+private/
+internal/
+dev-notes/
+implementation-notes/
 
 # Workspace configuration files
 *.code-workspace
