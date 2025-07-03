@@ -11,6 +11,9 @@ internal-operations/
 CLAUDE.md
 **/CLAUDE.md
 
+# Usage documentation
+superclaude-usage.md
+
 # Workspace configuration files
 *.code-workspace
 
