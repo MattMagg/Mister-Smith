@@ -87,7 +87,7 @@ impl ClaudeCliController {
 }
 ```
 
-#### B. Hook Bridge Service (`transport-layer-specifications.md` enhancement)
+#### B. Hook Bridge Service (`nats-transport.md` enhancement)
 
 **Purpose**: Bridge Claude Code hooks to NATS messaging system
 
@@ -196,7 +196,7 @@ impl AgentOrchestrator {
 }
 ```
 
-#### B. Transport Layer (`transport-layer-specifications.md`)
+#### B. Transport Layer (`nats-transport.md`)
 
 **Hook Integration Subjects** (already defined, just document usage):
 ```
@@ -387,7 +387,7 @@ exit 0
 **Framework Files to Create/Modify**:
 - Create: `core-architecture/claude-cli-integration.md`
 - Modify: `core-architecture/system-architecture.md`
-- Modify: `transport-layer-specifications.md`
+- Modify: `nats-transport.md`
 - Create: `config/claude-cli.toml`
 
 ### Phase 2: Hook System Integration (Weeks 3-4)
@@ -401,7 +401,7 @@ exit 0
 4. Error handling and timeout management
 
 **Framework Files to Modify**:
-- Enhance: `transport-layer-specifications.md`
+- Enhance: `nats-transport.md`
 - Modify: `observability-monitoring-framework.md`
 - Create: `scripts/nats-hook-bridge`
 

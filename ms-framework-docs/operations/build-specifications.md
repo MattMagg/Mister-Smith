@@ -1507,4 +1507,111 @@ pub fn configure_for_environment() {
 
 ---
 
-This comprehensive build specification provides all necessary information for autonomous agents to build and deploy the Mister Smith Framework across multiple platforms and configurations without requiring manual intervention or decision-making.
+## 12. Build Automation Scripts
+
+### 12.1 Comprehensive Build Script Collection
+
+The following automation scripts are provided for complete build and deployment workflows:
+
+#### Environment Setup Script
+- **Location**: `scripts/setup-build-env.sh`
+- **Purpose**: Complete development environment setup with all dependencies
+- **Features**:
+  - Rust toolchain installation with required version (1.75)
+  - Cross-compilation targets setup
+  - Build tool installation (cargo extensions, cross, sccache)
+  - Platform-specific optimizations (mold linker, system dependencies)
+  - Git hooks configuration for quality gates
+  - Development configuration templates
+
+#### Automated Release Script  
+- **Location**: `scripts/automated-release.sh`
+- **Purpose**: End-to-end release process automation
+- **Features**:
+  - Version bumping (major, minor, patch, prerelease)
+  - Changelog generation from git commits
+  - Multi-platform artifact building
+  - Security checks and quality gates
+  - GitHub release creation with assets
+  - crates.io publishing
+  - Docker image builds and publishing
+
+#### Cross-Compilation Script
+- **Location**: `scripts/cross-compile-all.sh`
+- **Purpose**: Build for all supported platforms in parallel
+- **Features**:
+  - 11 target platforms (Linux, macOS, Windows, ARM, WASM)
+  - Parallel builds with configurable job count
+  - Automatic archive creation and checksums
+  - Build matrix reporting
+  - Size optimization and stripping
+  - Platform-specific configurations
+
+#### Docker Build Script
+- **Location**: `scripts/docker-build.sh`
+- **Purpose**: Multi-architecture Docker image builds
+- **Features**:
+  - 4 image variants (minimal, standard, full, debug)
+  - Multi-arch builds (amd64, arm64)
+  - Layer caching optimization
+  - Security scanning integration
+  - Compose file generation
+  - Registry publishing with tags
+
+#### Performance Testing Script
+- **Location**: `scripts/performance-testing.sh`
+- **Purpose**: Comprehensive performance validation
+- **Features**:
+  - Micro-benchmarks with Criterion
+  - Load testing with wrk and hyperfine
+  - Stress testing to find breaking points
+  - Memory profiling with Valgrind
+  - CPU profiling with flame graphs
+  - Automated performance reporting
+
+#### Enhanced CI/CD Pipeline
+- **Location**: `scripts/ci-cd-pipeline.yml`
+- **Purpose**: Production-ready GitHub Actions workflow
+- **Features**:
+  - Security scanning (Trivy, dependency audit)
+  - Multi-platform testing matrix
+  - Performance regression detection
+  - Docker multi-arch builds
+  - Automated release management
+  - Notification integrations
+
+### 12.2 Script Usage Examples
+
+```bash
+# Complete environment setup
+./scripts/setup-build-env.sh
+
+# Development build with live reload
+cargo watch -x "build --features dev"
+
+# Cross-compile for all platforms
+./scripts/cross-compile-all.sh --clean --features tier_3
+
+# Create release build
+./scripts/automated-release.sh minor
+
+# Build Docker images
+./scripts/docker-build.sh --all-variants --push
+
+# Run performance tests
+./scripts/performance-testing.sh --all --duration 300
+```
+
+### 12.3 Build Integration with MS Framework
+
+These build scripts are specifically designed for the MS Framework and include:
+
+1. **Feature Flag Validation**: Ensures compatible feature combinations
+2. **Claude CLI Integration**: Special builds with Claude CLI hooks
+3. **Tier-Based Configurations**: Optimized builds for each deployment tier
+4. **Agent-Specific Optimizations**: Performance tuning for AI agent workloads
+5. **Security Hardening**: Automated security scans and compliance checks
+
+---
+
+This comprehensive build specification provides all necessary information for autonomous agents to build and deploy the Mister Smith Framework across multiple platforms and configurations without requiring manual intervention or decision-making. The included automation scripts ensure reproducible, secure, and optimized builds for all deployment scenarios.

@@ -219,7 +219,7 @@ hook_execution_timeout = 30
 
 ### Files Enhanced
 1. `ms-framework-docs/core-architecture/claude-cli-integration.md` - Core component specifications
-2. `ms-framework-docs/transport/transport-layer-specifications.md` - Hook message formats
+2. `ms-framework-docs/transport/nats-transport.md` - Hook message formats and NATS subject patterns
 3. `ms-framework-docs/data-management/agent-orchestration.md` - Parallel execution patterns
 
 ### Configuration Files

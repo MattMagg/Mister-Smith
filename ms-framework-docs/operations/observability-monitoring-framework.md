@@ -46,13 +46,439 @@ PATTERN AgentInstrumentation:
     configure_sampling_strategy()
 ```
 
-#### 2.2 Context Propagation Pattern
-```pseudocode
-PATTERN ContextPropagation:
-    inject_trace_context(outgoing_message)
-    extract_trace_context(incoming_message)
-    maintain_correlation_chain()
-    preserve_causality_information()
+#### 2.2 OpenTelemetry SDK Initialization
+```rust
+// Rust implementation example
+use opentelemetry::{global, sdk::{
+    export::trace::stdout,
+    propagation::TraceContextPropagator,
+    resource::{EnvResourceDetector, SdkProvidedResourceDetector},
+    trace::{self, RandomIdGenerator, Sampler},
+    Resource,
+}};
+use opentelemetry_otlp::{Protocol, WithExportConfig};
+
+PATTERN OTLPInitialization:
+    pub fn init_telemetry() -> Result<(), Box<dyn std::error::Error>> {
+        // Set global propagator
+        global::set_text_map_propagator(TraceContextPropagator::new());
+        
+        // Configure resource
+        let resource = Resource::from_detectors(
+            std::time::Duration::from_secs(3),
+            vec![
+                Box::new(EnvResourceDetector::new()),
+                Box::new(SdkProvidedResourceDetector),
+            ],
+        )
+        .merge(&Resource::new(vec![
+            KeyValue::new("service.name", "mister-smith-agent"),
+            KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
+            KeyValue::new("deployment.environment", std::env::var("ENVIRONMENT").unwrap_or("development".into())),
+        ]));
+        
+        // Configure OTLP exporter
+        let otlp_exporter = opentelemetry_otlp::new_exporter()
+            .tonic()
+            .with_endpoint("http://localhost:4317")
+            .with_protocol(Protocol::Grpc)
+            .with_timeout(std::time::Duration::from_secs(3));
+            
+        // Build trace provider
+        let trace_provider = opentelemetry_otlp::new_pipeline()
+            .tracing()
+            .with_exporter(otlp_exporter)
+            .with_trace_config(
+                trace::config()
+                    .with_sampler(Sampler::AlwaysOn)
+                    .with_id_generator(RandomIdGenerator::default())
+                    .with_max_events_per_span(64)
+                    .with_max_attributes_per_span(32)
+                    .with_max_links_per_span(16)
+                    .with_resource(resource),
+            )
+            .install_batch(opentelemetry::runtime::Tokio)?;
+            
+        global::set_tracer_provider(trace_provider);
+        Ok(())
+    }
+```
+
+#### 2.3 Custom Metrics Collection Implementation
+```rust
+PATTERN CustomMetricsImplementation:
+    use opentelemetry::{
+        metrics::{Counter, Histogram, ObservableGauge, Unit},
+        KeyValue,
+    };
+    use std::sync::Arc;
+    
+    pub struct AgentMetrics {
+        // Counters
+        pub task_completions: Counter<u64>,
+        pub task_errors: Counter<u64>,
+        pub messages_sent: Counter<u64>,
+        pub messages_received: Counter<u64>,
+        
+        // Histograms
+        pub task_duration: Histogram<f64>,
+        pub message_latency: Histogram<f64>,
+        pub processing_time: Histogram<f64>,
+        
+        // Gauges
+        pub active_agents: Arc<AtomicI64>,
+        pub queue_depth: Arc<AtomicI64>,
+        pub memory_usage: Arc<AtomicI64>,
+    }
+    
+    impl AgentMetrics {
+        pub fn new(meter: &opentelemetry::metrics::Meter) -> Self {
+            let active_agents = Arc::new(AtomicI64::new(0));
+            let queue_depth = Arc::new(AtomicI64::new(0));
+            let memory_usage = Arc::new(AtomicI64::new(0));
+            
+            // Register observable gauges
+            let active_agents_clone = active_agents.clone();
+            meter
+                .i64_observable_gauge("agent_active_count")
+                .with_description("Current number of active agents")
+                .with_unit(Unit::new("{agents}"))
+                .with_callback(move |observer| {
+                    observer.observe(
+                        active_agents_clone.load(Ordering::Relaxed),
+                        &[KeyValue::new("state", "active")],
+                    );
+                })
+                .init();
+                
+            Self {
+                task_completions: meter
+                    .u64_counter("task_completions_total")
+                    .with_description("Total number of completed tasks")
+                    .with_unit(Unit::new("{tasks}"))
+                    .init(),
+                    
+                task_errors: meter
+                    .u64_counter("task_errors_total")
+                    .with_description("Total number of failed tasks")
+                    .with_unit(Unit::new("{errors}"))
+                    .init(),
+                    
+                task_duration: meter
+                    .f64_histogram("task_duration_seconds")
+                    .with_description("Task execution duration distribution")
+                    .with_unit(Unit::new("s"))
+                    .init(),
+                    
+                message_latency: meter
+                    .f64_histogram("message_latency_seconds")
+                    .with_description("Message delivery latency")
+                    .with_unit(Unit::new("s"))
+                    .init(),
+                    
+                messages_sent: meter
+                    .u64_counter("messages_sent_total")
+                    .with_description("Total messages sent")
+                    .init(),
+                    
+                messages_received: meter
+                    .u64_counter("messages_received_total")
+                    .with_description("Total messages received")
+                    .init(),
+                    
+                processing_time: meter
+                    .f64_histogram("processing_time_seconds")
+                    .with_description("Processing time per operation")
+                    .with_unit(Unit::new("s"))
+                    .init(),
+                    
+                active_agents,
+                queue_depth,
+                memory_usage,
+            }
+        }
+        
+        // Helper methods for metric updates
+        pub fn record_task_completion(&self, task_type: &str, duration: f64, success: bool) {
+            let labels = &[KeyValue::new("task_type", task_type.to_string())];
+            
+            if success {
+                self.task_completions.add(1, labels);
+            } else {
+                self.task_errors.add(1, labels);
+            }
+            
+            self.task_duration.record(duration, labels);
+        }
+        
+        pub fn record_message_sent(&self, msg_type: &str, latency: f64) {
+            let labels = &[
+                KeyValue::new("message_type", msg_type.to_string()),
+                KeyValue::new("direction", "outbound"),
+            ];
+            
+            self.messages_sent.add(1, labels);
+            self.message_latency.record(latency, labels);
+        }
+    }
+```
+
+#### 2.4 Context Propagation Pattern
+```rust
+PATTERN ContextPropagationImplementation:
+    use opentelemetry::{
+        global,
+        propagation::{Injector, Extractor, TextMapPropagator},
+        Context,
+    };
+    use std::collections::HashMap;
+    
+    // Complete context propagation implementation
+    pub struct ContextPropagator {
+        propagator: Box<dyn TextMapPropagator + Send + Sync>,
+    }
+    
+    impl ContextPropagator {
+        pub fn new() -> Self {
+            Self {
+                propagator: Box::new(global::text_map_propagator()),
+            }
+        }
+        
+        // Inject context into message headers
+        pub fn inject_context(&self, context: &Context, headers: &mut HashMap<String, String>) {
+            let mut injector = MessageHeaderInjector::new(headers);
+            self.propagator.inject_context(context, &mut injector);
+        }
+        
+        // Extract context from message headers
+        pub fn extract_context(&self, headers: &HashMap<String, String>) -> Context {
+            let extractor = MessageHeaderExtractor::new(headers);
+            self.propagator.extract(&extractor)
+        }
+        
+        // Maintain correlation across agent boundaries
+        pub fn create_child_context(&self, parent: &Context, span_name: &str) -> Context {
+            let tracer = global::tracer("ms-framework");
+            let span = tracer
+                .span_builder(span_name)
+                .with_parent_context(parent.clone())
+                .start(&tracer);
+            Context::current_with_span(span)
+        }
+        
+        // Preserve causality information
+        pub fn add_baggage(&self, context: &Context, key: &str, value: &str) -> Context {
+            context.with_baggage(vec![(key.to_string(), value.to_string())])
+        }
+    }
+    
+    // Message header injector implementation
+    struct MessageHeaderInjector<'a> {
+        headers: &'a mut HashMap<String, String>,
+    }
+    
+    impl<'a> MessageHeaderInjector<'a> {
+        fn new(headers: &'a mut HashMap<String, String>) -> Self {
+            Self { headers }
+        }
+    }
+    
+    impl<'a> Injector for MessageHeaderInjector<'a> {
+        fn set(&mut self, key: &str, value: String) {
+            self.headers.insert(key.to_string(), value);
+        }
+    }
+    
+    // Message header extractor implementation
+    struct MessageHeaderExtractor<'a> {
+        headers: &'a HashMap<String, String>,
+    }
+    
+    impl<'a> MessageHeaderExtractor<'a> {
+        fn new(headers: &'a HashMap<String, String>) -> Self {
+            Self { headers }
+        }
+    }
+    
+    impl<'a> Extractor for MessageHeaderExtractor<'a> {
+        fn get(&self, key: &str) -> Option<&str> {
+            self.headers.get(key).map(|v| v.as_str())
+        }
+        
+        fn keys(&self) -> Vec<&str> {
+            self.headers.keys().map(|k| k.as_str()).collect()
+        }
+    }
+    
+    // Agent-specific context management
+    pub struct AgentContextManager {
+        agent_id: String,
+        agent_type: String,
+        propagator: ContextPropagator,
+    }
+    
+    impl AgentContextManager {
+        pub fn new(agent_id: String, agent_type: String) -> Self {
+            Self {
+                agent_id,
+                agent_type,
+                propagator: ContextPropagator::new(),
+            }
+        }
+        
+        // Create context for outgoing communication
+        pub fn create_outbound_context(&self, parent_context: &Context, operation: &str) -> Context {
+            let context = self.propagator.create_child_context(
+                parent_context,
+                &format!("agent.{}.{}", self.agent_type, operation)
+            );
+            
+            // Add agent-specific baggage
+            self.propagator.add_baggage(&context, "agent.id", &self.agent_id)
+                .add_baggage("agent.type", &self.agent_type)
+                .add_baggage("operation", operation)
+        }
+        
+        // Process incoming context
+        pub fn process_inbound_context(&self, headers: &HashMap<String, String>) -> Context {
+            let context = self.propagator.extract_context(headers);
+            
+            // Validate context and add local attributes
+            let local_context = self.propagator.create_child_context(
+                &context,
+                &format!("agent.{}.process", self.agent_type)
+            );
+            
+            self.propagator.add_baggage(&local_context, "processing.agent_id", &self.agent_id)
+        }
+    }
+```
+
+#### 2.5 Distributed Tracing Implementation
+```rust
+PATTERN DistributedTracingImplementation:
+    use opentelemetry::{trace::{Span, Tracer, TracerProvider}, Context};
+    use opentelemetry::propagation::{Injector, Extractor, TextMapPropagator};
+    
+    // Message header injection/extraction
+    pub struct MessageHeaders(HashMap<String, String>);
+    
+    impl Injector for MessageHeaders {
+        fn set(&mut self, key: &str, value: String) {
+            self.0.insert(key.to_string(), value);
+        }
+    }
+    
+    impl Extractor for MessageHeaders {
+        fn get(&self, key: &str) -> Option<&str> {
+            self.0.get(key).map(|v| v.as_str())
+        }
+        
+        fn keys(&self) -> Vec<&str> {
+            self.0.keys().map(|k| k.as_str()).collect()
+        }
+    }
+    
+    // Tracing wrapper for agent operations
+    pub struct TracedAgent {
+        tracer: Box<dyn Tracer + Send + Sync>,
+        propagator: Box<dyn TextMapPropagator + Send + Sync>,
+    }
+    
+    impl TracedAgent {
+        pub async fn execute_task<F, T>(
+            &self,
+            task_name: &str,
+            task_type: &str,
+            task_fn: F,
+        ) -> Result<T, Box<dyn std::error::Error>>
+        where
+            F: FnOnce(Context) -> Future<Output = Result<T, Box<dyn std::error::Error>>>,
+        {
+            // Create span for task execution
+            let mut span = self.tracer
+                .span_builder(format!("agent.task.{}", task_name))
+                .with_kind(SpanKind::Internal)
+                .with_attributes(vec![
+                    KeyValue::new("task.name", task_name.to_string()),
+                    KeyValue::new("task.type", task_type.to_string()),
+                    KeyValue::new("agent.id", self.agent_id.clone()),
+                    KeyValue::new("agent.type", self.agent_type.clone()),
+                ])
+                .start(&self.tracer);
+                
+            let cx = Context::current_with_span(span);
+            
+            // Execute task with tracing context
+            let start_time = Instant::now();
+            match task_fn(cx.clone()).await {
+                Ok(result) => {
+                    span.set_status(Status::ok());
+                    span.set_attribute(KeyValue::new("task.duration_ms", start_time.elapsed().as_millis() as i64));
+                    Ok(result)
+                }
+                Err(e) => {
+                    span.record_error(&e);
+                    span.set_status(Status::error(e.to_string()));
+                    Err(e)
+                }
+            }
+        }
+        
+        pub async fn send_message(
+            &self,
+            message: &Message,
+            destination: &str,
+        ) -> Result<(), Box<dyn std::error::Error>> {
+            let span = self.tracer
+                .span_builder("agent.message.send")
+                .with_kind(SpanKind::Producer)
+                .with_attributes(vec![
+                    KeyValue::new("messaging.system", "nats"),
+                    KeyValue::new("messaging.destination", destination.to_string()),
+                    KeyValue::new("messaging.message_id", message.id.clone()),
+                    KeyValue::new("messaging.message_type", message.msg_type.clone()),
+                ])
+                .start(&self.tracer);
+                
+            let cx = Context::current_with_span(span);
+            
+            // Inject trace context into message headers
+            let mut headers = MessageHeaders(HashMap::new());
+            self.propagator.inject_context(&cx, &mut headers);
+            
+            // Add headers to message
+            let mut msg_with_context = message.clone();
+            msg_with_context.headers = headers.0;
+            
+            // Send message
+            self.transport.send(destination, &msg_with_context).await
+        }
+        
+        pub async fn receive_message(
+            &self,
+            message: Message,
+        ) -> Result<Context, Box<dyn std::error::Error>> {
+            // Extract trace context from message headers
+            let headers = MessageHeaders(message.headers.clone());
+            let parent_cx = self.propagator.extract(&headers);
+            
+            // Create span for message processing
+            let span = self.tracer
+                .span_builder("agent.message.receive")
+                .with_kind(SpanKind::Consumer)
+                .with_attributes(vec![
+                    KeyValue::new("messaging.system", "nats"),
+                    KeyValue::new("messaging.message_id", message.id.clone()),
+                    KeyValue::new("messaging.message_type", message.msg_type.clone()),
+                ])
+                .with_parent_context(parent_cx)
+                .start(&self.tracer);
+                
+            Ok(Context::current_with_span(span))
+        }
+    }
 ```
 
 ### 3. Distributed Tracing Patterns
@@ -298,6 +724,132 @@ PATTERN CriticalThresholds:
 
 ### 5. Logging Patterns
 
+#### 5.0 Log Aggregation Pipeline Implementation
+```yaml
+PATTERN LogAggregationPipeline:
+    # Fluent Bit Configuration for Log Collection
+    fluent_bit_config:
+        [SERVICE]
+            flush        1
+            daemon       Off
+            log_level    info
+            parsers_file parsers.conf
+            
+        [INPUT]
+            Name              tail
+            Path              /var/log/mister-smith/agents/*.log
+            Parser            json
+            Tag               agents.*
+            Refresh_Interval  5
+            
+        [INPUT]
+            Name   systemd
+            Tag    host.*
+            Read_From_Tail On
+            
+        [FILTER]
+            Name         parser
+            Match        agents.*
+            Key_Name     log
+            Parser       json
+            Reserve_Data On
+            
+        [FILTER]
+            Name         nest
+            Match        agents.*
+            Operation    lift
+            Nested_under attributes
+            
+        [FILTER]
+            Name         modify
+            Match        agents.*
+            Add          environment ${ENVIRONMENT}
+            Add          cluster ${CLUSTER_NAME}
+            
+        [OUTPUT]
+            Name   otlp
+            Match  *
+            Host   ${OTLP_ENDPOINT}
+            Port   4317
+            Logs_uri            /v1/logs
+            Log_response_payload True
+            Tls                 Off
+            Tls_verify          Off
+            
+        [OUTPUT]
+            Name   forward
+            Match  agents.*
+            Host   ${LOG_AGGREGATOR}
+            Port   24224
+            Shared_Key ${SHARED_KEY}
+            
+    # Vector Configuration for Advanced Processing
+    vector_config:
+        sources:
+          agent_logs:
+            type: file
+            include:
+              - /var/log/mister-smith/agents/*.log
+            file_key: file
+            hostname_key: host
+            
+        transforms:
+          parse_json:
+            type: remap
+            inputs:
+              - agent_logs
+            source: |
+              . = parse_json!(.message)
+              .timestamp = parse_timestamp!(.timestamp, "%+")
+              
+          enrich_logs:
+            type: remap
+            inputs:
+              - parse_json
+            source: |
+              .environment = get_env_var!("ENVIRONMENT")
+              .cluster = get_env_var!("CLUSTER_NAME")
+              .severity_number = to_int(get(., ["severity_number"]) ?? 9)
+              
+          multiline_aggregation:
+            type: reduce
+            inputs:
+              - enrich_logs
+            group_by:
+              - trace_id
+              - span_id
+            merge_strategies:
+              message: concat_newline
+            expire_after_ms: 5000
+            
+          filter_errors:
+            type: filter
+            inputs:
+              - multiline_aggregation
+            condition: '.level == "error" || .level == "critical"'
+            
+        sinks:
+          otlp:
+            type: opentelemetry_logs
+            inputs:
+              - enrich_logs
+            endpoint: "http://${OTLP_ENDPOINT}:4317"
+            compression: gzip
+            
+          elasticsearch:
+            type: elasticsearch
+            inputs:
+              - multiline_aggregation
+            endpoint: "https://${ES_ENDPOINT}:9200"
+            index: "mister-smith-logs-%Y.%m.%d"
+            
+          error_alerts:
+            type: prometheus_remote_write
+            inputs:
+              - filter_errors
+            endpoint: "http://${PROMETHEUS_ENDPOINT}/api/v1/write"
+```
+
 #### 5.1 Structured Logging Pattern
 ```pseudocode
 PATTERN StructuredLogging:
@@ -513,6 +1065,125 @@ PATTERN DataLifecycle:
 ```
 
 ### 10. Performance Optimization Patterns
+
+#### 10.0 Performance Profiling Integration
+```rust
+PATTERN PerformanceProfilingIntegration:
+    use pprof::{protos::Message, ProfilerGuard, Report};
+    use std::fs::File;
+    use tokio::time::{interval, Duration};
+    
+    pub struct ProfilingManager {
+        continuous_profiler: Option<ProfilerGuard<'static>>,
+        profile_interval: Duration,
+        output_dir: PathBuf,
+    }
+    
+    impl ProfilingManager {
+        pub fn new(output_dir: PathBuf) -> Self {
+            Self {
+                continuous_profiler: None,
+                profile_interval: Duration::from_secs(60),
+                output_dir,
+            }
+        }
+        
+        // Continuous CPU profiling
+        pub fn start_continuous_profiling(&mut self) -> Result<(), Box<dyn Error>> {
+            let guard = pprof::ProfilerGuardBuilder::default()
+                .frequency(1000) // 1000 Hz sampling
+                .blocklist(&["libc", "libgcc", "pthread", "vdso"])
+                .build()?;
+                
+            self.continuous_profiler = Some(guard);
+            
+            // Spawn periodic profile dumps
+            let output_dir = self.output_dir.clone();
+            tokio::spawn(async move {
+                let mut interval = interval(Duration::from_secs(300)); // 5 minutes
+                
+                loop {
+                    interval.tick().await;
+                    if let Err(e) = Self::dump_profile(&output_dir).await {
+                        error!("Failed to dump profile: {}", e);
+                    }
+                }
+            });
+            
+            Ok(())
+        }
+        
+        // Memory profiling with jemalloc
+        pub fn configure_memory_profiling() {
+            // Enable jemalloc profiling
+            std::env::set_var("MALLOC_CONF", "prof:true,prof_prefix:jeprof.out,lg_prof_interval:30");
+        }
+        
+        // Trace-based profiling integration
+        pub fn create_profiling_span(tracer: &dyn Tracer, operation: &str) -> Span {
+            let mut span = tracer
+                .span_builder(format!("profile.{}", operation))
+                .with_kind(SpanKind::Internal)
+                .start(tracer);
+                
+            // Add profiling metadata
+            span.set_attributes(vec![
+                KeyValue::new("profile.type", "performance"),
+                KeyValue::new("profile.operation", operation.to_string()),
+                KeyValue::new("profile.thread_id", format!("{:?}", std::thread::current().id())),
+            ]);
+            
+            span
+        }
+        
+        // Async runtime metrics
+        pub fn export_tokio_metrics(meter: &Meter) {
+            let runtime_handle = tokio::runtime::Handle::current();
+            let runtime_metrics = runtime_handle.metrics();
+            
+            // Worker thread metrics
+            meter
+                .u64_observable_gauge("tokio_workers_count")
+                .with_description("Number of worker threads")
+                .with_callback(move |observer| {
+                    observer.observe(runtime_metrics.num_workers() as u64, &[]);
+                })
+                .init();
+                
+            // Task metrics
+            meter
+                .u64_observable_gauge("tokio_active_tasks_count")
+                .with_description("Number of active tasks")
+                .with_callback(move |observer| {
+                    observer.observe(runtime_metrics.active_tasks_count() as u64, &[]);
+                })
+                .init();
+                
+            // Queue metrics
+            meter
+                .u64_observable_gauge("tokio_injection_queue_depth")
+                .with_description("Injection queue depth")
+                .with_callback(move |observer| {
+                    observer.observe(runtime_metrics.injection_queue_depth() as u64, &[]);
+                })
+                .init();
+        }
+    }
+    
+    // Flame graph generation
+    pub async fn generate_flame_graph(
+        profile_data: Vec<u8>,
+        output_path: &Path,
+    ) -> Result<(), Box<dyn Error>> {
+        let report = Report::from_protobuf(&profile_data)?;
+        
+        let mut flame_graph = Vec::new();
+        report.flamegraph(&mut flame_graph)?;
+        
+        std::fs::write(output_path, flame_graph)?;
+        Ok(())
+    }
+```
 
 #### 10.1 Overhead Management Pattern
 ```pseudocode
@@ -951,6 +1622,236 @@ claude_cli_hook_duration_seconds_count{hook_type="pre_task",hook_name="setup"} 8
 
 ### 15.4 Health Check Endpoints
 
+#### 15.4.0 Health Check Implementation Pattern
+```rust
+PATTERN HealthCheckImplementation:
+    use serde::{Deserialize, Serialize};
+    use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+    use tokio::time::timeout;
+    
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub enum HealthStatus {
+        Healthy,
+        Degraded,
+        Unhealthy,
+        Unknown,
+    }
+    
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct HealthCheckResult {
+        pub status: HealthStatus,
+        pub timestamp: u64,
+        pub uptime_seconds: u64,
+        pub version: String,
+        pub checks: HashMap<String, ComponentHealth>,
+        pub metrics: HealthMetrics,
+    }
+    
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct ComponentHealth {
+        pub status: HealthStatus,
+        pub last_check: u64,
+        pub latency_ms: Option<u64>,
+        pub details: Option<String>,
+        pub dependencies: Vec<String>,
+    }
+    
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct HealthMetrics {
+        pub cpu_usage_percent: f64,
+        pub memory_usage_mb: u64,
+        pub memory_available_mb: u64,
+        pub active_agents: u32,
+        pub pending_tasks: u32,
+        pub message_queue_depth: u32,
+    }
+    
+    pub struct HealthCheckManager {
+        start_time: Instant,
+        system_start: SystemTime,
+        components: HashMap<String, Box<dyn HealthChecker>>,
+    }
+    
+    #[async_trait]
+    pub trait HealthChecker: Send + Sync {
+        async fn check_health(&self) -> ComponentHealth;
+        fn component_name(&self) -> &str;
+        fn dependencies(&self) -> Vec<String>;
+    }
+    
+    impl HealthCheckManager {
+        pub fn new() -> Self {
+            Self {
+                start_time: Instant::now(),
+                system_start: SystemTime::now(),
+                components: HashMap::new(),
+            }
+        }
+        
+        pub fn register_checker(&mut self, checker: Box<dyn HealthChecker>) {
+            self.components.insert(checker.component_name().to_string(), checker);
+        }
+        
+        pub async fn perform_health_check(&self) -> HealthCheckResult {
+            let mut checks = HashMap::new();
+            let mut overall_status = HealthStatus::Healthy;
+            
+            // Check all registered components
+            for (name, checker) in &self.components {
+                let component_health = timeout(
+                    Duration::from_secs(5),
+                    checker.check_health()
+                ).await.unwrap_or_else(|_| ComponentHealth {
+                    status: HealthStatus::Unhealthy,
+                    last_check: current_timestamp(),
+                    latency_ms: Some(5000),
+                    details: Some("Health check timeout".to_string()),
+                    dependencies: checker.dependencies(),
+                });
+                
+                // Update overall status based on component status
+                match component_health.status {
+                    HealthStatus::Unhealthy => overall_status = HealthStatus::Unhealthy,
+                    HealthStatus::Degraded if matches!(overall_status, HealthStatus::Healthy) => {
+                        overall_status = HealthStatus::Degraded
+                    },
+                    _ => {}
+                }
+                
+                checks.insert(name.clone(), component_health);
+            }
+            
+            HealthCheckResult {
+                status: overall_status,
+                timestamp: current_timestamp(),
+                uptime_seconds: self.start_time.elapsed().as_secs(),
+                version: env!("CARGO_PKG_VERSION").to_string(),
+                checks,
+                metrics: self.collect_system_metrics().await,
+            }
+        }
+        
+        async fn collect_system_metrics(&self) -> HealthMetrics {
+            HealthMetrics {
+                cpu_usage_percent: get_cpu_usage().await.unwrap_or(0.0),
+                memory_usage_mb: get_memory_usage().await.unwrap_or(0),
+                memory_available_mb: get_available_memory().await.unwrap_or(0),
+                active_agents: get_active_agent_count().await.unwrap_or(0),
+                pending_tasks: get_pending_task_count().await.unwrap_or(0),
+                message_queue_depth: get_message_queue_depth().await.unwrap_or(0),
+            }
+        }
+    }
+    
+    // Component-specific health checkers
+    pub struct MessagingHealthChecker {
+        nats_client: Arc<async_nats::Client>,
+    }
+    
+    #[async_trait]
+    impl HealthChecker for MessagingHealthChecker {
+        async fn check_health(&self) -> ComponentHealth {
+            let start = Instant::now();
+            
+            match self.nats_client.connection_state() {
+                async_nats::connection::State::Connected => {
+                    // Test message round-trip
+                    let test_subject = format!("health_check.{}", uuid::Uuid::new_v4());
+                    let result = timeout(
+                        Duration::from_millis(100),
+                        self.nats_client.request(test_subject, "ping".into())
+                    ).await;
+                    
+                    match result {
+                        Ok(Ok(_)) => ComponentHealth {
+                            status: HealthStatus::Healthy,
+                            last_check: current_timestamp(),
+                            latency_ms: Some(start.elapsed().as_millis() as u64),
+                            details: Some("NATS connection active and responsive".to_string()),
+                            dependencies: vec!["nats-server".to_string()],
+                        },
+                        _ => ComponentHealth {
+                            status: HealthStatus::Degraded,
+                            last_check: current_timestamp(),
+                            latency_ms: Some(start.elapsed().as_millis() as u64),
+                            details: Some("NATS connected but slow response".to_string()),
+                            dependencies: vec!["nats-server".to_string()],
+                        }
+                    }
+                },
+                _ => ComponentHealth {
+                    status: HealthStatus::Unhealthy,
+                    last_check: current_timestamp(),
+                    latency_ms: None,
+                    details: Some("NATS connection lost".to_string()),
+                    dependencies: vec!["nats-server".to_string()],
+                }
+            }
+        }
+        
+        fn component_name(&self) -> &str {
+            "messaging"
+        }
+        
+        fn dependencies(&self) -> Vec<String> {
+            vec!["nats-server".to_string()]
+        }
+    }
+    
+    pub struct DatabaseHealthChecker {
+        pool: Arc<sqlx::PgPool>,
+    }
+    
+    #[async_trait]
+    impl HealthChecker for DatabaseHealthChecker {
+        async fn check_health(&self) -> ComponentHealth {
+            let start = Instant::now();
+            
+            match timeout(
+                Duration::from_secs(2),
+                sqlx::query("SELECT 1").fetch_one(self.pool.as_ref())
+            ).await {
+                Ok(Ok(_)) => ComponentHealth {
+                    status: HealthStatus::Healthy,
+                    last_check: current_timestamp(),
+                    latency_ms: Some(start.elapsed().as_millis() as u64),
+                    details: Some("Database connection active".to_string()),
+                    dependencies: vec!["postgresql".to_string()],
+                },
+                Ok(Err(e)) => ComponentHealth {
+                    status: HealthStatus::Unhealthy,
+                    last_check: current_timestamp(),
+                    latency_ms: Some(start.elapsed().as_millis() as u64),
+                    details: Some(format!("Database error: {}", e)),
+                    dependencies: vec!["postgresql".to_string()],
+                },
+                Err(_) => ComponentHealth {
+                    status: HealthStatus::Unhealthy,
+                    last_check: current_timestamp(),
+                    latency_ms: Some(2000),
+                    details: Some("Database connection timeout".to_string()),
+                    dependencies: vec!["postgresql".to_string()],
+                }
+            }
+        }
+        
+        fn component_name(&self) -> &str {
+            "database"
+        }
+        
+        fn dependencies(&self) -> Vec<String> {
+            vec!["postgresql".to_string()]
+        }
+    }
+    
+    fn current_timestamp() -> u64 {
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs()
+    }
+```
+
 #### 15.4.1 Basic Health Check
 ```http
 GET /health
@@ -962,9 +1863,35 @@ Content-Type: application/json
   "uptime_seconds": 3600,
   "version": "1.0.0",
   "checks": {
-    "messaging": "healthy",
-    "database": "healthy",
-    "agents": "healthy"
+    "messaging": {
+      "status": "healthy",
+      "last_check": 1704110400,
+      "latency_ms": 15,
+      "details": "NATS connection active and responsive",
+      "dependencies": ["nats-server"]
+    },
+    "database": {
+      "status": "healthy", 
+      "last_check": 1704110400,
+      "latency_ms": 8,
+      "details": "Database connection active",
+      "dependencies": ["postgresql"]
+    },
+    "agents": {
+      "status": "healthy",
+      "last_check": 1704110400,
+      "latency_ms": 3,
+      "details": "All agents responsive",
+      "dependencies": []
+    }
+  },
+  "metrics": {
+    "cpu_usage_percent": 23.5,
+    "memory_usage_mb": 512,
+    "memory_available_mb": 2048,
+    "active_agents": 8,
+    "pending_tasks": 5,
+    "message_queue_depth": 12
   }
 }
 ```
@@ -1013,6 +1940,153 @@ Content-Type: application/json
 ```
 
 ### 15.5 Alert Rule Definitions
+
+#### 15.5.0 MS Framework Specific Alert Patterns
+```yaml
+groups:
+- name: ms_framework_critical_alerts
+  rules:
+  # Agent lifecycle and spawning alerts
+  - alert: AgentCrashLoop
+    expr: rate(agent_spawns_total[5m]) > 1
+    for: 2m
+    labels:
+      severity: critical
+      component: agent_lifecycle
+    annotations:
+      summary: "Agent {{ $labels.agent_type }} crash loop detected"
+      description: "Agent {{ $labels.agent_type }} is restarting more than once per 5 minutes. This indicates a systematic failure in agent initialization or execution."
+      runbook_url: "https://docs.ms-framework.org/runbooks/agent-crash-loop"
+      dashboard_url: "https://grafana.ms-framework.org/d/agents/agent-performance?var-agent_type={{ $labels.agent_type }}"
+
+  # Task execution monitoring
+  - alert: HighTaskErrorRate
+    expr: rate(task_errors_total[5m]) / rate(task_completions_total[5m]) > 0.05
+    for: 5m
+    labels:
+      severity: critical
+      component: task_execution
+    annotations:
+      summary: "High task error rate for {{ $labels.task_type }}"
+      description: "Task error rate is {{ $value | humanizePercentage }} over the last 5 minutes. Expected error rate < 1%."
+      runbook_url: "https://docs.ms-framework.org/runbooks/high-error-rate"
+
+  - alert: TaskExecutionStalled
+    expr: rate(task_completions_total[10m]) == 0 and task_queue_depth > 0
+    for: 10m
+    labels:
+      severity: critical
+      component: task_execution
+    annotations:
+      summary: "Task execution completely stalled for {{ $labels.agent_type }}"
+      description: "No tasks have completed in 10 minutes despite {{ $value }} tasks in queue"
+
+  # Resource exhaustion
+  - alert: AgentMemoryExhaustion
+    expr: agent_memory_bytes / (1024*1024*1024) > 1.5
+    for: 1m
+    labels:
+      severity: critical
+      component: resource_management
+    annotations:
+      summary: "Agent {{ $labels.agent_id }} memory exhaustion"
+      description: "Agent {{ $labels.agent_id }} is using {{ $value }}GB memory, approaching system limits"
+      runbook_url: "https://docs.ms-framework.org/runbooks/memory-exhaustion"
+
+  - alert: SystemMemoryPressure
+    expr: (sum(agent_memory_bytes) / (1024*1024*1024)) / (system_memory_total_gb) > 0.85
+    for: 5m
+    labels:
+      severity: critical
+      component: system_resources
+    annotations:
+      summary: "System memory pressure detected"
+      description: "Agent memory usage is {{ $value | humanizePercentage }} of total system memory"
+
+  # Communication and messaging
+  - alert: MessageQueueBackup
+    expr: message_queue_depth > 1000
+    for: 5m
+    labels:
+      severity: critical
+      component: messaging
+    annotations:
+      summary: "Message queue {{ $labels.queue_name }} backup"
+      description: "Queue depth is {{ $value }} messages, indicating processing bottleneck"
+      runbook_url: "https://docs.ms-framework.org/runbooks/queue-backup"
+
+  - alert: HighMessageLatency
+    expr: histogram_quantile(0.95, rate(message_latency_seconds_bucket[5m])) > 5
+    for: 5m
+    labels:
+      severity: critical
+      component: messaging
+    annotations:
+      summary: "High message latency detected"
+      description: "95th percentile message latency is {{ $value }}s, expected < 1s"
+
+  # Agent coordination failures
+  - alert: AgentCoordinationFailure
+    expr: rate(agent_coordination_failures_total[5m]) > 0.1
+    for: 2m
+    labels:
+      severity: critical
+      component: coordination
+    annotations:
+      summary: "Agent coordination failures detected"
+      description: "{{ $value }} coordination failures per second, indicating swarm instability"
+
+  - alert: SwarmSplitBrain
+    expr: count(group by (cluster_id) (agent_active_count)) > 1
+    for: 30s
+    labels:
+      severity: critical
+      component: coordination
+    annotations:
+      summary: "Multiple active clusters detected (split brain)"
+      description: "Detected {{ $value }} separate cluster formations, indicating split brain scenario"
+
+  # Claude CLI integration alerts
+  - alert: ClaudeCLIProcessFailures
+    expr: rate(claude_cli_processes_failed_total[5m]) > 0.1
+    for: 3m
+    labels:
+      severity: critical
+      component: claude_cli
+    annotations:
+      summary: "Claude CLI process failures detected"
+      description: "{{ $value }} Claude CLI process failures per second"
+
+  - alert: HookExecutionFailures
+    expr: rate(claude_cli_hook_executions_total{status="failure"}[5m]) > 0.05
+    for: 5m
+    labels:
+      severity: warning
+      component: claude_cli
+    annotations:
+      summary: "High hook execution failure rate"
+      description: "Hook failure rate: {{ $value }} failures per second"
+
+  # Performance degradation alerts
+  - alert: HighTaskLatencyP99
+    expr: histogram_quantile(0.99, rate(task_duration_seconds_bucket[10m])) > 60
+    for: 10m
+    labels:
+      severity: warning
+      component: performance
+    annotations:
+      summary: "High task latency detected"
+      description: "99th percentile task latency is {{ $value }}s for {{ $labels.task_type }}"
+
+  - alert: AgentSaturation
+    expr: agent_cpu_percent > 90
+    for: 10m
+    labels:
+      severity: warning
+      component: performance
+    annotations:
+      summary: "Agent {{ $labels.agent_id }} CPU saturation"
+      description: "Agent CPU usage is {{ $value }}% for 10+ minutes"
 
 #### 15.5.1 Critical Alerts (Prometheus AlertManager)
 ```yaml
@@ -1254,6 +2328,142 @@ system_baselines:
 
 ### 15.8 OTLP Configuration
 
+#### 15.8.0 Prometheus Exporter Implementation
+```rust
+PATTERN PrometheusExporterImplementation:
+    use prometheus::{{
+        Encoder, TextEncoder, Registry,
+        core::{Collector, Desc, Opts},
+        proto::MetricFamily,
+    }};
+    use hyper::{Body, Request, Response, Server, StatusCode};
+    use std::sync::Arc;
+    
+    pub struct MetricsExporter {
+        registry: Registry,
+        agent_collector: AgentMetricsCollector,
+        system_collector: SystemMetricsCollector,
+    }
+    
+    impl MetricsExporter {
+        pub fn new() -> Result<Self, Box<dyn Error>> {
+            let registry = Registry::new();
+            
+            // Register custom collectors
+            let agent_collector = AgentMetricsCollector::new()?;
+            let system_collector = SystemMetricsCollector::new()?;
+            
+            registry.register(Box::new(agent_collector.clone()))?;
+            registry.register(Box::new(system_collector.clone()))?;
+            
+            Ok(Self {
+                registry,
+                agent_collector,
+                system_collector,
+            })
+        }
+        
+        // HTTP endpoint handler
+        pub async fn serve_metrics(self: Arc<Self>) -> Result<(), Box<dyn Error>> {
+            let addr = ([0, 0, 0, 0], 9090).into();
+            
+            let make_service = hyper::service::make_service_fn(move |_| {
+                let exporter = self.clone();
+                async move {
+                    Ok::<_, hyper::Error>(hyper::service::service_fn(move |req| {
+                        let exporter = exporter.clone();
+                        async move { exporter.handle_request(req).await }
+                    }))
+                }
+            });
+            
+            let server = Server::bind(&addr).serve(make_service);
+            info!("Prometheus metrics available at http://{}/metrics", addr);
+            
+            server.await?;
+            Ok(())
+        }
+        
+        async fn handle_request(&self, req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+            match req.uri().path() {
+                "/metrics" => {
+                    let encoder = TextEncoder::new();
+                    let metric_families = self.registry.gather();
+                    let mut buffer = Vec::new();
+                    
+                    encoder.encode(&metric_families, &mut buffer).unwrap();
+                    
+                    Ok(Response::builder()
+                        .status(StatusCode::OK)
+                        .header("Content-Type", encoder.format_type())
+                        .body(Body::from(buffer))
+                        .unwrap())
+                }
+                "/health" => {
+                    Ok(Response::builder()
+                        .status(StatusCode::OK)
+                        .body(Body::from("{\"status\":\"healthy\"}\n"))
+                        .unwrap())
+                }
+                _ => {
+                    Ok(Response::builder()
+                        .status(StatusCode::NOT_FOUND)
+                        .body(Body::from("404 Not Found\n"))
+                        .unwrap())
+                }
+            }
+        }
+    }
+    
+    // Custom collector for agent-specific metrics
+    #[derive(Clone)]
+    struct AgentMetricsCollector {
+        agent_states: Arc<RwLock<HashMap<String, AgentState>>>,
+        descs: Vec<Desc>,
+    }
+    
+    impl Collector for AgentMetricsCollector {
+        fn desc(&self) -> Vec<&Desc> {
+            self.descs.iter().collect()
+        }
+        
+        fn collect(&self) -> Vec<MetricFamily> {
+            let mut families = Vec::new();
+            
+            // Collect agent state metrics
+            let states = self.agent_states.read().unwrap();
+            let mut state_counts: HashMap<String, i64> = HashMap::new();
+            
+            for (_, state) in states.iter() {
+                *state_counts.entry(state.to_string()).or_insert(0) += 1;
+            }
+            
+            // Create gauge metric family
+            let mut agent_state_family = MetricFamily::new();
+            agent_state_family.set_name("agent_state_count".to_string());
+            agent_state_family.set_help("Number of agents in each state".to_string());
+            agent_state_family.set_field_type(prometheus::proto::MetricType::GAUGE);
+            
+            for (state, count) in state_counts {
+                let mut metric = prometheus::proto::Metric::new();
+                let mut gauge = prometheus::proto::Gauge::new();
+                gauge.set_value(count as f64);
+                metric.set_gauge(gauge);
+                
+                let mut label = prometheus::proto::LabelPair::new();
+                label.set_name("state".to_string());
+                label.set_value(state);
+                metric.set_label(vec![label].into());
+                
+                agent_state_family.mut_metric().push(metric);
+            }
+            
+            families.push(agent_state_family);
+            families
+        }
+    }
+```
+
 #### 15.8.1 OpenTelemetry Collector Configuration
 ```yaml
 receivers:
@@ -1309,6 +2519,576 @@ service:
       exporters: [logging]
 ```
 
+### 16. Agent-Specific Instrumentation Patterns
+
+#### 16.1 Research Agent Instrumentation
+```rust
+PATTERN ResearchAgentInstrumentation:
+    use opentelemetry::{
+        metrics::{Counter, Histogram, Gauge},
+        trace::{Tracer, Span},
+        KeyValue,
+    };
+    
+    pub struct ResearchAgentMetrics {
+        // Research-specific counters
+        pub sources_searched: Counter<u64>,
+        pub documents_processed: Counter<u64>,
+        pub citations_found: Counter<u64>,
+        pub queries_executed: Counter<u64>,
+        
+        // Quality metrics
+        pub relevance_scores: Histogram<f64>,
+        pub confidence_scores: Histogram<f64>,
+        pub search_depth_levels: Histogram<u64>,
+        
+        // Performance metrics
+        pub search_duration: Histogram<f64>,
+        pub processing_time_per_document: Histogram<f64>,
+        pub memory_usage_per_search: Gauge<f64>,
+    }
+    
+    impl ResearchAgentMetrics {
+        pub fn record_search_operation(
+            &self,
+            query: &str,
+            sources_count: u64,
+            duration: f64,
+            relevance_score: f64,
+        ) {
+            let labels = &[
+                KeyValue::new("query_type", classify_query(query)),
+                KeyValue::new("search_method", "semantic"),
+            ];
+            
+            self.sources_searched.add(sources_count, labels);
+            self.search_duration.record(duration, labels);
+            self.relevance_scores.record(relevance_score, labels);
+        }
+        
+        pub fn record_document_processing(
+            &self,
+            document_type: &str,
+            processing_time: f64,
+            extracted_citations: u64,
+        ) {
+            let labels = &[
+                KeyValue::new("document_type", document_type),
+                KeyValue::new("processing_method", "nlp_extraction"),
+            ];
+            
+            self.documents_processed.add(1, labels);
+            self.processing_time_per_document.record(processing_time, labels);
+            self.citations_found.add(extracted_citations, labels);
+        }
+    }
+```
+
+#### 16.2 Coder Agent Instrumentation
+```rust
+PATTERN CoderAgentInstrumentation:
+    pub struct CoderAgentMetrics {
+        // Code generation metrics
+        pub lines_generated: Counter<u64>,
+        pub functions_created: Counter<u64>,
+        pub tests_written: Counter<u64>,
+        pub bugs_fixed: Counter<u64>,
+        
+        // Quality metrics
+        pub code_complexity_scores: Histogram<f64>,
+        pub test_coverage_percentage: Histogram<f64>,
+        pub compilation_success_rate: Histogram<f64>,
+        
+        // Performance metrics
+        pub generation_time_per_function: Histogram<f64>,
+        pub refactoring_time: Histogram<f64>,
+        pub context_processing_time: Histogram<f64>,
+    }
+    
+    impl CoderAgentMetrics {
+        pub fn record_code_generation(
+            &self,
+            language: &str,
+            lines_count: u64,
+            complexity_score: f64,
+            generation_time: f64,
+        ) {
+            let labels = &[
+                KeyValue::new("language", language),
+                KeyValue::new("generation_type", "function"),
+            ];
+            
+            self.lines_generated.add(lines_count, labels);
+            self.functions_created.add(1, labels);
+            self.code_complexity_scores.record(complexity_score, labels);
+            self.generation_time_per_function.record(generation_time, labels);
+        }
+        
+        pub fn record_test_creation(
+            &self,
+            test_type: &str,
+            coverage_percentage: f64,
+            creation_time: f64,
+        ) {
+            let labels = &[
+                KeyValue::new("test_type", test_type),
+                KeyValue::new("framework", "unknown"),
+            ];
+            
+            self.tests_written.add(1, labels);
+            self.test_coverage_percentage.record(coverage_percentage, labels);
+        }
+    }
+```
+
+#### 16.3 Coordinator Agent Instrumentation
+```rust
+PATTERN CoordinatorAgentInstrumentation:
+    pub struct CoordinatorAgentMetrics {
+        // Coordination metrics
+        pub agents_managed: Gauge<u64>,
+        pub tasks_distributed: Counter<u64>,
+        pub coordination_messages: Counter<u64>,
+        pub load_balancing_decisions: Counter<u64>,
+        
+        // Performance metrics
+        pub coordination_latency: Histogram<f64>,
+        pub task_assignment_time: Histogram<f64>,
+        pub agent_response_time: Histogram<f64>,
+        
+        // Efficiency metrics
+        pub resource_utilization_efficiency: Histogram<f64>,
+        pub task_completion_rate: Histogram<f64>,
+        pub agent_idle_time: Histogram<f64>,
+    }
+    
+    impl CoordinatorAgentMetrics {
+        pub fn record_task_distribution(
+            &self,
+            task_type: &str,
+            agent_count: u64,
+            distribution_time: f64,
+        ) {
+            let labels = &[
+                KeyValue::new("task_type", task_type),
+                KeyValue::new("distribution_strategy", "load_balanced"),
+            ];
+            
+            self.tasks_distributed.add(1, labels);
+            self.task_assignment_time.record(distribution_time, labels);
+            self.coordination_messages.add(agent_count, labels);
+        }
+        
+        pub fn record_coordination_decision(
+            &self,
+            decision_type: &str,
+            latency: f64,
+            efficiency_score: f64,
+        ) {
+            let labels = &[
+                KeyValue::new("decision_type", decision_type),
+                KeyValue::new("coordination_algorithm", "consensus"),
+            ];
+            
+            self.coordination_latency.record(latency, labels);
+            self.resource_utilization_efficiency.record(efficiency_score, labels);
+            self.load_balancing_decisions.add(1, labels);
+        }
+    }
+```
+
+#### 16.4 Comprehensive Agent Performance Monitoring
+```rust
+PATTERN ComprehensiveAgentMonitoring:
+    use tokio::time::{interval, Duration};
+    use sysinfo::{System, SystemExt, ProcessExt};
+    
+    pub struct AgentPerformanceMonitor {
+        agent_id: String,
+        agent_type: String,
+        system: System,
+        metrics: AgentMetrics,
+        tracer: Box<dyn Tracer + Send + Sync>,
+    }
+    
+    impl AgentPerformanceMonitor {
+        pub fn new(agent_id: String, agent_type: String) -> Self {
+            Self {
+                agent_id,
+                agent_type,
+                system: System::new_all(),
+                metrics: AgentMetrics::new(),
+                tracer: global::tracer("agent-performance"),
+            }
+        }
+        
+        // Continuous performance monitoring
+        pub async fn start_monitoring(&mut self) {
+            let mut interval = interval(Duration::from_secs(30));
+            
+            loop {
+                interval.tick().await;
+                self.collect_performance_metrics().await;
+            }
+        }
+        
+        async fn collect_performance_metrics(&mut self) {
+            let span = self.tracer
+                .span_builder("performance.collection")
+                .with_attributes(vec![
+                    KeyValue::new("agent.id", self.agent_id.clone()),
+                    KeyValue::new("agent.type", self.agent_type.clone()),
+                ])
+                .start(&self.tracer);
+                
+            let _guard = span.enter();
+            
+            // Update system information
+            self.system.refresh_all();
+            
+            // CPU metrics
+            let cpu_usage = self.get_process_cpu_usage();
+            self.metrics.cpu_usage_percent.record(cpu_usage, &[
+                KeyValue::new("agent.id", self.agent_id.clone())
+            ]);
+            
+            // Memory metrics
+            let memory_usage = self.get_process_memory_usage();
+            self.metrics.memory_usage_bytes.record(memory_usage as f64, &[
+                KeyValue::new("agent.id", self.agent_id.clone())
+            ]);
+            
+            // Network metrics
+            let network_stats = self.collect_network_metrics().await;
+            self.record_network_metrics(network_stats);
+            
+            // Agent-specific metrics
+            self.collect_agent_specific_metrics().await;
+            
+            span.add_event("performance_metrics_collected", vec![
+                KeyValue::new("cpu_usage", cpu_usage),
+                KeyValue::new("memory_mb", memory_usage / (1024 * 1024)),
+            ]);
+        }
+        
+        fn get_process_cpu_usage(&self) -> f64 {
+            let pid = std::process::id();
+            self.system
+                .process(sysinfo::Pid::from(pid as usize))
+                .map(|process| process.cpu_usage() as f64)
+                .unwrap_or(0.0)
+        }
+        
+        fn get_process_memory_usage(&self) -> u64 {
+            let pid = std::process::id();
+            self.system
+                .process(sysinfo::Pid::from(pid as usize))
+                .map(|process| process.memory())
+                .unwrap_or(0)
+        }
+        
+        fn get_network_bytes_sent() -> Result<u64, std::io::Error> {
+            // Read network statistics from /proc/net/dev
+            let content = std::fs::read_to_string("/proc/net/dev")?;
+            let mut total_bytes = 0;
+            
+            for line in content.lines().skip(2) { // Skip header lines
+                if let Some(interface_stats) = line.split_whitespace().nth(9) {
+                    if let Ok(bytes) = interface_stats.parse::<u64>() {
+                        total_bytes += bytes;
+                    }
+                }
+            }
+            Ok(total_bytes)
+        }
+        
+        fn get_network_bytes_received() -> Result<u64, std::io::Error> {
+            let content = std::fs::read_to_string("/proc/net/dev")?;
+            let mut total_bytes = 0;
+            
+            for line in content.lines().skip(2) {
+                if let Some(interface_stats) = line.split_whitespace().nth(1) {
+                    if let Ok(bytes) = interface_stats.parse::<u64>() {
+                        total_bytes += bytes;
+                    }
+                }
+            }
+            Ok(total_bytes)
+        }
+        
+        fn get_network_packets_sent() -> Result<u64, std::io::Error> {
+            let content = std::fs::read_to_string("/proc/net/dev")?;
+            let mut total_packets = 0;
+            
+            for line in content.lines().skip(2) {
+                if let Some(interface_stats) = line.split_whitespace().nth(10) {
+                    if let Ok(packets) = interface_stats.parse::<u64>() {
+                        total_packets += packets;
+                    }
+                }
+            }
+            Ok(total_packets)
+        }
+        
+        fn get_network_packets_received() -> Result<u64, std::io::Error> {
+            let content = std::fs::read_to_string("/proc/net/dev")?;
+            let mut total_packets = 0;
+            
+            for line in content.lines().skip(2) {
+                if let Some(interface_stats) = line.split_whitespace().nth(2) {
+                    if let Ok(packets) = interface_stats.parse::<u64>() {
+                        total_packets += packets;
+                    }
+                }
+            }
+            Ok(total_packets)
+        }
+        
+        fn get_active_connections() -> Result<u64, std::io::Error> {
+            // Count active TCP connections from /proc/net/tcp
+            let content = std::fs::read_to_string("/proc/net/tcp")?;
+            let connection_count = content.lines()
+                .skip(1) // Skip header
+                .filter(|line| {
+                    // Filter for established connections (state 01)
+                    line.split_whitespace().nth(3).map_or(false, |state| state == "01")
+                })
+                .count();
+            Ok(connection_count as u64)
+        }
+        
+        async fn collect_network_metrics(&self) -> NetworkStats {
+            // Collect network statistics specific to agent communication
+            NetworkStats {
+                bytes_sent: Self::get_network_bytes_sent().unwrap_or(0),
+                bytes_received: Self::get_network_bytes_received().unwrap_or(0),
+                packets_sent: Self::get_network_packets_sent().unwrap_or(0),
+                packets_received: Self::get_network_packets_received().unwrap_or(0),
+                connection_count: Self::get_active_connections().unwrap_or(0),
+            }
+        }
+        
+        async fn collect_agent_specific_metrics(&self) {
+            match self.agent_type.as_str() {
+                "research_agent" => self.collect_research_metrics().await,
+                "coder_agent" => self.collect_coding_metrics().await,
+                "coordinator_agent" => self.collect_coordination_metrics().await,
+                _ => self.collect_generic_metrics().await,
+            }
+        }
+        
+        async fn collect_research_metrics(&self) {
+            // Research agent specific performance metrics
+            let active_searches = self.count_active_searches().await;
+            self.metrics.active_searches.record(active_searches as f64, &[
+                KeyValue::new("agent.id", self.agent_id.clone())
+            ]);
+        }
+        
+        async fn collect_coding_metrics(&self) {
+            // Coding agent specific performance metrics
+            let active_compilations = self.count_active_compilations().await;
+            self.metrics.active_compilations.record(active_compilations as f64, &[
+                KeyValue::new("agent.id", self.agent_id.clone())
+            ]);
+        }
+        
+        async fn collect_coordination_metrics(&self) {
+            // Coordinator agent specific performance metrics
+            let managed_agents = self.count_managed_agents().await;
+            self.metrics.managed_agents.record(managed_agents as f64, &[
+                KeyValue::new("agent.id", self.agent_id.clone())
+            ]);
+        }
+        
+        async fn collect_generic_metrics(&self) {
+            // Generic agent performance metrics
+            let queue_depth = self.get_task_queue_depth().await;
+            self.metrics.task_queue_depth.record(queue_depth as f64, &[
+                KeyValue::new("agent.id", self.agent_id.clone())
+            ]);
+        }
+    }
+    
+    #[derive(Debug)]
+    struct NetworkStats {
+        bytes_sent: u64,
+        bytes_received: u64,
+        packets_sent: u64,
+        packets_received: u64,
+        connection_count: u32,
+    }
+```
+
+### 17. Production-Ready Deployment Configuration
+
+#### 17.1 Complete Docker Compose Observability Stack
+```yaml
+PATTERN ProductionObservabilityStack:
+    version: '3.8'
+    
+    services:
+      # OpenTelemetry Collector
+      otel-collector:
+        image: otel/opentelemetry-collector-contrib:0.89.0
+        container_name: ms-framework-otel-collector
+        command: ["--config=/etc/otel-collector-config.yaml"]
+        volumes:
+          - ./config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+        ports:
+          - "4317:4317"   # OTLP gRPC receiver
+          - "4318:4318"   # OTLP HTTP receiver
+          - "8889:8889"   # Prometheus metrics
+        depends_on:
+          - prometheus
+          - jaeger
+          - elasticsearch
+        environment:
+          - PROMETHEUS_ENDPOINT=prometheus:9090
+          - JAEGER_ENDPOINT=jaeger:14250
+          - ELASTICSEARCH_ENDPOINT=elasticsearch:9200
+        networks:
+          - ms-framework
+          
+      # Prometheus for metrics storage
+      prometheus:
+        image: prom/prometheus:v2.47.0
+        container_name: ms-framework-prometheus
+        command:
+          - '--config.file=/etc/prometheus/prometheus.yml'
+          - '--storage.tsdb.path=/prometheus'
+          - '--web.console.libraries=/etc/prometheus/console_libraries'
+          - '--web.console.templates=/etc/prometheus/consoles'
+          - '--storage.tsdb.retention.time=30d'
+          - '--web.enable-lifecycle'
+        volumes:
+          - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+          - ./rules:/etc/prometheus/rules
+          - prometheus_data:/prometheus
+        ports:
+          - "9090:9090"
+        networks:
+          - ms-framework
+          
+      # Grafana for visualization
+      grafana:
+        image: grafana/grafana:10.2.0
+        container_name: ms-framework-grafana
+        environment:
+          - GF_SECURITY_ADMIN_PASSWORD=admin
+          - GF_USERS_ALLOW_SIGN_UP=false
+        volumes:
+          - grafana_data:/var/lib/grafana
+          - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
+          - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
+        ports:
+          - "3000:3000"
+        networks:
+          - ms-framework
+          
+      # Jaeger for distributed tracing
+      jaeger:
+        image: jaegertracing/all-in-one:1.50
+        container_name: ms-framework-jaeger
+        environment:
+          - COLLECTOR_OTLP_ENABLED=true
+        ports:
+          - "16686:16686"  # Jaeger UI
+          - "14250:14250"  # OTLP gRPC
+        networks:
+          - ms-framework
+          
+      # Elasticsearch for logs
+      elasticsearch:
+        image: elasticsearch:8.11.0
+        container_name: ms-framework-elasticsearch
+        environment:
+          - discovery.type=single-node
+          - xpack.security.enabled=false
+          - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        volumes:
+          - elasticsearch_data:/usr/share/elasticsearch/data
+        ports:
+          - "9200:9200"
+        networks:
+          - ms-framework
+          
+      # Kibana for log visualization
+      kibana:
+        image: kibana:8.11.0
+        container_name: ms-framework-kibana
+        environment:
+          - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+        ports:
+          - "5601:5601"
+        depends_on:
+          - elasticsearch
+        networks:
+          - ms-framework
+          
+      # AlertManager for alert handling
+      alertmanager:
+        image: prom/alertmanager:v0.26.0
+        container_name: ms-framework-alertmanager
+        volumes:
+          - ./config/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+        ports:
+          - "9093:9093"
+        networks:
+          - ms-framework
+    
+    volumes:
+      prometheus_data:
+      grafana_data:
+      elasticsearch_data:
+    
+    networks:
+      ms-framework:
+        driver: bridge
+```
+
+#### 17.2 Production Monitoring Best Practices
+```yaml
+PATTERN ProductionBestPractices:
+    monitoring_principles:
+      - instrument_critical_paths_only
+      - use_consistent_naming_conventions
+      - implement_proper_sampling_strategies
+      - minimize_performance_overhead
+      - ensure_high_availability_monitoring
+      
+    metric_naming_conventions:
+      counters: "{component}_{action}_total"
+      gauges: "{component}_{resource}_current"
+      histograms: "{component}_{operation}_duration_seconds"
+      
+    label_conventions:
+      required_labels:
+        - service_name
+        - service_version
+        - environment
+        - cluster
+      optional_labels:
+        - agent_type
+        - task_type
+        - region
+        
+    retention_policies:
+      raw_metrics: "7d"
+      downsampled_5m: "30d"
+      downsampled_1h: "1y"
+      
+    alerting_guidelines:
+      critical_alerts:
+        - response_time: "immediate"
+        - escalation: "15_minutes"
+        - channels: ["pagerduty", "slack_critical"]
+      warning_alerts:
+        - response_time: "1_hour"
+        - escalation: "24_hours"
+        - channels: ["slack_warnings", "email"]
+```
+
 ---
 
-This framework provides comprehensive observability patterns for multi-agent systems without specifying particular technologies or implementations, suitable for specialized research agents to implement with their chosen technology stacks.
+This comprehensive framework provides production-ready observability patterns for multi-agent systems, covering all aspects from instrumentation through visualization and alerting. The implementation patterns ensure efficient monitoring without significant performance overhead while providing deep insights into system behavior and performance.

@@ -6,7 +6,11 @@ This document provides comprehensive authentication implementation specification
 
 **Integration Points**:
 - Security Framework: `/ms-framework-docs/security/security-framework.md`
-- Transport Layer: `/ms-framework-docs/transport/transport-layer-specifications.md`
+- Transport Layer: `/ms-framework-docs/transport/` - Modular transport specifications
+  - [Transport Core](../transport/transport-core.md) - Core patterns and security foundations
+  - [NATS Transport](../transport/nats-transport.md) - Messaging security
+  - [gRPC Transport](../transport/grpc-transport.md) - RPC security with TLS/mTLS
+  - [HTTP Transport](../transport/http-transport.md) - API security and authentication
 - Deployment Architecture: `/ms-framework-docs/operations/deployment-architecture-specifications.md`
 
 ## 1. JWT Token Structure and Claims

@@ -82,7 +82,7 @@ echo "$INPUT" | nats pub "$SUBJECT" --stdin
 Add Claude CLI Controller as new component in architecture diagram and component descriptions.
 
 #### Update Transport Layer
-**File**: `ms-framework-docs/transport/transport-layer-specifications.md`
+**File**: `ms-framework-docs/transport/nats-transport.md`
 
 Hook message formats already added. Verify integration with existing NATS subject taxonomy.
 

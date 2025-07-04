@@ -1277,3 +1277,1071 @@ The design enables autonomous developers to:
 5. Extend the framework through well-defined interfaces
 
 This specification serves as the authoritative reference for implementing the Mister Smith AI Agent Framework with Rust best practices and type safety guarantees.
+
+---
+
+## 9. Dependency Detection & Analysis
+
+### 9.1 Static Dependency Analysis
+
+```rust
+/// Static dependency analyzer for compile-time dependency detection
+pub struct DependencyAnalyzer {
+    registry: Arc<ServiceRegistry>,
+    graph: DependencyGraph,
+    cache: DashMap<TypeId, Vec<DependencyInfo>>,
+}
+
+/// Comprehensive dependency information
+#[derive(Debug, Clone)]
+pub struct DependencyInfo {
+    pub type_id: TypeId,
+    pub type_name: &'static str,
+    pub required: bool,
+    pub lifecycle: DependencyLifecycle,
+    pub injection_point: InjectionPoint,
+    pub version_constraint: Option<VersionReq>,
+}
+
+/// Dependency lifecycle management
+#[derive(Debug, Clone, Copy)]
+pub enum DependencyLifecycle {
+    Singleton,      // Single instance shared across system
+    Transient,      // New instance per request
+    Scoped,         // Instance per scope/context
+    PerRequest,     // Instance per handler invocation
+}
+
+/// Injection point specification
+#[derive(Debug, Clone)]
+pub enum InjectionPoint {
+    Constructor,                    // Injected via new()
+    Method(&'static str),          // Injected via method
+    Property(&'static str),        // Injected via setter
+    Field(&'static str),           // Direct field injection
+}
+
+impl DependencyAnalyzer {
+    /// Analyze dependencies for a type at compile time
+    pub fn analyze<T: 'static>(&self) -> Result<DependencyReport, AnalysisError> {
+        let type_id = TypeId::of::<T>();
+        
+        // Check cache first
+        if let Some(cached) = self.cache.get(&type_id) {
+            return Ok(DependencyReport::from_cache(cached.clone()));
+        }
+        
+        // Perform static analysis
+        let dependencies = self.extract_dependencies::<T>()?;
+        let graph_node = self.build_dependency_node(&dependencies)?;
+        
+        // Detect issues
+        let cycles = self.detect_circular_dependencies(&graph_node)?;
+        let conflicts = self.detect_version_conflicts(&dependencies)?;
+        let missing = self.detect_missing_dependencies(&dependencies)?;
+        
+        let report = DependencyReport {
+            type_id,
+            type_name: std::any::type_name::<T>(),
+            dependencies,
+            circular_dependencies: cycles,
+            version_conflicts: conflicts,
+            missing_dependencies: missing,
+            resolution_order: self.calculate_resolution_order(&graph_node)?,
+        };
+        
+        // Cache results
+        self.cache.insert(type_id, report.dependencies.clone());
+        
+        Ok(report)
+    }
+    
+    /// Extract dependencies using type system introspection
+    fn extract_dependencies<T: 'static>(&self) -> Result<Vec<DependencyInfo>, AnalysisError> {
+        let mut dependencies = Vec::new();
+        
+        // Use compile-time reflection if available
+        #[cfg(feature = "reflection")]
+        {
+            use crate::reflection::TypeReflection;
+            let reflection = T::reflect();
+            
+            for field in reflection.fields() {
+                if let Some(dep_attr) = field.get_attribute::<Dependency>() {
+                    dependencies.push(DependencyInfo {
+                        type_id: field.type_id(),
+                        type_name: field.type_name(),
+                        required: dep_attr.required,
+                        lifecycle: dep_attr.lifecycle,
+                        injection_point: InjectionPoint::Field(field.name()),
+                        version_constraint: dep_attr.version,
+                    });
+                }
+            }
+        }
+        
+        // Fallback to trait-based detection
+        if let Some(injectable) = <T as Any>::downcast_ref::<dyn Injectable>() {
+            dependencies.extend(injectable.dependencies());
+        }
+        
+        Ok(dependencies)
+    }
+}
+
+/// Dependency analysis report
+#[derive(Debug)]
+pub struct DependencyReport {
+    pub type_id: TypeId,
+    pub type_name: &'static str,
+    pub dependencies: Vec<DependencyInfo>,
+    pub circular_dependencies: Vec<DependencyCycle>,
+    pub version_conflicts: Vec<VersionConflict>,
+    pub missing_dependencies: Vec<MissingDependency>,
+    pub resolution_order: Vec<TypeId>,
+}
+
+/// Circular dependency detection result
+#[derive(Debug)]
+pub struct DependencyCycle {
+    pub cycle: Vec<TypeId>,
+    pub affected_types: Vec<&'static str>,
+    pub severity: CycleSeverity,
+}
+
+#[derive(Debug)]
+pub enum CycleSeverity {
+    Error,      // Direct circular dependency
+    Warning,    // Indirect cycle through optional deps
+    Info,       // Potential cycle in lazy dependencies
+}
+```
+
+### 9.2 Runtime Dependency Injection
+
+```rust
+/// Advanced dependency injection container with runtime resolution
+pub struct DependencyInjector {
+    container: Arc<ServiceRegistry>,
+    resolver: Arc<DependencyResolver>,
+    scope_manager: ScopeManager,
+    interceptors: Vec<Box<dyn InjectionInterceptor>>,
+}
+
+/// Trait for injectable types
+pub trait Injectable: Send + Sync + 'static {
+    fn dependencies() -> Vec<DependencyInfo> where Self: Sized;
+    fn inject(&mut self, injector: &DependencyInjector) -> Result<(), InjectionError>;
+}
+
+/// Automatic dependency resolution
+pub struct DependencyResolver {
+    strategies: Vec<Box<dyn ResolutionStrategy>>,
+    fallback: Box<dyn FallbackResolver>,
+}
+
+impl DependencyResolver {
+    /// Resolve a dependency with automatic strategy selection
+    pub async fn resolve<T: 'static>(&self, context: &ResolutionContext) -> Result<Arc<T>, ResolutionError> {
+        // Try each strategy in order
+        for strategy in &self.strategies {
+            if strategy.can_resolve::<T>(context) {
+                match strategy.resolve::<T>(context).await {
+                    Ok(instance) => return Ok(instance),
+                    Err(ResolutionError::NotFound) => continue,
+                    Err(e) => return Err(e),
+                }
+            }
+        }
+        
+        // Use fallback resolver
+        self.fallback.resolve::<T>(context).await
+    }
+}
+
+/// Resolution strategies for different scenarios
+pub trait ResolutionStrategy: Send + Sync {
+    fn can_resolve<T: 'static>(&self, context: &ResolutionContext) -> bool;
+    async fn resolve<T: 'static>(&self, context: &ResolutionContext) -> Result<Arc<T>, ResolutionError>;
+}
+
+/// Factory-based resolution strategy
+pub struct FactoryResolutionStrategy {
+    factories: HashMap<TypeId, Box<dyn ServiceFactory>>,
+}
+
+/// Convention-based resolution strategy
+pub struct ConventionResolutionStrategy {
+    naming_convention: NamingConvention,
+    search_paths: Vec<PathBuf>,
+}
+
+/// Attribute-based resolution strategy
+pub struct AttributeResolutionStrategy {
+    attribute_scanner: AttributeScanner,
+}
+
+impl DependencyInjector {
+    /// Create instance with automatic dependency injection
+    pub async fn create<T>(&self) -> Result<T, InjectionError> 
+    where 
+        T: Injectable + Default,
+    {
+        let mut instance = T::default();
+        self.inject_dependencies(&mut instance).await?;
+        Ok(instance)
+    }
+    
+    /// Create with constructor injection
+    pub async fn create_with<T, F>(&self, factory: F) -> Result<T, InjectionError>
+    where 
+        T: Injectable,
+        F: FnOnce(DependencyProvider) -> Result<T, InjectionError>,
+    {
+        let provider = self.create_provider().await?;
+        let instance = factory(provider)?;
+        Ok(instance)
+    }
+    
+    /// Inject dependencies into existing instance
+    async fn inject_dependencies<T: Injectable>(&self, instance: &mut T) -> Result<(), InjectionError> {
+        let dependencies = T::dependencies();
+        
+        for dep in dependencies {
+            // Apply interceptors
+            for interceptor in &self.interceptors {
+                interceptor.before_injection(&dep)?;
+            }
+            
+            // Perform injection based on injection point
+            match dep.injection_point {
+                InjectionPoint::Field(name) => {
+                    self.inject_field(instance, name, &dep).await?;
+                }
+                InjectionPoint::Method(name) => {
+                    self.inject_method(instance, name, &dep).await?;
+                }
+                InjectionPoint::Property(name) => {
+                    self.inject_property(instance, name, &dep).await?;
+                }
+                InjectionPoint::Constructor => {
+                    return Err(InjectionError::InvalidInjectionPoint(
+                        "Constructor injection must use create_with()".into()
+                    ));
+                }
+            }
+            
+            // Apply post-injection interceptors
+            for interceptor in &self.interceptors {
+                interceptor.after_injection(&dep)?;
+            }
+        }
+        
+        Ok(())
+    }
+}
+
+/// Dependency provider for constructor injection
+pub struct DependencyProvider {
+    injector: Arc<DependencyInjector>,
+    context: ResolutionContext,
+}
+
+impl DependencyProvider {
+    pub async fn get<T: 'static>(&self) -> Result<Arc<T>, InjectionError> {
+        self.injector.resolver
+            .resolve::<T>(&self.context)
+            .await
+            .map_err(InjectionError::from)
+    }
+    
+    pub async fn get_required<T: 'static>(&self) -> Result<Arc<T>, InjectionError> {
+        self.get::<T>().await.map_err(|_| {
+            InjectionError::RequiredDependencyMissing(std::any::type_name::<T>())
+        })
+    }
+    
+    pub async fn get_optional<T: 'static>(&self) -> Option<Arc<T>> {
+        self.get::<T>().await.ok()
+    }
+}
+```
+
+### 9.3 Circular Dependency Detection
+
+```rust
+/// Advanced circular dependency detector with multiple algorithms
+pub struct CircularDependencyDetector {
+    algorithms: Vec<Box<dyn DetectionAlgorithm>>,
+    graph: Arc<DependencyGraph>,
+    cache: Arc<RwLock<DetectionCache>>,
+}
+
+/// Dependency graph representation
+pub struct DependencyGraph {
+    nodes: HashMap<TypeId, DependencyNode>,
+    edges: HashMap<TypeId, HashSet<TypeId>>,
+    metadata: HashMap<TypeId, NodeMetadata>,
+}
+
+#[derive(Clone)]
+pub struct DependencyNode {
+    type_id: TypeId,
+    type_name: &'static str,
+    dependencies: Vec<TypeId>,
+    dependents: Vec<TypeId>,
+    lifecycle: DependencyLifecycle,
+    lazy: bool,
+}
+
+/// Detection algorithms trait
+pub trait DetectionAlgorithm: Send + Sync {
+    fn detect_cycles(&self, graph: &DependencyGraph) -> Vec<DependencyCycle>;
+    fn algorithm_name(&self) -> &'static str;
+}
+
+/// Tarjan's strongly connected components algorithm
+pub struct TarjanAlgorithm {
+    index_counter: AtomicUsize,
+    stack: Mutex<Vec<TypeId>>,
+    indices: DashMap<TypeId, usize>,
+    lowlinks: DashMap<TypeId, usize>,
+    on_stack: DashMap<TypeId, bool>,
+}
+
+impl DetectionAlgorithm for TarjanAlgorithm {
+    fn detect_cycles(&self, graph: &DependencyGraph) -> Vec<DependencyCycle> {
+        let mut cycles = Vec::new();
+        
+        for node in graph.nodes.values() {
+            if !self.indices.contains_key(&node.type_id) {
+                self.strongconnect(node, graph, &mut cycles);
+            }
+        }
+        
+        cycles
+    }
+    
+    fn algorithm_name(&self) -> &'static str {
+        "Tarjan's Algorithm"
+    }
+}
+
+impl TarjanAlgorithm {
+    fn strongconnect(
+        &self, 
+        node: &DependencyNode, 
+        graph: &DependencyGraph,
+        cycles: &mut Vec<DependencyCycle>
+    ) {
+        let index = self.index_counter.fetch_add(1, Ordering::SeqCst);
+        self.indices.insert(node.type_id, index);
+        self.lowlinks.insert(node.type_id, index);
+        self.on_stack.insert(node.type_id, true);
+        
+        let mut stack = self.stack.lock().unwrap();
+        stack.push(node.type_id);
+        drop(stack);
+        
+        // Check successors
+        for &dep_id in &node.dependencies {
+            if !self.indices.contains_key(&dep_id) {
+                if let Some(dep_node) = graph.nodes.get(&dep_id) {
+                    self.strongconnect(dep_node, graph, cycles);
+                    
+                    let dep_lowlink = self.lowlinks.get(&dep_id).map(|v| *v).unwrap_or(index);
+                    let current_lowlink = self.lowlinks.get(&node.type_id).map(|v| *v).unwrap_or(index);
+                    self.lowlinks.insert(node.type_id, current_lowlink.min(dep_lowlink));
+                }
+            } else if self.on_stack.get(&dep_id).map(|v| *v).unwrap_or(false) {
+                let dep_index = self.indices.get(&dep_id).map(|v| *v).unwrap_or(index);
+                let current_lowlink = self.lowlinks.get(&node.type_id).map(|v| *v).unwrap_or(index);
+                self.lowlinks.insert(node.type_id, current_lowlink.min(dep_index));
+            }
+        }
+        
+        // Found SCC root
+        if self.lowlinks.get(&node.type_id).map(|v| *v) == self.indices.get(&node.type_id).map(|v| *v) {
+            let mut cycle_nodes = Vec::new();
+            let mut stack = self.stack.lock().unwrap();
+            
+            loop {
+                if let Some(type_id) = stack.pop() {
+                    self.on_stack.insert(type_id, false);
+                    cycle_nodes.push(type_id);
+                    
+                    if type_id == node.type_id {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+            
+            if cycle_nodes.len() > 1 {
+                cycles.push(self.create_cycle_report(cycle_nodes, graph));
+            }
+        }
+    }
+    
+    fn create_cycle_report(&self, nodes: Vec<TypeId>, graph: &DependencyGraph) -> DependencyCycle {
+        let affected_types = nodes.iter()
+            .filter_map(|id| graph.nodes.get(id).map(|n| n.type_name))
+            .collect();
+        
+        let severity = if nodes.iter().all(|id| {
+            graph.nodes.get(id).map(|n| n.lazy).unwrap_or(false)
+        }) {
+            CycleSeverity::Info
+        } else if nodes.len() == 2 {
+            CycleSeverity::Error
+        } else {
+            CycleSeverity::Warning
+        };
+        
+        DependencyCycle {
+            cycle: nodes,
+            affected_types,
+            severity,
+        }
+    }
+}
+
+/// DFS-based cycle detection for comparison
+pub struct DfsDetector {
+    visited: DashMap<TypeId, VisitState>,
+    path: Mutex<Vec<TypeId>>,
+}
+
+#[derive(Clone, Copy)]
+enum VisitState {
+    White,  // Not visited
+    Gray,   // Currently visiting
+    Black,  // Fully visited
+}
+
+impl CircularDependencyDetector {
+    pub fn new(graph: Arc<DependencyGraph>) -> Self {
+        let algorithms: Vec<Box<dyn DetectionAlgorithm>> = vec![
+            Box::new(TarjanAlgorithm::new()),
+            Box::new(DfsDetector::new()),
+        ];
+        
+        Self {
+            algorithms,
+            graph,
+            cache: Arc::new(RwLock::new(DetectionCache::new())),
+        }
+    }
+    
+    /// Detect all circular dependencies using multiple algorithms
+    pub async fn detect_all(&self) -> Result<Vec<DependencyCycle>, DetectionError> {
+        let cache = self.cache.read().await;
+        if let Some(cached) = cache.get_all_cycles() {
+            return Ok(cached);
+        }
+        drop(cache);
+        
+        let mut all_cycles = Vec::new();
+        let mut seen_cycles = HashSet::new();
+        
+        for algorithm in &self.algorithms {
+            let cycles = algorithm.detect_cycles(&*self.graph);
+            
+            for cycle in cycles {
+                let cycle_key = self.create_cycle_key(&cycle);
+                if seen_cycles.insert(cycle_key) {
+                    all_cycles.push(cycle);
+                }
+            }
+        }
+        
+        let mut cache = self.cache.write().await;
+        cache.store_all_cycles(all_cycles.clone());
+        
+        Ok(all_cycles)
+    }
+    
+    /// Check if adding a dependency would create a cycle
+    pub async fn would_create_cycle(
+        &self, 
+        from: TypeId, 
+        to: TypeId
+    ) -> Result<bool, DetectionError> {
+        // Quick check: self-dependency
+        if from == to {
+            return Ok(true);
+        }
+        
+        // Check if path exists from 'to' to 'from'
+        let path_exists = self.path_exists(to, from).await?;
+        Ok(path_exists)
+    }
+    
+    /// Find shortest cycle involving a specific type
+    pub async fn find_cycle_with(&self, type_id: TypeId) -> Option<DependencyCycle> {
+        let cycles = self.detect_all().await.ok()?;
+        cycles.into_iter()
+            .filter(|cycle| cycle.cycle.contains(&type_id))
+            .min_by_key(|cycle| cycle.cycle.len())
+    }
+}
+```
+
+### 9.4 Dependency Graph Visualization
+
+```rust
+/// Dependency graph visualizer with multiple output formats
+pub struct DependencyVisualizer {
+    graph: Arc<DependencyGraph>,
+    layout_engine: Box<dyn LayoutEngine>,
+    renderers: HashMap<VisualizationFormat, Box<dyn GraphRenderer>>,
+}
+
+/// Supported visualization formats
+#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
+pub enum VisualizationFormat {
+    Dot,        // Graphviz DOT format
+    Mermaid,    // Mermaid diagram
+    Json,       // JSON graph representation
+    Svg,        // Direct SVG output
+    PlantUml,   // PlantUML diagram
+}
+
+/// Layout algorithms
+pub trait LayoutEngine: Send + Sync {
+    fn layout(&self, graph: &DependencyGraph) -> LayoutResult;
+}
+
+/// Graph rendering trait
+pub trait GraphRenderer: Send + Sync {
+    fn render(&self, graph: &DependencyGraph, layout: &LayoutResult) -> String;
+    fn format(&self) -> VisualizationFormat;
+}
+
+/// Hierarchical layout engine
+pub struct HierarchicalLayout {
+    layer_separation: f64,
+    node_separation: f64,
+    edge_routing: EdgeRouting,
+}
+
+/// Force-directed layout engine
+pub struct ForceDirectedLayout {
+    iterations: usize,
+    spring_constant: f64,
+    repulsion_constant: f64,
+    damping: f64,
+}
+
+impl DependencyVisualizer {
+    /// Generate visualization in specified format
+    pub fn visualize(&self, format: VisualizationFormat) -> Result<String, VisualizationError> {
+        let layout = self.layout_engine.layout(&*self.graph);
+        
+        let renderer = self.renderers.get(&format)
+            .ok_or(VisualizationError::UnsupportedFormat(format))?;
+        
+        Ok(renderer.render(&*self.graph, &layout))
+    }
+    
+    /// Generate interactive HTML visualization
+    pub fn generate_interactive_html(&self) -> Result<String, VisualizationError> {
+        let layout = self.layout_engine.layout(&*self.graph);
+        
+        let html = format!(r#"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dependency Graph</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .node {{ cursor: pointer; }}
+        .node circle {{ fill: #69b3a2; stroke: #000; stroke-width: 1.5px; }}
+        .node text {{ font: 12px sans-serif; }}
+        .link {{ fill: none; stroke: #999; stroke-opacity: 0.6; stroke-width: 2px; }}
+        .link.circular {{ stroke: #ff0000; stroke-dasharray: 5,5; }}
+        #tooltip {{ position: absolute; background: rgba(0,0,0,0.8); color: white; 
+                    padding: 10px; border-radius: 5px; pointer-events: none; }}
+    </style>
+</head>
+<body>
+    <div id="graph"></div>
+    <div id="tooltip" style="display: none;"></div>
+    <script>
+        const data = {json_data};
+        // D3.js visualization code here
+        {d3_code}
+    </script>
+</body>
+</html>
+        "#,
+            json_data = self.graph_to_json(&layout)?,
+            d3_code = include_str!("../assets/dependency_graph.js")
+        );
+        
+        Ok(html)
+    }
+}
+
+/// DOT format renderer
+pub struct DotRenderer {
+    include_lifecycle: bool,
+    highlight_cycles: bool,
+    node_attributes: HashMap<DependencyLifecycle, String>,
+}
+
+impl GraphRenderer for DotRenderer {
+    fn render(&self, graph: &DependencyGraph, _layout: &LayoutResult) -> String {
+        let mut dot = String::from("digraph Dependencies {\n");
+        dot.push_str("  rankdir=TB;\n");
+        dot.push_str("  node [shape=box];\n\n");
+        
+        // Render nodes
+        for node in graph.nodes.values() {
+            let attrs = self.node_attributes.get(&node.lifecycle)
+                .map(|a| format!(" [{}]", a))
+                .unwrap_or_default();
+            
+            dot.push_str(&format!("  \"{}\" [label=\"{}\\n{:?}\"]{};\n",
+                node.type_id.as_u64(),
+                node.type_name,
+                node.lifecycle,
+                attrs
+            ));
+        }
+        
+        dot.push_str("\n");
+        
+        // Render edges
+        for (from, tos) in &graph.edges {
+            for to in tos {
+                let edge_attrs = if self.is_part_of_cycle(from, to, graph) {
+                    " [color=red, style=bold]"
+                } else {
+                    ""
+                };
+                
+                dot.push_str(&format!("  \"{}\" -> \"{}\"{};\n",
+                    from.as_u64(),
+                    to.as_u64(),
+                    edge_attrs
+                ));
+            }
+        }
+        
+        dot.push_str("}\n");
+        dot
+    }
+    
+    fn format(&self) -> VisualizationFormat {
+        VisualizationFormat::Dot
+    }
+}
+
+/// Mermaid diagram renderer
+pub struct MermaidRenderer {
+    diagram_type: MermaidDiagramType,
+    theme: MermaidTheme,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum MermaidDiagramType {
+    FlowChart,
+    ClassDiagram,
+    StateDiagram,
+}
+
+impl GraphRenderer for MermaidRenderer {
+    fn render(&self, graph: &DependencyGraph, _layout: &LayoutResult) -> String {
+        match self.diagram_type {
+            MermaidDiagramType::FlowChart => self.render_flowchart(graph),
+            MermaidDiagramType::ClassDiagram => self.render_class_diagram(graph),
+            MermaidDiagramType::StateDiagram => self.render_state_diagram(graph),
+        }
+    }
+    
+    fn format(&self) -> VisualizationFormat {
+        VisualizationFormat::Mermaid
+    }
+}
+```
+
+### 9.5 Version Conflict Resolution
+
+```rust
+/// Version conflict detector and resolver
+pub struct VersionConflictResolver {
+    version_graph: VersionGraph,
+    resolution_strategies: Vec<Box<dyn ResolutionStrategy>>,
+    compatibility_checker: CompatibilityChecker,
+}
+
+/// Version constraint graph
+pub struct VersionGraph {
+    packages: HashMap<String, PackageVersions>,
+    constraints: HashMap<(String, String), VersionConstraint>,
+}
+
+/// Version conflict information
+#[derive(Debug)]
+pub struct VersionConflict {
+    pub package: String,
+    pub requested_versions: Vec<(String, VersionReq)>,
+    pub conflict_type: ConflictType,
+    pub resolution_options: Vec<ResolutionOption>,
+}
+
+#[derive(Debug)]
+pub enum ConflictType {
+    Incompatible,       // No version satisfies all constraints  
+    Multiple,           // Multiple versions required
+    Circular,           // Circular version dependencies
+    Missing,            // Required version not available
+}
+
+/// Resolution options for version conflicts
+#[derive(Debug)]
+pub struct ResolutionOption {
+    pub strategy: ResolutionStrategy,
+    pub selected_version: Version,
+    pub side_effects: Vec<SideEffect>,
+    pub confidence: f64,
+}
+
+impl VersionConflictResolver {
+    /// Detect all version conflicts in the dependency graph
+    pub async fn detect_conflicts(&self) -> Result<Vec<VersionConflict>, ResolutionError> {
+        let mut conflicts = Vec::new();
+        
+        for (package, versions) in &self.version_graph.packages {
+            let constraints = self.collect_constraints(package);
+            
+            if let Some(conflict) = self.analyze_constraints(package, &constraints).await? {
+                conflicts.push(conflict);
+            }
+        }
+        
+        Ok(conflicts)
+    }
+    
+    /// Automatically resolve version conflicts
+    pub async fn auto_resolve(&self, conflicts: Vec<VersionConflict>) -> Result<ResolutionPlan, ResolutionError> {
+        let mut plan = ResolutionPlan::new();
+        
+        for conflict in conflicts {
+            let resolution = self.find_best_resolution(&conflict).await?;
+            plan.add_resolution(conflict.package.clone(), resolution);
+        }
+        
+        // Validate the complete plan
+        self.validate_resolution_plan(&plan).await?;
+        
+        Ok(plan)
+    }
+    
+    /// Find best resolution for a specific conflict
+    async fn find_best_resolution(&self, conflict: &VersionConflict) -> Result<Resolution, ResolutionError> {
+        let mut best_option = None;
+        let mut best_score = 0.0;
+        
+        for strategy in &self.resolution_strategies {
+            if let Some(option) = strategy.resolve(conflict, &self.version_graph).await? {
+                let score = self.score_resolution(&option, conflict);
+                
+                if score > best_score {
+                    best_score = score;
+                    best_option = Some(option);
+                }
+            }
+        }
+        
+        best_option.ok_or(ResolutionError::NoResolutionFound)
+    }
+}
+
+/// Resolution plan for multiple conflicts
+pub struct ResolutionPlan {
+    resolutions: HashMap<String, Resolution>,
+    execution_order: Vec<String>,
+    validation_steps: Vec<ValidationStep>,
+}
+
+impl ResolutionPlan {
+    /// Execute the resolution plan
+    pub async fn execute(&self, registry: &mut ServiceRegistry) -> Result<(), ExecutionError> {
+        // Pre-execution validation
+        for step in &self.validation_steps {
+            step.validate(registry).await?;
+        }
+        
+        // Execute resolutions in order
+        for package in &self.execution_order {
+            if let Some(resolution) = self.resolutions.get(package) {
+                resolution.apply(registry).await?;
+            }
+        }
+        
+        // Post-execution verification
+        self.verify_resolution(registry).await?;
+        
+        Ok(())
+    }
+}
+```
+
+### 9.6 Dependency Validation Tools
+
+```rust
+/// Comprehensive dependency validation framework
+pub struct DependencyValidator {
+    rules: Vec<Box<dyn ValidationRule>>,
+    analyzers: Vec<Box<dyn DependencyAnalyzer>>,
+    reporter: ValidationReporter,
+}
+
+/// Validation rule trait
+pub trait ValidationRule: Send + Sync {
+    fn validate(&self, graph: &DependencyGraph) -> ValidationResult;
+    fn rule_name(&self) -> &'static str;
+    fn severity(&self) -> ValidationSeverity;
+}
+
+/// Built-in validation rules
+pub struct MaxDepthRule {
+    max_depth: usize,
+}
+
+pub struct NoCyclesRule {
+    allow_lazy_cycles: bool,
+}
+
+pub struct SingletonConsistencyRule {
+    // Ensures singletons don't depend on transient services
+}
+
+pub struct VersionCompatibilityRule {
+    compatibility_matrix: CompatibilityMatrix,
+}
+
+pub struct SecurityBoundaryRule {
+    // Ensures security boundaries aren't violated
+    security_zones: HashMap<TypeId, SecurityZone>,
+}
+
+/// Validation result aggregation
+#[derive(Debug)]
+pub struct ValidationReport {
+    pub passed: bool,
+    pub violations: Vec<Violation>,
+    pub warnings: Vec<Warning>,
+    pub suggestions: Vec<Suggestion>,
+    pub metrics: ValidationMetrics,
+}
+
+#[derive(Debug)]
+pub struct Violation {
+    pub rule: &'static str,
+    pub description: String,
+    pub affected_types: Vec<TypeId>,
+    pub severity: ValidationSeverity,
+    pub fix_suggestions: Vec<String>,
+}
+
+impl DependencyValidator {
+    /// Perform comprehensive validation
+    pub async fn validate(&self, graph: &DependencyGraph) -> ValidationReport {
+        let mut report = ValidationReport::new();
+        
+        // Run all validation rules
+        for rule in &self.rules {
+            let result = rule.validate(graph);
+            report.merge_result(result);
+        }
+        
+        // Run analyzers for deeper insights
+        for analyzer in &self.analyzers {
+            let analysis = analyzer.analyze(graph).await;
+            report.merge_analysis(analysis);
+        }
+        
+        // Generate final report
+        self.reporter.finalize_report(&mut report);
+        
+        report
+    }
+    
+    /// Validate incremental changes
+    pub async fn validate_change(
+        &self, 
+        graph: &DependencyGraph,
+        change: &DependencyChange
+    ) -> Result<(), ValidationError> {
+        // Quick validation for common cases
+        match change {
+            DependencyChange::AddDependency { from, to } => {
+                // Check for immediate cycles
+                if self.would_create_cycle(graph, *from, *to) {
+                    return Err(ValidationError::WouldCreateCycle);
+                }
+                
+                // Check depth constraints
+                if self.would_exceed_depth(graph, *from, *to) {
+                    return Err(ValidationError::MaxDepthExceeded);
+                }
+            }
+            DependencyChange::RemoveDependency { from, to } => {
+                // Check if removal breaks required dependencies
+                if self.is_required_dependency(graph, *from, *to) {
+                    return Err(ValidationError::RequiredDependency);
+                }
+            }
+            DependencyChange::UpdateLifecycle { type_id, lifecycle } => {
+                // Validate lifecycle consistency
+                self.validate_lifecycle_change(graph, *type_id, *lifecycle)?;
+            }
+        }
+        
+        Ok(())
+    }
+}
+
+/// CLI tool for dependency validation
+pub struct DependencyValidatorCli {
+    validator: DependencyValidator,
+    output_format: OutputFormat,
+}
+
+impl DependencyValidatorCli {
+    pub async fn run(&self, args: CliArgs) -> Result<(), CliError> {
+        // Load dependency graph
+        let graph = self.load_graph(&args.project_path)?;
+        
+        // Run validation
+        let report = self.validator.validate(&graph).await;
+        
+        // Output results
+        match self.output_format {
+            OutputFormat::Human => self.print_human_readable(&report),
+            OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&report)?),
+            OutputFormat::Junit => self.write_junit_report(&report, &args.output_path)?,
+            OutputFormat::Sarif => self.write_sarif_report(&report, &args.output_path)?,
+        }
+        
+        // Exit with appropriate code
+        if report.passed {
+            Ok(())
+        } else {
+            Err(CliError::ValidationFailed(report.violations.len()))
+        }
+    }
+}
+```
+
+### 9.7 Integration with Build System
+
+```rust
+/// Build system integration for dependency validation
+pub struct BuildSystemIntegration {
+    validator: Arc<DependencyValidator>,
+    cache: BuildCache,
+    hooks: Vec<Box<dyn BuildHook>>,
+}
+
+/// Build hook trait for custom integrations
+pub trait BuildHook: Send + Sync {
+    fn pre_build(&self, context: &BuildContext) -> Result<(), BuildError>;
+    fn post_analysis(&self, report: &ValidationReport) -> Result<(), BuildError>;
+    fn on_error(&self, error: &BuildError) -> Result<(), BuildError>;
+}
+
+/// Cargo integration
+pub struct CargoIntegration {
+    manifest_path: PathBuf,
+    workspace: bool,
+}
+
+impl CargoIntegration {
+    /// Generate Cargo.toml with resolved dependencies
+    pub fn generate_manifest(&self, resolution: &ResolutionPlan) -> Result<String, IntegrationError> {
+        let mut manifest = String::new();
+        
+        // Package metadata
+        manifest.push_str("[package]\n");
+        manifest.push_str(&format!("name = \"{}\"\n", self.package_name()));
+        manifest.push_str(&format!("version = \"{}\"\n", self.version()));
+        manifest.push_str("\n[dependencies]\n");
+        
+        // Add resolved dependencies
+        for (package, resolution) in resolution.resolutions() {
+            manifest.push_str(&format!("{} = \"{}\"\n", package, resolution.version));
+        }
+        
+        Ok(manifest)
+    }
+    
+    /// Validate against Cargo.lock
+    pub fn validate_lockfile(&self, graph: &DependencyGraph) -> Result<(), IntegrationError> {
+        let lockfile = self.read_lockfile()?;
+        
+        for package in lockfile.packages() {
+            if let Some(node) = graph.find_package(&package.name) {
+                self.validate_package_versions(&package, &node)?;
+            }
+        }
+        
+        Ok(())
+    }
+}
+
+/// Procedural macro for compile-time validation
+/// Usage: #[validate_dependencies]
+pub fn validate_dependencies_macro(input: TokenStream) -> TokenStream {
+    let analyzer = DependencyAnalyzer::new();
+    
+    // Parse input type
+    let input_type = parse_macro_input!(input as Type);
+    
+    // Analyze at compile time
+    match analyzer.analyze_type(&input_type) {
+        Ok(report) => {
+            if report.has_errors() {
+                return compile_error!(&report.format_errors());
+            }
+            
+            // Generate validation code
+            quote! {
+                const _: () = {
+                    #[doc = #report.format_summary()]
+                    const DEPENDENCY_VALIDATION: &str = "PASSED";
+                };
+            }
+        }
+        Err(e) => compile_error!(&format!("Dependency analysis failed: {}", e)),
+    }
+}
+```
+
+---
+
+## Summary
+
+The Dependency Detection & Analysis system provides comprehensive tools for managing dependencies in the Mister Smith AI Agent Framework:
+
+### Key Features:
+1. **Static Dependency Analysis** - Compile-time detection using type system introspection
+2. **Runtime Dependency Injection** - Flexible injection with multiple strategies
+3. **Circular Dependency Detection** - Multiple algorithms including Tarjan's SCC
+4. **Graph Visualization** - Multiple output formats (DOT, Mermaid, SVG, Interactive HTML)
+5. **Version Conflict Resolution** - Automatic resolution with multiple strategies
+6. **Validation Tools** - Comprehensive rule-based validation framework
+7. **Build System Integration** - Seamless integration with Cargo and other build tools
+
+### Benefits:
+- **Early Detection** - Catch dependency issues at compile time
+- **Automatic Resolution** - Smart conflict resolution strategies
+- **Visual Insights** - Clear visualization of dependency relationships
+- **Performance** - Efficient algorithms with caching
+- **Flexibility** - Pluggable strategies and extensible architecture
+
+This completes the module organization and type system specification with full dependency detection capabilities.

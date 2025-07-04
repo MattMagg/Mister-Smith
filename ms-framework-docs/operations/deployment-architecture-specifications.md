@@ -1684,4 +1684,1612 @@ async fn metrics_endpoint() -> Json<Value> {
 
 ---
 
-This deployment architecture specification provides comprehensive patterns and concrete implementation templates for deploying multi-agent systems at scale, including Docker best practices, Kubernetes manifests, and environment management suitable for production deployment of the Mister Smith AI Agent Framework.
+### 20. Service Mesh Implementation
+
+#### 20.1 Istio Service Mesh Configuration
+```yaml
+# istio-config.yaml - Service mesh for Mister Smith
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: mister-smith-control-plane
+  namespace: istio-system
+spec:
+  values:
+    global:
+      meshID: mister-smith-mesh
+      multiCluster:
+        clusterName: mister-smith-cluster
+      network: mister-smith-network
+    pilot:
+      traceSampling: 1.0
+  components:
+    pilot:
+      k8s:
+        resources:
+          requests:
+            cpu: 500m
+            memory: 2048Mi
+          limits:
+            cpu: 1000m
+            memory: 4096Mi
+        hpaSpec:
+          maxReplicas: 5
+          minReplicas: 2
+          metrics:
+          - type: Resource
+            resource:
+              name: cpu
+              target:
+                type: Utilization
+                averageUtilization: 80
+    ingressGateways:
+    - name: istio-ingressgateway
+      enabled: true
+      k8s:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 2000m
+            memory: 1024Mi
+        hpaSpec:
+          maxReplicas: 5
+          minReplicas: 2
+    egressGateways:
+    - name: istio-egressgateway
+      enabled: true
+```
+
+#### 20.2 Gateway and Virtual Service Configuration
+```yaml
+# gateway.yaml - Ingress gateway configuration
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: mister-smith-gateway
+  namespace: mister-smith-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - api.mister-smith.local
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: mister-smith-tls
+    hosts:
+    - api.mister-smith.local
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: mister-smith-orchestrator
+  namespace: mister-smith-system
+spec:
+  hosts:
+  - api.mister-smith.local
+  gateways:
+  - mister-smith-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /api/v1/
+    route:
+    - destination:
+        host: mister-smith-orchestrator.mister-smith-system.svc.cluster.local
+        port:
+          number: 8080
+    retries:
+      attempts: 3
+      perTryTimeout: 30s
+      retryOn: gateway-error,connect-failure,refused-stream
+    timeout: 60s
+  - match:
+    - uri:
+        prefix: /health
+    route:
+    - destination:
+        host: mister-smith-orchestrator.mister-smith-system.svc.cluster.local
+        port:
+          number: 8080
+```
+
+#### 20.3 Traffic Policies and Circuit Breaker
+```yaml
+# traffic-policy.yaml - Advanced traffic management
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: mister-smith-orchestrator
+  namespace: mister-smith-system
+spec:
+  host: mister-smith-orchestrator.mister-smith-system.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 30s
+        tcpKeepalive:
+          time: 7200s
+          interval: 75s
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+        consecutiveGatewayErrors: 5
+        interval: 30s
+        baseEjectionTime: 30s
+    circuitBreaker:
+      consecutiveGatewayErrors: 5
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+    loadBalancer:
+      simple: LEAST_CONN
+    outlierDetection:
+      consecutiveGatewayErrors: 5
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: mister-smith-worker
+  namespace: mister-smith-workload
+spec:
+  host: mister-smith-worker.mister-smith-workload.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 50
+        connectTimeout: 10s
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 5
+        maxRetries: 2
+    loadBalancer:
+      consistentHash:
+        httpHeaderName: "x-agent-affinity"
+```
+
+### 21. Blue-Green Deployment Implementation
+
+#### 21.1 Blue-Green Deployment Script
+```bash
+#!/bin/bash
+# blue-green-deploy.sh - Blue-green deployment automation
+
+set -euo pipefail
+
+NAMESPACE=${NAMESPACE:-mister-smith-workload}
+APP_NAME=${APP_NAME:-mister-smith-worker}
+NEW_VERSION=${NEW_VERSION:-latest}
+HEALTH_CHECK_TIMEOUT=${HEALTH_CHECK_TIMEOUT:-300}
+ROLLBACK_ON_FAILURE=${ROLLBACK_ON_FAILURE:-true}
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+log() {
+    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
+}
+
+warn() {
+    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}"
+}
+
+error() {
+    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"
+    exit 1
+}
+
+check_prerequisites() {
+    log "Checking prerequisites..."
+    
+    if ! command -v kubectl &> /dev/null; then
+        error "kubectl not found"
+    fi
+    
+    if ! kubectl get namespace "$NAMESPACE" &> /dev/null; then
+        error "Namespace $NAMESPACE not found"
+    fi
+    
+    log "Prerequisites check passed"
+}
+
+get_current_color() {
+    local selector=$(kubectl get service "$APP_NAME" -n "$NAMESPACE" -o jsonpath='{.spec.selector.version}' 2>/dev/null || echo "")
+    
+    if [[ "$selector" == *"blue"* ]]; then
+        echo "blue"
+    elif [[ "$selector" == *"green"* ]]; then
+        echo "green"
+    else
+        echo "blue"  # Default to blue if no color found
+    fi
+}
+
+get_inactive_color() {
+    local current_color=$1
+    if [[ "$current_color" == "blue" ]]; then
+        echo "green"
+    else
+        echo "blue"
+    fi
+}
+
+deploy_new_version() {
+    local target_color=$1
+    local deployment_name="${APP_NAME}-${target_color}"
+    
+    log "Deploying version $NEW_VERSION to $target_color environment..."
+    
+    # Update deployment with new image
+    kubectl set image deployment/"$deployment_name" \
+        worker="mister-smith/worker:$NEW_VERSION" \
+        -n "$NAMESPACE"
+    
+    # Wait for rollout to complete
+    kubectl rollout status deployment/"$deployment_name" \
+        -n "$NAMESPACE" \
+        --timeout=600s
+    
+    log "Deployment to $target_color completed"
+}
+
+health_check() {
+    local target_color=$1
+    local service_name="${APP_NAME}-${target_color}"
+    local port=$(kubectl get service "$service_name" -n "$NAMESPACE" -o jsonpath='{.spec.ports[0].port}')
+    
+    log "Performing health checks for $target_color environment..."
+    
+    local end_time=$((SECONDS + HEALTH_CHECK_TIMEOUT))
+    
+    while [ $SECONDS -lt $end_time ]; do
+        if kubectl exec -n "$NAMESPACE" deployment/"${APP_NAME}-${target_color}" -- \
+           curl -f -s "http://localhost:8081/health" > /dev/null; then
+            log "Health check passed for $target_color"
+            return 0
+        fi
+        
+        log "Health check failed, retrying in 10 seconds..."
+        sleep 10
+    done
+    
+    error "Health check timed out for $target_color environment"
+}
+
+switch_traffic() {
+    local target_color=$1
+    
+    log "Switching traffic to $target_color environment..."
+    
+    # Update service selector
+    kubectl patch service "$APP_NAME" -n "$NAMESPACE" -p \
+        "{\"spec\":{\"selector\":{\"version\":\"$target_color\"}}}"
+    
+    # Verify traffic switch
+    sleep 10
+    local current_selector=$(kubectl get service "$APP_NAME" -n "$NAMESPACE" -o jsonpath='{.spec.selector.version}')
+    
+    if [[ "$current_selector" == "$target_color" ]]; then
+        log "Traffic successfully switched to $target_color"
+    else
+        error "Failed to switch traffic to $target_color"
+    fi
+}
+
+cleanup_old_version() {
+    local old_color=$1
+    
+    log "Cleaning up $old_color environment..."
+    
+    # Scale down old deployment
+    kubectl scale deployment "${APP_NAME}-${old_color}" --replicas=0 -n "$NAMESPACE"
+    
+    log "Scaled down $old_color environment"
+}
+
+rollback() {
+    local rollback_color=$1
+    
+    warn "Rolling back to $rollback_color environment..."
+    
+    switch_traffic "$rollback_color"
+    
+    # Scale up rollback environment if needed
+    kubectl scale deployment "${APP_NAME}-${rollback_color}" --replicas=2 -n "$NAMESPACE"
+    
+    log "Rollback completed to $rollback_color"
+}
+
+main() {
+    log "Starting blue-green deployment for $APP_NAME version $NEW_VERSION"
+    
+    check_prerequisites
+    
+    local current_color=$(get_current_color)
+    local target_color=$(get_inactive_color "$current_color")
+    
+    log "Current active environment: $current_color"
+    log "Target deployment environment: $target_color"
+    
+    # Deploy new version to inactive environment
+    deploy_new_version "$target_color"
+    
+    # Perform health checks
+    if ! health_check "$target_color"; then
+        if [[ "$ROLLBACK_ON_FAILURE" == "true" ]]; then
+            rollback "$current_color"
+        fi
+        exit 1
+    fi
+    
+    # Switch traffic to new version
+    switch_traffic "$target_color"
+    
+    # Final health check after traffic switch
+    sleep 30
+    if ! health_check "$target_color"; then
+        if [[ "$ROLLBACK_ON_FAILURE" == "true" ]]; then
+            rollback "$current_color"
+        fi
+        exit 1
+    fi
+    
+    # Cleanup old environment
+    cleanup_old_version "$current_color"
+    
+    log "Blue-green deployment completed successfully!"
+    log "Active environment: $target_color"
+    log "Version: $NEW_VERSION"
+}
+
+# Handle signals for cleanup
+trap 'error "Deployment interrupted"' INT TERM
+
+main "$@"
+```
+
+#### 21.2 Blue-Green Service Configuration
+```yaml
+# blue-green-services.yaml - Service definitions for blue-green deployment
+apiVersion: v1
+kind: Service
+metadata:
+  name: mister-smith-worker
+  namespace: mister-smith-workload
+  labels:
+    app: mister-smith-worker
+    deployment-strategy: blue-green
+spec:
+  selector:
+    app: mister-smith-worker
+    version: blue  # This will be updated during deployment
+  ports:
+  - name: http
+    port: 8081
+    targetPort: 8081
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mister-smith-worker-blue
+  namespace: mister-smith-workload
+  labels:
+    app: mister-smith-worker
+    version: blue
+spec:
+  selector:
+    app: mister-smith-worker
+    version: blue
+  ports:
+  - name: http
+    port: 8081
+    targetPort: 8081
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mister-smith-worker-green
+  namespace: mister-smith-workload
+  labels:
+    app: mister-smith-worker
+    version: green
+spec:
+  selector:
+    app: mister-smith-worker
+    version: green
+  ports:
+  - name: http
+    port: 8081
+    targetPort: 8081
+    protocol: TCP
+  type: ClusterIP
+```
+
+### 22. Automated Deployment Pipeline
+
+#### 22.1 GitHub Actions CI/CD Pipeline
+```yaml
+# .github/workflows/deploy.yml - Automated deployment pipeline
+name: Deploy Mister Smith
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: mister-smith
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha,prefix={{branch}}-
+          
+    - name: Build and push orchestrator image
+      id: build-orchestrator
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.orchestrator
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}-orchestrator
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Build and push worker image
+      id: build-worker
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.worker
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}-worker
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      security-events: write
+    
+    steps:
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ needs.build.outputs.image-tag }}-orchestrator
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/develop'
+    environment: development
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG_DEV }}
+        
+    - name: Deploy to development
+      run: |
+        helm upgrade --install mister-smith-dev ./helm/mister-smith \
+          --namespace mister-smith-dev \
+          --create-namespace \
+          --set image.tag=${{ github.sha }} \
+          --set environment=development \
+          --set replicaCount=1 \
+          --set resources.requests.cpu=100m \
+          --set resources.requests.memory=256Mi \
+          --wait --timeout=600s
+          
+    - name: Run smoke tests
+      run: |
+        kubectl wait --for=condition=ready pod -l app=mister-smith-orchestrator \
+          -n mister-smith-dev --timeout=300s
+        kubectl exec -n mister-smith-dev deployment/mister-smith-orchestrator -- \
+          curl -f http://localhost:8080/health
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [build, deploy-dev]
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
+        
+    - name: Deploy to staging
+      run: |
+        helm upgrade --install mister-smith-staging ./helm/mister-smith \
+          --namespace mister-smith-staging \
+          --create-namespace \
+          --set image.tag=${{ github.sha }} \
+          --set environment=staging \
+          --set replicaCount=2 \
+          --set autoscaling.enabled=true \
+          --set autoscaling.minReplicas=2 \
+          --set autoscaling.maxReplicas=10 \
+          --wait --timeout=600s
+          
+    - name: Run integration tests
+      run: |
+        kubectl wait --for=condition=ready pod -l app=mister-smith-orchestrator \
+          -n mister-smith-staging --timeout=300s
+        # Add integration test commands here
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [build, deploy-staging]
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG_PROD }}
+        
+    - name: Blue-Green Production Deployment
+      run: |
+        export NEW_VERSION=${{ github.sha }}
+        export NAMESPACE=mister-smith-production
+        ./scripts/blue-green-deploy.sh
+        
+    - name: Notify deployment success
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        channel: '#deployments'
+        text: 'Production deployment completed successfully!'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+```
+
+#### 22.2 Helm Chart Implementation
+```yaml
+# helm/mister-smith/Chart.yaml
+apiVersion: v2
+name: mister-smith
+description: A Helm chart for Mister Smith AI Agent Framework
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+dependencies:
+- name: postgresql
+  version: 12.12.10
+  repository: https://charts.bitnami.com/bitnami
+  condition: postgresql.enabled
+- name: redis
+  version: 18.1.5
+  repository: https://charts.bitnami.com/bitnami
+  condition: redis.enabled
+- name: nats
+  version: 1.1.5
+  repository: https://nats-io.github.io/k8s/helm/charts/
+  condition: nats.enabled
+```
+
+```yaml
+# helm/mister-smith/values.yaml
+# Default values for mister-smith
+global:
+  environment: development
+  imageRegistry: ghcr.io
+  imagePullSecrets: []
+
+image:
+  registry: ghcr.io
+  repository: mister-smith
+  tag: latest
+  pullPolicy: IfNotPresent
+
+orchestrator:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: mister-smith/orchestrator
+    tag: ""
+  service:
+    type: ClusterIP
+    port: 8080
+    grpcPort: 9090
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+worker:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: mister-smith/worker
+    tag: ""
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 50
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+  - host: api.mister-smith.local
+    paths:
+    - path: /
+      pathType: Prefix
+  tls: []
+
+# External dependencies
+postgresql:
+  enabled: true
+  auth:
+    username: mister_smith
+    database: mister_smith
+    existingSecret: mister-smith-postgres-secret
+
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    existingSecret: mister-smith-redis-secret
+
+nats:
+  enabled: true
+  nats:
+    jetstream:
+      enabled: true
+    limits:
+      maxPayload: 8MB
+  cluster:
+    enabled: true
+    replicas: 3
+
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: mister-smith-monitoring
+  grafana:
+    dashboards:
+      enabled: true
+
+istio:
+  enabled: false
+  gateway:
+    enabled: false
+  virtualService:
+    enabled: false
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - mister-smith
+        topologyKey: kubernetes.io/hostname
+```
+
+### 23. Infrastructure as Code with Terraform
+
+#### 23.1 AWS EKS Cluster Provisioning
+```hcl
+# terraform/main.tf - AWS EKS cluster for Mister Smith
+terraform {
+  required_version = ">= 1.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.23"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.11"
+    }
+  }
+  
+  backend "s3" {
+    bucket         = "mister-smith-terraform-state"
+    key            = "eks/terraform.tfstate"
+    region         = "us-west-2"
+    dynamodb_table = "mister-smith-terraform-locks"
+    encrypt        = true
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+  
+  default_tags {
+    tags = {
+      Project     = "mister-smith"
+      Environment = var.environment
+      ManagedBy   = "terraform"
+    }
+  }
+}
+
+data "aws_availability_zones" "available" {
+  filter {
+    name   = "opt-in-status"
+    values = ["opt-in-not-required"]
+  }
+}
+
+# VPC Configuration
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+
+  name = "${var.cluster_name}-vpc"
+  cidr = var.vpc_cidr
+
+  azs             = slice(data.aws_availability_zones.available.names, 0, 3)
+  private_subnets = var.private_subnets
+  public_subnets  = var.public_subnets
+
+  enable_nat_gateway   = true
+  single_nat_gateway   = false
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  enable_flow_log                      = true
+  create_flow_log_cloudwatch_iam_role  = true
+  create_flow_log_cloudwatch_log_group = true
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
+  }
+}
+
+# EKS Cluster
+module "eks" {
+  source = "terraform-aws-modules/eks/aws"
+  version = "~> 19.0"
+
+  cluster_name    = var.cluster_name
+  cluster_version = var.kubernetes_version
+
+  vpc_id                         = module.vpc.vpc_id
+  subnet_ids                     = module.vpc.private_subnets
+  cluster_endpoint_public_access = true
+  cluster_endpoint_private_access = true
+
+  cluster_addons = {
+    coredns = {
+      most_recent = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+    vpc-cni = {
+      most_recent = true
+    }
+    aws-ebs-csi-driver = {
+      most_recent = true
+    }
+  }
+
+  # Node groups
+  eks_managed_node_groups = {
+    system = {
+      name = "system-nodes"
+      
+      instance_types = ["m5.large"]
+      capacity_type  = "ON_DEMAND"
+      
+      min_size     = 2
+      max_size     = 4
+      desired_size = 3
+      
+      labels = {
+        role = "system"
+      }
+      
+      taints = {
+        system = {
+          key    = "node-role.kubernetes.io/system"
+          value  = "true"
+          effect = "NO_SCHEDULE"
+        }
+      }
+    }
+    
+    workers = {
+      name = "worker-nodes"
+      
+      instance_types = ["m5.xlarge", "m5.2xlarge"]
+      capacity_type  = "SPOT"
+      
+      min_size     = 2
+      max_size     = 50
+      desired_size = 4
+      
+      labels = {
+        role = "worker"
+      }
+      
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 100
+            volume_type           = "gp3"
+            iops                  = 3000
+            throughput            = 150
+            encrypted             = true
+            delete_on_termination = true
+          }
+        }
+      }
+    }
+    
+    data = {
+      name = "data-nodes"
+      
+      instance_types = ["r5.large", "r5.xlarge"]
+      capacity_type  = "ON_DEMAND"
+      
+      min_size     = 1
+      max_size     = 5
+      desired_size = 2
+      
+      labels = {
+        role = "data"
+      }
+      
+      taints = {
+        data = {
+          key    = "node-role.kubernetes.io/data"
+          value  = "true"
+          effect = "NO_SCHEDULE"
+        }
+      }
+    }
+  }
+
+  # aws-auth configmap
+  manage_aws_auth_configmap = true
+
+  aws_auth_roles = [
+    {
+      rolearn  = module.eks_admins_iam_role.iam_role_arn
+      username = "cluster-admin"
+      groups   = ["system:masters"]
+    },
+  ]
+
+  aws_auth_users = var.map_users
+  aws_auth_accounts = var.map_accounts
+
+  cluster_security_group_additional_rules = {
+    ingress_nodes_ephemeral_ports_tcp = {
+      description                = "Node groups to cluster API"
+      protocol                   = "tcp"
+      from_port                  = 1025
+      to_port                    = 65535
+      type                       = "ingress"
+      source_node_security_group = true
+    }
+  }
+
+  node_security_group_additional_rules = {
+    ingress_self_all = {
+      description = "Node to node all ports/protocols"
+      protocol    = "-1"
+      from_port   = 0
+      to_port     = 0
+      type        = "ingress"
+      self        = true
+    }
+    
+    egress_all = {
+      description      = "Node all egress"
+      protocol         = "-1"
+      from_port        = 0
+      to_port          = 0
+      type             = "egress"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+  }
+}
+
+# IAM role for EKS admins
+module "eks_admins_iam_role" {
+  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.0"
+
+  role_name             = "${var.cluster_name}-eks-admins"
+  attach_admin_policy   = true
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:cluster-admin"]
+    }
+  }
+}
+
+# AWS Load Balancer Controller
+module "load_balancer_controller_irsa_role" {
+  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.0"
+
+  role_name = "${var.cluster_name}-load-balancer-controller"
+
+  attach_load_balancer_controller_policy = true
+
+  oidc_providers = {
+    ex = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:aws-load-balancer-controller"]
+    }
+  }
+}
+
+# EBS CSI Driver
+module "ebs_csi_irsa_role" {
+  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.0"
+
+  role_name = "${var.cluster_name}-ebs-csi"
+
+  attach_ebs_csi_policy = true
+
+  oidc_providers = {
+    ex = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:ebs-csi-controller-sa"]
+    }
+  }
+}
+
+# Cluster Autoscaler
+module "cluster_autoscaler_irsa_role" {
+  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.0"
+
+  role_name = "${var.cluster_name}-cluster-autoscaler"
+
+  attach_cluster_autoscaler_policy = true
+  cluster_autoscaler_cluster_names = [module.eks.cluster_name]
+
+  oidc_providers = {
+    ex = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:cluster-autoscaler"]
+    }
+  }
+}
+
+# RDS PostgreSQL for persistent storage
+module "db" {
+  source = "terraform-aws-modules/rds/aws"
+  version = "~> 6.0"
+
+  identifier = "${var.cluster_name}-postgres"
+
+  engine            = "postgres"
+  engine_version    = "15.4"
+  instance_class    = var.db_instance_class
+  allocated_storage = var.db_allocated_storage
+  storage_encrypted = true
+
+  db_name  = "mister_smith"
+  username = "postgres"
+  port     = "5432"
+
+  manage_master_user_password = true
+
+  vpc_security_group_ids = [module.db_security_group.security_group_id]
+
+  maintenance_window = "Mon:00:00-Mon:03:00"
+  backup_window      = "03:00-06:00"
+
+  monitoring_interval    = "60"
+  monitoring_role_name   = "${var.cluster_name}-rds-monitoring-role"
+  create_monitoring_role = true
+
+  tags = {
+    Name = "${var.cluster_name}-postgres"
+  }
+
+  subnet_group_name   = module.db_subnet_group.db_subnet_group_id
+  family              = "postgres15"
+  major_engine_version = "15"
+
+  deletion_protection = var.environment == "production"
+
+  parameters = [
+    {
+      name  = "log_connections"
+      value = 1
+    }
+  ]
+}
+
+module "db_subnet_group" {
+  source = "terraform-aws-modules/rds/aws//modules/db_subnet_group"
+  version = "~> 6.0"
+
+  name       = "${var.cluster_name}-postgres"
+  subnet_ids = module.vpc.private_subnets
+}
+
+module "db_security_group" {
+  source = "terraform-aws-modules/security-group/aws"
+  version = "~> 5.0"
+
+  name        = "${var.cluster_name}-postgres"
+  description = "Security group for RDS PostgreSQL"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress_with_source_security_group_id = [
+    {
+      from_port                = 5432
+      to_port                  = 5432
+      protocol                 = "tcp"
+      description              = "PostgreSQL access from EKS cluster"
+      source_security_group_id = module.eks.cluster_security_group_id
+    },
+  ]
+}
+
+# ElastiCache Redis for caching
+module "redis" {
+  source = "terraform-aws-modules/elasticache/aws"
+  version = "~> 1.0"
+
+  cluster_id               = "${var.cluster_name}-redis"
+  description              = "Redis cluster for Mister Smith"
+
+  engine_version           = "7.0"
+  node_type               = var.redis_node_type
+  port                    = 6379
+  parameter_group_name    = "default.redis7"
+
+  num_cache_nodes         = 1
+
+  subnet_group_name       = "${var.cluster_name}-redis"
+  subnet_ids              = module.vpc.private_subnets
+  security_group_ids      = [module.redis_security_group.security_group_id]
+
+  apply_immediately       = true
+  auto_minor_version_upgrade = false
+  maintenance_window         = "sun:05:00-sun:06:00"
+  
+  at_rest_encryption_enabled = true
+  transit_encryption_enabled = true
+  auth_token                = var.redis_auth_token
+}
+
+module "redis_security_group" {
+  source = "terraform-aws-modules/security-group/aws"
+  version = "~> 5.0"
+
+  name        = "${var.cluster_name}-redis"
+  description = "Security group for ElastiCache Redis"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress_with_source_security_group_id = [
+    {
+      from_port                = 6379
+      to_port                  = 6379
+      protocol                 = "tcp"
+      description              = "Redis access from EKS cluster"
+      source_security_group_id = module.eks.cluster_security_group_id
+    },
+  ]
+}
+```
+
+#### 23.2 Terraform Variables
+```hcl
+# terraform/variables.tf
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "us-west-2"
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "development"
+}
+
+variable "cluster_name" {
+  description = "Name of the EKS cluster"
+  type        = string
+  default     = "mister-smith"
+}
+
+variable "kubernetes_version" {
+  description = "Kubernetes version"
+  type        = string
+  default     = "1.28"
+}
+
+variable "vpc_cidr" {
+  description = "CIDR block for VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "private_subnets" {
+  description = "Private subnet CIDR blocks"
+  type        = list(string)
+  default     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+}
+
+variable "public_subnets" {
+  description = "Public subnet CIDR blocks"
+  type        = list(string)
+  default     = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+}
+
+variable "db_instance_class" {
+  description = "RDS instance class"
+  type        = string
+  default     = "db.t3.micro"
+}
+
+variable "db_allocated_storage" {
+  description = "The allocated storage in gigabytes"
+  type        = number
+  default     = 20
+}
+
+variable "redis_node_type" {
+  description = "ElastiCache node type"
+  type        = string
+  default     = "cache.t3.micro"
+}
+
+variable "redis_auth_token" {
+  description = "Auth token for Redis"
+  type        = string
+  sensitive   = true
+}
+
+variable "map_users" {
+  description = "Additional IAM users to add to the aws-auth configmap"
+  type = list(object({
+    userarn  = string
+    username = string
+    groups   = list(string)
+  }))
+  default = []
+}
+
+variable "map_accounts" {
+  description = "Additional AWS account numbers to add to the aws-auth configmap"
+  type        = list(string)
+  default     = []
+}
+```
+
+### 24. Auto-scaling Implementation
+
+#### 24.1 Vertical Pod Autoscaler Configuration
+```yaml
+# vpa-config.yaml - Vertical Pod Autoscaler for optimal resource allocation
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: mister-smith-orchestrator-vpa
+  namespace: mister-smith-system
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mister-smith-orchestrator
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: orchestrator
+      minAllowed:
+        cpu: 100m
+        memory: 128Mi
+      maxAllowed:
+        cpu: 2000m
+        memory: 4Gi
+      controlledResources: ["cpu", "memory"]
+      controlledValues: RequestsAndLimits
+    - containerName: metrics-sidecar
+      mode: "Off"  # Don't auto-scale sidecar
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: mister-smith-worker-vpa
+  namespace: mister-smith-workload
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mister-smith-worker
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: worker
+      minAllowed:
+        cpu: 50m
+        memory: 64Mi
+      maxAllowed:
+        cpu: 1000m
+        memory: 2Gi
+      controlledResources: ["cpu", "memory"]
+      controlledValues: RequestsAndLimits
+```
+
+#### 24.2 Custom Metrics for HPA
+```yaml
+# custom-metrics-hpa.yaml - HPA with custom metrics
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mister-smith-worker-custom-hpa
+  namespace: mister-smith-workload
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mister-smith-worker
+  minReplicas: 2
+  maxReplicas: 100
+  metrics:
+  # Standard resource metrics
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  # Custom application metrics
+  - type: Pods
+    pods:
+      metric:
+        name: pending_tasks_per_pod
+      target:
+        type: AverageValue
+        averageValue: "50"
+  - type: Pods
+    pods:
+      metric:
+        name: task_processing_rate_per_pod
+      target:
+        type: AverageValue
+        averageValue: "10"
+  # External metrics (from NATS)
+  - type: External
+    external:
+      metric:
+        name: nats_pending_messages
+        selector:
+          matchLabels:
+            queue: "mister-smith.tasks"
+      target:
+        type: Value
+        value: "1000"
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 5
+        periodSeconds: 15
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 25
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Min
+```
+
+#### 24.3 Cluster Autoscaler Configuration
+```yaml
+# cluster-autoscaler.yaml - Cluster-level auto-scaling
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-autoscaler
+  namespace: kube-system
+  labels:
+    app: cluster-autoscaler
+spec:
+  selector:
+    matchLabels:
+      app: cluster-autoscaler
+  template:
+    metadata:
+      labels:
+        app: cluster-autoscaler
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '8085'
+    spec:
+      priorityClassName: system-cluster-critical
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      serviceAccountName: cluster-autoscaler
+      containers:
+      - image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.28.2
+        name: cluster-autoscaler
+        resources:
+          limits:
+            cpu: 100m
+            memory: 600Mi
+          requests:
+            cpu: 100m
+            memory: 600Mi
+        command:
+        - ./cluster-autoscaler
+        - --v=4
+        - --stderrthreshold=info
+        - --cloud-provider=aws
+        - --skip-nodes-with-local-storage=false
+        - --expander=least-waste
+        - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/mister-smith
+        - --balance-similar-node-groups
+        - --scale-down-enabled=true
+        - --scale-down-delay-after-add=10m
+        - --scale-down-unneeded-time=10m
+        - --scale-down-utilization-threshold=0.5
+        - --scale-down-non-empty-candidates-count=30
+        - --max-node-provision-time=15m
+        - --scan-interval=10s
+        - --skip-nodes-with-system-pods=false
+        env:
+        - name: AWS_REGION
+          value: us-west-2
+        volumeMounts:
+        - name: ssl-certs
+          mountPath: /etc/ssl/certs/ca-certificates.crt
+          readOnly: true
+        imagePullPolicy: "Always"
+      volumes:
+      - name: ssl-certs
+        hostPath:
+          path: "/etc/ssl/certs/ca-bundle.crt"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    k8s-addon: cluster-autoscaler.addons.k8s.io
+    k8s-app: cluster-autoscaler
+  name: cluster-autoscaler
+  namespace: kube-system
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/mister-smith-cluster-autoscaler
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-autoscaler
+  labels:
+    k8s-addon: cluster-autoscaler.addons.k8s.io
+    k8s-app: cluster-autoscaler
+rules:
+- apiGroups: [""]
+  resources: ["events", "endpoints"]
+  verbs: ["create", "patch"]
+- apiGroups: [""]
+  resources: ["pods/eviction"]
+  verbs: ["create"]
+- apiGroups: [""]
+  resources: ["pods/status"]
+  verbs: ["update"]
+- apiGroups: [""]
+  resources: ["endpoints"]
+  resourceNames: ["cluster-autoscaler"]
+  verbs: ["get", "update"]
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["watch", "list", "get", "update"]
+- apiGroups: [""]
+  resources: ["namespaces", "pods", "services", "replicationcontrollers", "persistentvolumeclaims", "persistentvolumes"]
+  verbs: ["watch", "list", "get"]
+- apiGroups: ["extensions"]
+  resources: ["replicasets", "daemonsets"]
+  verbs: ["watch", "list", "get"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["watch", "list"]
+- apiGroups: ["apps"]
+  resources: ["statefulsets", "replicasets", "daemonsets"]
+  verbs: ["watch", "list", "get"]
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses", "csinodes", "csidrivers", "csistoragecapacities"]
+  verbs: ["watch", "list", "get"]
+- apiGroups: ["batch", "extensions"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch", "patch"]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["create"]
+- apiGroups: ["coordination.k8s.io"]
+  resourceNames: ["cluster-autoscaler"]
+  resources: ["leases"]
+  verbs: ["get", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-autoscaler
+  labels:
+    k8s-addon: cluster-autoscaler.addons.k8s.io
+    k8s-app: cluster-autoscaler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-autoscaler
+subjects:
+- kind: ServiceAccount
+  name: cluster-autoscaler
+  namespace: kube-system
+```
+
+---
+
+This deployment architecture specification provides comprehensive patterns and concrete implementation templates for deploying multi-agent systems at scale, including Docker best practices, Kubernetes manifests, service mesh configuration, blue-green deployments, automated CI/CD pipelines, infrastructure as code, and advanced auto-scaling strategies suitable for production deployment of the Mister Smith AI Agent Framework.
