@@ -4,14 +4,11 @@
 # Internal operations directory
 internal-operations/
 
+# Jekyll site directory (private development)
+jekyll-site/
+
 # Claude configuration and cache
 .claude/
-
-# Ruv Swarm state directory
-.ruv-swarm/
-
-# DAA Neural Network directory
-daa-neural-network/
 
 # CLAUDE.md files (agent documentation)
 CLAUDE.md
@@ -175,3 +172,5 @@ temp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+.ruv-swarm/
