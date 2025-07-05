@@ -2,175 +2,173 @@
 # Ignore internal operations and development files
 
 # Internal operations directory
-internal-operations/
+# internal-operations/
 
 # Jekyll site directory (private development)
-jekyll-site/
+# jekyll-site/
 
 # Claude configuration and cache
-.claude/
+# .claude/
 
 # CLAUDE.md files (agent documentation)
-CLAUDE.md
-**/CLAUDE.md
+# CLAUDE.md
+# **/CLAUDE.md
 
 # Usage documentation
-superclaude-usage.md
+# superclaude-usage.md
 
 # IMPLEMENTATION CODE - Keep private
 # Rust source code
-src/
-lib/
-core/
-target/
-Cargo.toml
-Cargo.lock
+# src/
+# lib/
+# core/
+# target/
+# Cargo.toml
+# Cargo.lock
 
 # Python implementation
-*.py
-__pycache__/
-*.pyc
-venv/
-.venv/
-requirements.txt
-poetry.lock
+# *.py
+# __pycache__/
+# *.pyc
+# venv/
+# .venv/
+# requirements.txt
+# poetry.lock
 
 # Configuration files with sensitive details
-config/
-secrets/
-.env*
-*.key
-*.pem
-*.toml
-*.ini
+# config/
+# secrets/
+# .env*
+# *.key
+# *.pem
+# *.toml
+# *.ini
 
 # Database and data files
-*.db
-*.sqlite
-*.sql
-data/
-database/
+# *.db
+# *.sqlite
+# *.sql
+# data/
+# database/
 
 # Build and deployment artifacts
-build/
-dist/
-release/
-deployment/
+# build/
+# dist/
+# release/
+# deployment/
 
 # Private documentation and notes
-private/
-internal/
-dev-notes/
-implementation-notes/
+# private/
+# internal/
+# dev-notes/
+# implementation-notes/
 
 # Workspace configuration files
-*.code-workspace
+# *.code-workspace
 
 # macOS system files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# .DS_Store
+# .DS_Store?
+# ._*
+# .Spotlight-V100
+# .Trashes
+# ehthumbs.db
+# Thumbs.db
 
 # Node.js dependencies and cache
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.npm
-.yarn-integrity
+# node_modules/
+# npm-debug.log*
+# yarn-debug.log*
+# yarn-error.log*
+# .npm
+# .yarn-integrity
 
 # Package lock files (optional - uncomment if you want to ignore them)
 # package-lock.json
 # yarn.lock
 
 # Logs
-logs
-*.log
+# logs
+# *.log
 
 # Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# pids
+# *.pid
+# *.seed
+# *.pid.lock
 
 # Coverage directory used by tools like istanbul
-coverage/
-*.lcov
+# coverage/
+# *.lcov
 
 # nyc test coverage
-.nyc_output
+# .nyc_output
 
 # Dependency directories
-jspm_packages/
+# jspm_packages/
 
 # Optional npm cache directory
-.npm
+# .npm
 
 # Optional eslint cache
-.eslintcache
+# .eslintcache
 
 # Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
+# .rpt2_cache/
+# .rts2_cache_cjs/
+# .rts2_cache_es/
+# .rts2_cache_umd/
 
 # Optional REPL history
-.node_repl_history
+# .node_repl_history
 
 # Output of 'npm pack'
-*.tgz
+# *.tgz
 
 # Yarn Integrity file
-.yarn-integrity
+# .yarn-integrity
 
 # dotenv environment variables file
-.env
-.env.test
-.env.local
-.env.production
+# .env
+# .env.test
+# .env.local
+# .env.production
 
 # parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
+# .cache
+# .parcel-cache
 
 # Next.js build output
-.next
+# .next
 
 # Nuxt.js build / generate output
-.nuxt
-dist
+# .nuxt
+# dist
 
 # Gatsby files
-.cache/
-public
+# .cache/
+# public
 
 # Storybook build outputs
-.out
-.storybook-out
+# .out
+# .storybook-out
 
 # Temporary folders
-tmp/
-temp/
+# tmp/
+# temp/
 
 # Editor directories and files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# .vscode/
+# .idea/
+# *.swp
+# *.swo
+# *~
 
 # OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-.ruv-swarm/
+# .DS_Store
+# .DS_Store?
+# ._*
+# .Spotlight-V100
+# .Trashes
+# ehthumbs.db
+# Thumbs.db
