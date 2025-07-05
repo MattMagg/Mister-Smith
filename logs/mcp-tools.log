@@ -1,0 +1,86 @@
+[2m[08:29:37.587][0m [32mℹ️  INFO [0m [1m[mcp-tools][0m Initializing swarm
+{
+  component: [32m'mcp-tools-enhanced'[39m,
+  params: {
+    maxAgents: [33m30[39m,
+    strategy: [32m'specialized'[39m,
+    topology: [32m'hierarchical'[39m
+  }
+}
+[2m[08:29:37.591][0m [32mℹ️  INFO [0m [1m[mcp-tools][0m Swarm created successfully
+{
+  component: [32m'mcp-tools-enhanced'[39m,
+  swarmId: [32m'swarm-1751704177590'[39m
+}
+[2m[08:30:13.213][0m [33m⚠️  WARN [0m [1m[mcp-tools][0m Failed to persist DAA agent
+{
+  agentId: [32m'agent-1-system-design'[39m,
+  component: [32m'mcp-tools-enhanced'[39m,
+  error: [32m'FOREIGN KEY constraint failed'[39m
+}
+[2m[08:30:13.332][0m [33m⚠️  WARN [0m [1m[mcp-tools][0m Failed to persist DAA agent
+{
+  agentId: [32m'agent-2-components'[39m,
+  component: [32m'mcp-tools-enhanced'[39m,
+  error: [32m'FOREIGN KEY constraint failed'[39m
+}
+[2m[08:30:13.429][0m [33m⚠️  WARN [0m [1m[mcp-tools][0m Failed to persist DAA agent
+{
+  agentId: [32m'agent-3-async-patterns'[39m,
+  component: [32m'mcp-tools-enhanced'[39m,
+  error: [32m'FOREIGN KEY constraint failed'[39m
+}
+[2m[08:30:13.539][0m [33m⚠️  WARN [0m [1m[mcp-tools][0m Failed to persist DAA agent
+{
+  agentId: [32m'agent-4-supervision'[39m,
+  component: [32m'mcp-tools-enhanced'[39m,
+  error: [32m'FOREIGN KEY constraint failed'[39m
+}
+[2m[08:30:13.713][0m [33m⚠️  WARN [0m [1m[mcp-tools][0m Failed to persist DAA agent
+{
+  agentId: [32m'agent-5-type-system'[39m,
+  component: [32m'mcp-tools-enhanced'[39m,
+  error: [32m'FOREIGN KEY constraint failed'[39m
+}
+[2m[08:30:13.879][0m [33m⚠️  WARN [0m [1m[mcp-tools][0m Failed to persist DAA agent
+{
+  agentId: [32m'agent-6-module-org'[39m,
+  component: [32m'mcp-tools-enhanced'[39m,
+  error: [32m'FOREIGN KEY constraint failed'[39m
+}
+[2m[08:30:47.078][0m [33m⚠️  WARN [0m [1m[mcp-tools][0m Failed to persist DAA agent
+{
+  agentId: [32m'agent-7-orchestration'[39m,
+  component: [32m'mcp-tools-enhanced'[39m,
+  error: [32m'FOREIGN KEY constraint failed'[39m
+}
+[2m[08:30:47.174][0m [33m⚠️  WARN [0m [1m[mcp-tools][0m Failed to persist DAA agent
+{
+  agentId: [32m'agent-8-lifecycle'[39m,
+  component: [32m'mcp-tools-enhanced'[39m,
+  error: [32m'FOREIGN KEY constraint failed'[39m
+}
+[2m[08:30:47.277][0m [33m⚠️  WARN [0m [1m[mcp-tools][0m Failed to persist DAA agent
+{
+  agentId: [32m'agent-9-messaging'[39m,
+  component: [32m'mcp-tools-enhanced'[39m,
+  error: [32m'FOREIGN KEY constraint failed'[39m
+}
+[2m[08:30:47.388][0m [33m⚠️  WARN [0m [1m[mcp-tools][0m Failed to persist DAA agent
+{
+  agentId: [32m'agent-10-data-flow'[39m,
+  component: [32m'mcp-tools-enhanced'[39m,
+  error: [32m'FOREIGN KEY constraint failed'[39m
+}
+[2m[08:30:47.586][0m [33m⚠️  WARN [0m [1m[mcp-tools][0m Failed to persist DAA agent
+{
+  agentId: [32m'agent-11-persistence'[39m,
+  component: [32m'mcp-tools-enhanced'[39m,
+  error: [32m'FOREIGN KEY constraint failed'[39m
+}
+[2m[08:30:47.760][0m [33m⚠️  WARN [0m [1m[mcp-tools][0m Failed to persist DAA agent
+{
+  agentId: [32m'agent-12-postgresql'[39m,
+  component: [32m'mcp-tools-enhanced'[39m,
+  error: [32m'FOREIGN KEY constraint failed'[39m
+}
