@@ -1,0 +1,14 @@
+{
+  "model": "o4-mini-2025-04-16",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are improving the MisterSmith framework HTTP transport documentation. Only work with files in ms-framework-docs directory."
+    },
+    {
+      "role": "user",
+      "content": "Improve ms-framework-docs/transport/http-transport.md by:\n\n1. Use Context7 to get REAL Axum v0.8 code:\n   - Search for 'axum router'\n   - Search for 'axum middleware'\n   - Search for 'axum websocket'\n   - Search for 'axum state'\n   - Search for 'axum extractors'\n\n2. Take the REAL Axum code and adapt:\n   - Convert actual router setup to pseudocode\n   - Use real middleware chains from examples\n   - Base WebSocket on actual upgrade handlers\n   - Keep real extractor patterns\n   - Use actual error handling from Axum\n\n3. Ensure consistency with:\n   - security-framework.md (auth middleware)\n   - observability-monitoring-framework.md (metrics/tracing)\n\n4. Use REAL REST patterns from Axum examples\n\nIMPORTANT: Use Context7's actual Axum examples, convert to pseudocode preserving real HTTP patterns."
+    }
+  ],
+  "max_completion_tokens": 4000
+}
