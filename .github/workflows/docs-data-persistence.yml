@@ -60,30 +60,33 @@ jobs:
             
             TASK: Improve ms-framework-docs/data-management/postgresql-implementation.md by:
             
-            1. Search Context7 for SQLx patterns and best practices
-            2. Add comprehensive pseudocode for:
-               - Connection pool configuration
-               - Query builder patterns
-               - Compile-time checked queries
-               - Transaction management
-               - Migration strategies
-               - Type-safe query results
-               - Prepared statement caching
-               - Database error handling
+            1. Use Context7 to get REAL SQLx v0.8.2 code:
+               - Search for "sqlx pool postgres"
+               - Search for "sqlx query macro"
+               - Search for "sqlx transaction"
+               - Search for "sqlx migrate"
+               - Get actual database code examples
+            
+            2. Take the REAL SQLx code and adapt:
+               - Convert actual pool configs to pseudocode
+               - Use real query! macro patterns
+               - Base transactions on actual SQLx examples
+               - Keep real error handling patterns
+               - Use actual migration code structure
             
             3. Also update database-schemas.md with:
-               - Agent state tables
-               - Message queue tables
-               - Event sourcing schemas
-               - Audit log structures
+               - Agent state tables based on real schemas
+               - Message queue tables from actual implementations
+               - Event sourcing patterns from real code
+               - Audit structures from production examples
             
             4. Ensure consistency with:
                - data-persistence.md
                - persistence-operations.md
                - storage-patterns.md
             
-            IMPORTANT: Use SQL schema definitions and Rust pseudocode only.
-            Web search for "SQLx Rust patterns" if needed.
+            IMPORTANT: Use Context7's actual SQLx examples,
+            convert to pseudocode preserving real SQL patterns.
       
       - name: Improve Redis Caching Documentation
         if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'redis-caching'
@@ -100,26 +103,30 @@ jobs:
             
             TASK: Create/improve Redis caching documentation by:
             
-            1. Search Context7 for redis-rs async patterns
+            1. Use Context7 to get REAL redis v0.27.5 code:
+               - Search for "redis connection manager"
+               - Search for "redis pubsub"
+               - Search for "redis pipeline"
+               - Search for "redis lua script"
+               - Get actual Redis client usage
+            
             2. If file doesn't exist, create ms-framework-docs/data-management/redis-caching.md
-            3. Add pseudocode patterns for:
-               - Connection pool management
-               - Pub/Sub for agent events
-               - Distributed locks (Redlock)
-               - Cache-aside patterns
-               - Write-through caching
-               - Session storage
-               - Rate limiting
-               - Lua scripting patterns
+            3. Take the REAL Redis code and adapt:
+               - Convert actual connection code to pseudocode
+               - Use real pub/sub patterns from examples
+               - Base locking on actual Redis implementations
+               - Keep real caching patterns
+               - Use actual Lua script examples
             
             4. Cross-reference with:
                - agent-communication.md (pub/sub)
-               - storage-patterns.md
+               - storage-patterns.md  
                - connection-management.md
             
-            5. Include cache invalidation strategies
+            5. Use REAL cache invalidation from Redis examples
             
-            IMPORTANT: Documentation phase - pseudocode only.
+            IMPORTANT: Use Context7's actual redis-rs examples,
+            convert to pseudocode preserving real patterns.
       
       - name: Improve Persistence Operations Documentation
         if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'persistence-operations'
@@ -132,28 +139,30 @@ jobs:
             
             TASK: Improve ms-framework-docs/data-management/persistence-operations.md by:
             
-            1. Search web for "database connection pooling best practices Rust"
-            2. Add comprehensive patterns for:
-               - Connection pool sizing strategies
-               - Read replica routing
-               - Write batching and coalescing
-               - Backup and restore procedures
-               - Data archival strategies
-               - Hot/cold data separation
-               - Monitoring and metrics
+            1. Search for REAL database operations code:
+               - Use Context7 to find SQLx/Redis operational patterns
+               - Search web for actual Rust database pooling libraries
+               - Look for real production database code
             
-            3. Include operation workflows:
-               - Health checks
-               - Failover procedures
-               - Performance tuning
-               - Index management
+            2. Adapt REAL operational code:
+               - Use actual connection pool configs
+               - Base routing on real read replica code
+               - Take batching from actual implementations
+               - Use real backup scripts as reference
+            
+            3. Include REAL operation workflows:
+               - Health checks from actual monitoring code
+               - Failover from real HA implementations
+               - Performance tuning from actual configs
+               - Index management from real DBAs
             
             4. Cross-reference with:
                - postgresql-implementation.md
                - storage-patterns.md
                - observability-monitoring-framework.md
             
-            IMPORTANT: Focus on operational patterns, not implementation.
+            IMPORTANT: Use real production patterns,
+            convert to documentation preserving actual practices.
       
       - name: Improve JetStream KV Documentation
         if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'database-schemas'
@@ -168,27 +177,31 @@ jobs:
             
             TASK: Improve ms-framework-docs/data-management/jetstream-kv.md by:
             
-            1. Search web for "NATS JetStream KV patterns"
-            2. Add patterns for:
-               - KV bucket configuration
-               - Key naming conventions for agents
-               - Watching for changes
-               - TTL and eviction policies
-               - Revision history usage
-               - Distributed state coordination
-               - Leader election patterns
+            1. Get REAL JetStream KV code:
+               - Use Context7 async-nats to search "kv bucket"
+               - Search for "kv watch"
+               - Search for "kv history"
+               - Find actual KV usage examples
+            
+            2. Adapt REAL JetStream KV patterns:
+               - Use actual bucket creation code
+               - Take key patterns from real examples
+               - Base watching on actual KV watchers
+               - Use real TTL configurations
+               - Keep actual revision handling
             
             3. Show integration with:
-               - Agent state management
-               - Configuration distribution
-               - Service discovery
+               - Agent state from real implementations
+               - Config distribution from actual code
+               - Service discovery from real patterns
             
             4. Cross-reference with:
                - nats-transport.md
                - agent-operations.md
                - data-persistence.md
             
-            IMPORTANT: Pseudocode examples showing KV operations.
+            IMPORTANT: Use Context7's actual JetStream KV examples,
+            convert to pseudocode preserving real patterns.
       
       - name: Check for changes
         id: check_changes

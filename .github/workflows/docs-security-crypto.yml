@@ -56,26 +56,29 @@ jobs:
             
             TASK: Improve ms-framework-docs/security/authentication-implementation.md by:
             
-            1. Search Context7 for jwt-simple patterns and examples
-            2. Add comprehensive pseudocode for:
-               - JWT token generation and validation
-               - RSA/ECDSA key management
-               - Token refresh patterns
-               - Multi-factor authentication flows
-               - OAuth2/OIDC integration patterns
-               - API key management
-               - Session handling strategies
+            1. Use Context7 to get REAL jwt-simple v0.12.10 code:
+               - Search for "jwt encode decode"
+               - Search for "jwt claims"
+               - Search for "jwt rsa ecdsa"
+               - Get actual JWT implementation examples
             
-            3. Search web for "JWT best practices 2024" for latest security guidelines
+            2. Take the REAL JWT code and adapt:
+               - Convert actual token generation to pseudocode
+               - Use real key management from examples
+               - Base refresh on actual JWT patterns
+               - Keep real validation logic
+            
+            3. Search web for actual JWT libraries and security guides
             
             4. Ensure consistency with:
                - authorization-implementation.md
                - security-framework.md
                - All transport layers (HTTP headers, gRPC metadata)
             
-            5. Include security considerations and threat models
+            5. Use REAL security patterns from production code
             
-            IMPORTANT: Documentation phase - pseudocode and patterns only.
+            IMPORTANT: Use Context7's actual jwt-simple examples,
+            convert to pseudocode preserving real security patterns.
       
       - name: Improve Authorization Documentation
         if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'authorization'
@@ -88,28 +91,31 @@ jobs:
             
             TASK: Improve ms-framework-docs/security/authorization-implementation.md and authorization-specifications.md by:
             
-            1. Search web for "RBAC vs ABAC patterns Rust"
-            2. Add comprehensive patterns for:
-               - Role-Based Access Control (RBAC)
-               - Attribute-Based Access Control (ABAC)
-               - Policy decision points
-               - Resource-based permissions
-               - Hierarchical roles
-               - Dynamic permission evaluation
-               - Audit logging for access decisions
+            1. Find REAL authorization code:
+               - Search web for actual RBAC/ABAC Rust libraries
+               - Look for casbin-rs, oso, or similar
+               - Find real permission checking code
             
-            3. Define authorization schemas:
-               - Permission models
-               - Role hierarchies
-               - Policy language (pseudocode)
-               - Context propagation
+            2. Adapt REAL authorization patterns:
+               - Use actual RBAC implementations
+               - Take ABAC rules from real systems
+               - Base policies on actual engines
+               - Keep real permission evaluation
+               - Use actual audit logging code
+            
+            3. Define schemas from REAL systems:
+               - Permission models from actual code
+               - Role hierarchies from production
+               - Policy syntax from real engines
+               - Context from actual middleware
             
             4. Cross-reference with:
                - authentication-implementation.md
                - All agent operation files
                - Transport middleware integration
             
-            IMPORTANT: Focus on flexible, extensible authorization patterns.
+            IMPORTANT: Use real authorization libraries as reference,
+            convert to pseudocode preserving actual patterns.
       
       - name: Improve Encryption Documentation
         if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'encryption'
@@ -127,25 +133,29 @@ jobs:
             
             TASK: Create/improve encryption documentation by:
             
-            1. Search Context7 for ring cryptography patterns
-            2. If needed, create ms-framework-docs/security/encryption-patterns.md
-            3. Add pseudocode for:
-               - Data encryption at rest (AES-GCM)
-               - Transport encryption (TLS configuration)
-               - Key derivation functions (PBKDF2, Argon2)
-               - Key rotation strategies
-               - Envelope encryption patterns
-               - Secure random generation
-               - Certificate management
+            1. Use Context7 to get REAL ring v0.17.8 code:
+               - Search for "ring aead"
+               - Search for "ring pbkdf2"
+               - Search for "ring rand"
+               - Get actual crypto examples
             
-            4. Search web for "encryption key management best practices"
+            2. If needed, create ms-framework-docs/security/encryption-patterns.md
+            3. Take the REAL crypto code and adapt:
+               - Convert actual AES-GCM usage to pseudocode
+               - Use real KDF implementations
+               - Base key rotation on actual patterns
+               - Keep real random generation
+               - Use actual TLS configs
+            
+            4. Search web for actual key management systems
             
             5. Cross-reference with:
                - All transport layers (TLS config)
                - Database encryption
                - Message encryption patterns
             
-            IMPORTANT: Show crypto patterns without revealing sensitive practices.
+            IMPORTANT: Use Context7's actual ring examples,
+            convert to safe pseudocode patterns.
       
       - name: Improve Security Patterns Documentation
         if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'security-patterns'
@@ -158,32 +168,34 @@ jobs:
             
             TASK: Improve ms-framework-docs/security/security-patterns.md by:
             
-            1. Search web for "zero trust architecture patterns" and "defense in depth"
-            2. Add comprehensive security patterns:
-               - Zero-trust networking
-               - Defense in depth strategies
-               - Input validation patterns
-               - Output encoding
-               - CSRF protection
-               - Rate limiting strategies
-               - Security headers configuration
-               - Secrets management
-               - Secure defaults
+            1. Find REAL security implementations:
+               - Search for actual zero trust Rust code
+               - Look for real validation libraries
+               - Find actual rate limiting implementations
+               - Get real security header configs
             
-            3. Include threat modeling:
-               - Common attack vectors
-               - Mitigation strategies
-               - Security boundaries
-               - Trust zones
+            2. Adapt REAL security code:
+               - Use actual input validation patterns
+               - Take CSRF protection from real frameworks
+               - Base rate limiting on actual libraries
+               - Keep real header configurations
+               - Use actual secrets management code
+            
+            3. Include REAL threat mitigations:
+               - Attack vectors from actual CVEs
+               - Mitigations from real patches
+               - Boundaries from actual architectures
+               - Trust zones from production systems
             
             4. Cross-reference with:
                - security-framework.md
                - security-integration.md
                - All transport and data layers
             
-            5. Add security checklist for each component
+            5. Create checklists from REAL security audits
             
-            IMPORTANT: Focus on practical, implementable patterns.
+            IMPORTANT: Use real security code as reference,
+            convert to documentation preserving actual defenses.
       
       - name: Check for changes
         id: check_changes

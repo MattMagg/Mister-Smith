@@ -1,4 +1,4 @@
-name: MisterSmith Framework CI/CD
+name: MisterSmith Documentation CI
 
 on:
   push:

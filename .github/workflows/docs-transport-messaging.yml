@@ -57,26 +57,29 @@ jobs:
             
             TASK: Improve ms-framework-docs/transport/nats-transport.md by:
             
-            1. Search Context7 for async-nats patterns and best practices
-            2. Add comprehensive pseudocode for:
-               - JetStream setup and configuration
-               - Stream and consumer patterns
-               - Key-Value store usage for agent state
-               - Object store for large payloads
-               - Service discovery patterns
-               - Request-reply patterns
-               - Pub/sub with wildcards
+            1. Use Context7 to get REAL async-nats v0.37.0 code:
+               - Search for "jetstream publish subscribe"
+               - Search for "nats kv get put"
+               - Search for "object store"
+               - Search for "service api"
+               - Get actual NATS client usage examples
+            
+            2. Take the REAL NATS code and adapt it:
+               - Convert actual JetStream setup code to pseudocode
+               - Use real consumer patterns from the library
+               - Base KV operations on actual async-nats examples
+               - Keep real error handling patterns
             
             3. Ensure consistency with:
                - message-schemas.md (message formats)
                - agent-communication.md (communication patterns)
                - connection-management.md
             
-            4. Add error handling and reconnection strategies
-            5. Include performance tuning guidelines
+            4. Use REAL reconnection code from async-nats
+            5. Base performance tips on actual library docs
             
-            IMPORTANT: Documentation phase - pseudocode only.
-            Web search for "NATS JetStream Rust patterns" if needed.
+            IMPORTANT: Use Context7's actual async-nats code examples,
+            then convert to pseudocode while preserving real NATS patterns.
       
       - name: Improve gRPC/Tonic Documentation
         if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'grpc-tonic'
@@ -93,24 +96,28 @@ jobs:
             
             TASK: Improve ms-framework-docs/transport/grpc-transport.md by:
             
-            1. Search Context7 for Tonic gRPC patterns
-            2. Add pseudocode for:
-               - Service definitions (.proto equivalents in Rust)
-               - Server implementation patterns
-               - Client connection pooling
-               - Interceptors for auth/logging
-               - Streaming patterns (unary, server, client, bidirectional)
-               - Load balancing configuration
-               - TLS/mTLS setup
+            1. Use Context7 to get REAL Tonic v0.11 code:
+               - Search for "tonic server example"
+               - Search for "tonic client"
+               - Search for "tonic interceptor"
+               - Search for "tonic streaming"
+               - Get actual gRPC service implementations
+            
+            2. Take the REAL Tonic code and adapt:
+               - Convert actual service traits to pseudocode
+               - Use real interceptor patterns from examples
+               - Base streaming on actual Tonic stream handlers
+               - Keep real error handling and status codes
             
             3. Cross-reference with:
                - authentication-implementation.md
-               - authorization-implementation.md
+               - authorization-implementation.md  
                - integration-contracts.md
             
-            4. Add protobuf schema examples (as comments)
+            4. Use REAL proto patterns from Tonic examples
             
-            IMPORTANT: Pseudocode only, no real proto files.
+            IMPORTANT: Use Context7's actual Tonic examples,
+            convert to pseudocode preserving real gRPC patterns.
       
       - name: Improve HTTP/Axum Documentation
         if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'http-axum'
@@ -127,24 +134,28 @@ jobs:
             
             TASK: Improve ms-framework-docs/transport/http-transport.md by:
             
-            1. Search Context7 for Axum patterns and middleware
-            2. Add comprehensive pseudocode for:
-               - Router configuration and nesting
-               - State management patterns
-               - Middleware stacks (auth, logging, cors, compression)
-               - WebSocket upgrade handling
-               - Server-Sent Events (SSE)
-               - Request/response extractors
-               - Error handling and status codes
-               - OpenAPI integration patterns
+            1. Use Context7 to get REAL Axum v0.8 code:
+               - Search for "axum router"
+               - Search for "axum middleware"
+               - Search for "axum websocket"
+               - Search for "axum state"
+               - Search for "axum extractors"
+            
+            2. Take the REAL Axum code and adapt:
+               - Convert actual router setup to pseudocode
+               - Use real middleware chains from examples
+               - Base WebSocket on actual upgrade handlers
+               - Keep real extractor patterns
+               - Use actual error handling from Axum
             
             3. Ensure consistency with:
                - security-framework.md (auth middleware)
                - observability-monitoring-framework.md (metrics/tracing)
             
-            4. Include REST API design patterns for agents
+            4. Use REAL REST patterns from Axum examples
             
-            IMPORTANT: Documentation only - pseudocode examples.
+            IMPORTANT: Use Context7's actual Axum examples,
+            convert to pseudocode preserving real HTTP patterns.
       
       - name: Improve Message Schemas Documentation
         if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'message-schemas'
@@ -161,14 +172,18 @@ jobs:
             
             TASK: Improve ms-framework-docs/data-management/message-schemas.md by:
             
-            1. Search Context7 for Serde patterns and best practices
-            2. Enhance with:
-               - Comprehensive message type definitions
-               - Serialization/deserialization patterns
-               - Schema versioning strategies
-               - Message envelope patterns
-               - Error response schemas
-               - Event sourcing message formats
+            1. Use Context7 to get REAL Serde v1.0.214 code:
+               - Search for "serde derive serialize"
+               - Search for "serde custom serialization"
+               - Search for "serde flatten"
+               - Search for "serde rename"
+               - Get actual serialization examples
+            
+            2. Take the REAL Serde code and adapt:
+               - Convert actual derive macros to documentation
+               - Use real attribute patterns from examples
+               - Base versioning on actual Serde techniques
+               - Keep real validation patterns
             
             3. Cross-reference and ensure consistency:
                - core-message-schemas.md
@@ -176,9 +191,10 @@ jobs:
                - workflow-message-schemas.md
                - All transport layers (NATS, gRPC, HTTP)
             
-            4. Add validation patterns using serde attributes
+            4. Use REAL Serde attributes from examples
             
-            IMPORTANT: Pseudocode structs with serde attributes only.
+            IMPORTANT: Use Context7's actual Serde examples,
+            convert to pseudocode preserving real patterns.
       
       - name: Check for changes
         id: check_changes

@@ -62,13 +62,18 @@ jobs:
             
             TASK: Improve ms-framework-docs/core-architecture/tokio-runtime.md by:
             
-            1. Search Context7 for Tokio best practices and patterns
-            2. Add comprehensive pseudocode examples for:
-               - Runtime configuration (worker threads, thread pools)
-               - Task spawning patterns (spawn, spawn_blocking, spawn_local)
-               - Channel patterns (mpsc, broadcast, oneshot, watch)
-               - Select! macro usage patterns
-               - Graceful shutdown patterns
+            1. Use Context7 to get REAL Tokio v1.45.0 code examples:
+               - Search for "runtime configuration" 
+               - Search for "task spawning"
+               - Search for "channel patterns mpsc broadcast"
+               - Search for "select macro"
+               - Search for "graceful shutdown"
+            
+            2. Take the ACTUAL code examples from Context7 and adapt them:
+               - Convert real implementations to documentation pseudocode
+               - Keep the patterns and structure from real code
+               - Replace concrete types with descriptive names
+               - Add explanatory comments about what each pattern does
             
             3. Ensure consistency with:
                - ms-framework-docs/core-architecture/async-patterns.md
@@ -76,13 +81,14 @@ jobs:
             
             4. Format according to project standards:
                - Use ```rust blocks for pseudocode
-               - Include // comments explaining patterns
+               - Include // comments explaining patterns FROM THE REAL CODE
                - Add cross-references to related docs
                - Maintain consistent heading structure
             
-            5. Search web for recent Tokio patterns if needed
+            5. Use actual Tokio code examples as the foundation for all patterns
             
-            IMPORTANT: This is documentation phase - use ONLY pseudocode, no real implementation.
+            IMPORTANT: This is documentation phase - convert Context7's REAL code examples
+            into pseudocode while preserving the actual patterns and best practices.
             Follow all guidelines in ms-framework-docs/CLAUDE.md
       
       - name: Improve Async Patterns Documentation
@@ -100,20 +106,26 @@ jobs:
             
             TASK: Improve ms-framework-docs/core-architecture/async-patterns.md by:
             
-            1. Search Context7 for futures-rs patterns and best practices
-            2. Add comprehensive pseudocode for:
-               - Stream processing patterns (map, filter, buffer, chunks)
-               - Future combinators (join, select, race, timeout)
-               - Error handling in async contexts
-               - Async trait definitions and usage
-               - Cancellation and timeout patterns
+            1. Use Context7 to get REAL futures v0.3.31 code examples:
+               - Search for "stream map filter"
+               - Search for "future join select"
+               - Search for "async error handling"
+               - Search for "async trait impl"
+               - Search for "future timeout"
+            
+            2. Take the ACTUAL code from Context7 and adapt:
+               - Use real Stream and Future implementations as templates
+               - Convert actual error handling patterns to pseudocode
+               - Keep the real combinators and their usage patterns
+               - Preserve the actual async trait patterns from the library
             
             3. Ensure alignment with supervision-trees.md for error propagation
             4. Cross-reference with agent-lifecycle.md for state machines
             
-            5. Format with clear sections and examples
+            5. Format with clear sections using REAL code structure
             
-            IMPORTANT: Documentation phase only - pseudocode examples only.
+            IMPORTANT: Use Context7's actual futures-rs code examples as the base,
+            then convert to documentation pseudocode while keeping real patterns.
       
       - name: Improve Supervision Trees Documentation
         if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'supervision-trees'
@@ -128,22 +140,27 @@ jobs:
             
             TASK: Improve ms-framework-docs/core-architecture/supervision-trees.md by:
             
-            1. Search web for "Erlang supervision trees Rust implementation patterns"
-            2. Add pseudocode for:
-               - Supervisor trait definitions
-               - Child restart strategies (one-for-one, one-for-all, rest-for-one)
-               - Backoff and retry patterns
-               - Health check integration
-               - Graceful shutdown cascading
+            1. Use Context7 and web search to find REAL supervision implementations:
+               - Search Context7 for "tokio task supervision"
+               - Search Context7 for "error recovery patterns"
+               - Search web for actual Rust supervision tree libraries (like bastion-rs)
+               - Look for real restart strategy implementations
+            
+            2. Adapt REAL supervision code patterns:
+               - Take actual supervisor trait implementations
+               - Convert real restart strategies to pseudocode
+               - Use actual backoff algorithms from libraries
+               - Base health checks on real monitoring code
             
             3. Ensure consistency with:
                - tokio-runtime.md (task spawning)
                - agent-lifecycle.md (lifecycle states)
                - process-management-specifications.md
             
-            4. Add sequence diagrams in mermaid format for supervision flows
+            4. Add sequence diagrams based on REAL supervision flows
             
-            IMPORTANT: Pseudocode only, follow documentation phase rules.
+            IMPORTANT: Use actual supervision implementations as reference,
+            convert to pseudocode while preserving real architectural patterns.
       
       - name: Improve Agent Lifecycle Documentation
         if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'agent-lifecycle'
@@ -159,21 +176,31 @@ jobs:
             
             TASK: Improve ms-framework-docs/data-management/agent-lifecycle.md by:
             
-            1. Search Context7 for crossbeam channel patterns
-            2. Add comprehensive state machine pseudocode:
-               - Agent states (Created, Initializing, Running, Suspended, Terminating)
-               - State transition rules and guards
-               - Channel-based communication patterns
-               - Lifecycle event publishing
+            1. Use Context7 to get REAL crossbeam v0.5.13 code:
+               - Search for "crossbeam channel send recv"
+               - Search for "crossbeam select"
+               - Search for "bounded unbounded channel"
+               - Get actual channel communication patterns
             
-            3. Cross-reference with:
+            2. Find REAL state machine implementations:
+               - Search web for "Rust state machine libraries"
+               - Look at actual FSM crates for patterns
+               - Use real state transition code as reference
+            
+            3. Adapt the REAL code to documentation:
+               - Convert actual channel usage to agent communication pseudocode
+               - Base state transitions on real FSM implementations
+               - Use actual event publishing patterns from libraries
+            
+            4. Cross-reference with:
                - agent-operations.md
                - agent-orchestration.md
                - supervision-trees.md
             
-            4. Include mermaid state diagrams
+            5. Create state diagrams based on REAL state machines
             
-            IMPORTANT: Documentation phase - pseudocode only.
+            IMPORTANT: Use Context7's actual crossbeam examples and real FSM code,
+            then convert to pseudocode preserving the actual patterns.
       
       - name: Check for changes
         id: check_changes
