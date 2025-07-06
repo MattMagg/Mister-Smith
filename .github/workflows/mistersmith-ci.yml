@@ -54,6 +54,8 @@ jobs:
             ms-framework-docs/**/*.md
             *.md
             internal-operations/**/*.md
+          config: .markdownlint.json
+          fix: false
 
   # Phase 2: Dependency Analysis
   dependencies:
