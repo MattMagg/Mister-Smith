@@ -29,6 +29,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -88,7 +89,6 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: "claude-sonnet-4-20250514"
-          allowed_directories: "ms-framework-docs"
           direct_prompt: |
             You are improving the MisterSmith framework gRPC transport documentation.
             
@@ -160,7 +160,6 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: "claude-sonnet-4-20250514"
-          allowed_directories: "ms-framework-docs"
           direct_prompt: |
             You are improving the MisterSmith message schema documentation.
             
@@ -197,25 +196,21 @@ jobs:
       - name: Apply OpenAI improvements
         if: github.event.inputs.focus_area == 'all' || contains('nats-messaging,http-axum', github.event.inputs.focus_area)
         run: |
-          # This is a simplified version - in a real implementation,
-          # you would parse the OpenAI responses and apply specific changes
-          # to the documentation files
+          echo "=== Applying OpenAI Improvements ==="
           
-          echo "=== OpenAI Suggested Improvements ==="
-          
+          # Apply NATS improvements if available
           if [ -f nats_improvements.md ]; then
-            echo "NATS Transport improvements available"
+            echo "Applying NATS Transport improvements"
+            cp ms-framework-docs/transport/nats-transport.md ms-framework-docs/transport/nats-transport.md.bak
+            cp nats_improvements.md ms-framework-docs/transport/nats-transport.md
           fi
           
+          # Apply Axum improvements if available
           if [ -f axum_improvements.md ]; then
-            echo "HTTP/Axum improvements available"
+            echo "Applying HTTP/Axum improvements"
+            cp ms-framework-docs/transport/http-transport.md ms-framework-docs/transport/http-transport.md.bak
+            cp axum_improvements.md ms-framework-docs/transport/http-transport.md
           fi
-          
-          # Note: In production, you would:
-          # 1. Parse the improvement suggestions
-          # 2. Apply them to the actual files
-          # 3. Ensure proper formatting
-          # 4. Validate the changes
       
       - name: Check for changes
         id: check_changes

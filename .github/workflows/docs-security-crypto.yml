@@ -28,6 +28,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -87,7 +88,6 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: "claude-sonnet-4-20250514"
-          allowed_directories: "ms-framework-docs"
           direct_prompt: |
             You are improving the MisterSmith framework authorization documentation.
             
@@ -167,7 +167,6 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: "claude-sonnet-4-20250514"
-          allowed_directories: "ms-framework-docs"
           direct_prompt: |
             You are improving the MisterSmith security patterns documentation.
             

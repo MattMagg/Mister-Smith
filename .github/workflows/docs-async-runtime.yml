@@ -32,6 +32,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,7 +52,6 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: "claude-sonnet-4-20250514"
-          allowed_directories: "ms-framework-docs"
           direct_prompt: |
             You are improving the MisterSmith framework documentation for async runtime patterns.
             
@@ -153,9 +153,9 @@ jobs:
           
           # Apply improvements to the file
           if [ -s improvements.md ]; then
-            # This is a simplified version - in practice, you'd parse and apply specific changes
-            echo "OpenAI suggested improvements for async-patterns.md"
-            cat improvements.md
+            # Apply the improvements to the actual file
+            cp ms-framework-docs/core-architecture/async-patterns.md ms-framework-docs/core-architecture/async-patterns.md.bak
+            echo "$response" | jq -r '.choices[0].message.content' > ms-framework-docs/core-architecture/async-patterns.md
           fi
       
       - name: Improve Supervision Trees Documentation (Claude)
@@ -164,7 +164,6 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: "claude-sonnet-4-20250514"
-          allowed_directories: "ms-framework-docs"
           direct_prompt: |
             You are improving the MisterSmith framework supervision tree documentation.
             
@@ -258,8 +257,9 @@ jobs:
           echo "$response" | jq -r '.choices[0].message.content' > lifecycle_improvements.md
           
           if [ -s lifecycle_improvements.md ]; then
-            echo "OpenAI suggested improvements for agent-lifecycle.md"
-            cat lifecycle_improvements.md
+            # Apply the improvements to the actual file
+            cp ms-framework-docs/data-management/agent-lifecycle.md ms-framework-docs/data-management/agent-lifecycle.md.bak
+            echo "$response" | jq -r '.choices[0].message.content' > ms-framework-docs/data-management/agent-lifecycle.md
           fi
       
       - name: Check for changes
