@@ -62,7 +62,7 @@ jobs:
               }
             ],
             "temperature": 0.3,
-            "max_tokens": 4000
+            "max_completion_tokens": 4000
           }
           EOF
           
@@ -142,7 +142,7 @@ jobs:
               }
             ],
             "temperature": 0.3,
-            "max_tokens": 4000
+            "max_completion_tokens": 4000
           }
           EOF
           
