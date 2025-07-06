@@ -6,7 +6,8 @@
 
 ## Overview
 
-This document summarizes the completion of all process management documentation gaps in the Mister Smith AI Agent Framework operations documentation. All TODO/TBD/INCOMPLETE markers have been resolved with production-ready implementation details.
+This document summarizes the completion of all process management documentation gaps in the Mister Smith AI Agent Framework operations documentation.
+All TODO/TBD/INCOMPLETE markers have been resolved with production-ready implementation details.
 
 ## Completed Deliverables
 
@@ -111,7 +112,7 @@ This document summarizes the completion of all process management documentation 
 
 ### Service Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                   PROCESS MANAGEMENT LAYERS                │
 ├─────────────────────────────────────────────────────────────┤
@@ -127,7 +128,7 @@ This document summarizes the completion of all process management documentation 
 
 ### Resource Hierarchy
 
-```
+```text
 mister-smith.slice (8GB memory, 800% CPU)
 ├── orchestrator.slice (4GB memory, 400% CPU)
 ├── workers.slice (3GB memory, 300% CPU) 
@@ -136,7 +137,7 @@ mister-smith.slice (8GB memory, 800% CPU)
 
 ### Supervision Tree
 
-```
+```text
 RootSupervisor
 ├── OrchestrationSupervisor (OneForAll strategy)
 ├── WorkerPoolSupervisor (OneForOne strategy)
@@ -290,9 +291,12 @@ RootSupervisor
 
 ## Conclusion
 
-The process management documentation is now complete with production-ready implementations covering all aspects of systemd integration, process supervision, lifecycle management, resource management, and health monitoring. All TODO/TBD markers have been resolved, and the framework provides comprehensive operational capabilities for the Mister Smith AI Agent Framework.
+The process management documentation is now complete with production-ready implementations covering all aspects of systemd integration,
+process supervision, lifecycle management, resource management, and health monitoring. All TODO/TBD markers have been resolved,
+and the framework provides comprehensive operational capabilities for the Mister Smith AI Agent Framework.
 
-The implementation follows industry best practices for service management, resource control, fault tolerance, and operational monitoring, ensuring robust production deployment across all environment tiers.
+The implementation follows industry best practices for service management, resource control, fault tolerance, and operational monitoring,
+ensuring robust production deployment across all environment tiers.
 
 ---
 

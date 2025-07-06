@@ -2,11 +2,12 @@
 
 ## FOLDER CONTEXT
 
-You are now in the MisterSmith framework documentation folder. This folder contains the technical specifications for the future implementation. Remember: These are SPECIFICATIONS ONLY - no implementation exists yet.
+You are now in the MisterSmith framework documentation folder. This folder contains the technical specifications
+for the future implementation. Remember: These are SPECIFICATIONS ONLY - no implementation exists yet.
 
 ## DOCUMENTATION STRUCTURE
 
-```
+```text
 ms-framework-docs/
 ├── core-architecture/      # Foundational system design
 ├── agent-domains/         # Specialized agent specifications

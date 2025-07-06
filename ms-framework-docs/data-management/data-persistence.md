@@ -6,7 +6,7 @@ tags:
 - '#revised-document #data-persistence #foundation-focus'
 ---
 
-# Data Persistence & Memory Management Architecture
+## Data Persistence & Memory Management Architecture
 
 ## Foundation Patterns Guide
 
@@ -22,12 +22,14 @@ tags:
 > | **TOTAL SCORE** | **15/15** | **✅ DEPLOYMENT APPROVED** |
 >
 > *Validated: 2025-07-05 | Document Lines: 3,470 | Implementation Status: 100%*
-
 > **Canonical Reference**: See `tech-framework.md` for authoritative technology stack specifications
 
 ## Executive Summary
 
-This document defines foundational data persistence and memory management patterns using PostgreSQL 15 with SQLx 0.7 as the primary data layer, complemented by JetStream KV for distributed state management. The architecture implements a dual-store approach with short-term state in NATS JetStream KV and long-term state in PostgreSQL, achieving high throughput while maintaining durability. Focus is on teachable patterns and basic architectural principles.
+This document defines foundational data persistence and memory management patterns using PostgreSQL 15 with SQLx 0.7
+as the primary data layer, complemented by JetStream KV for distributed state management. The architecture implements
+a dual-store approach with short-term state in NATS JetStream KV and long-term state in PostgreSQL, achieving high
+throughput while maintaining durability. Focus is on teachable patterns and basic architectural principles.
 
 > **Implementation Status**: ✅ **FULLY PRODUCTION READY** (Validation Score: 15/15)
 >
@@ -42,7 +44,7 @@ This document defines foundational data persistence and memory management patter
 
 ### 1.1 Storage Pattern Overview
 
-```pseudocode
+```rust
 DEFINE StorageLayer ENUM {
     MEMORY_CACHE,     // In-process cache
     DISTRIBUTED_KV,   // JetStream KV (short-term)
@@ -60,7 +62,7 @@ INTERFACE DataStorage {
 
 ### 1.2 Data Categories & Two-Tier Architecture
 
-```pseudocode
+```rust
 DEFINE DataType ENUM {
     SESSION_DATA,     // Temporary user sessions (KV)
     AGENT_STATE,      // Agent runtime state (KV → SQL)
@@ -89,9 +91,11 @@ CLASS DataRouter {
 
 ### 1.3 Hybrid Storage Pattern
 
-> **Validation Finding**: ✅ This dual-store architecture has been validated as providing "optimal performance characteristics while maintaining ACID guarantees where needed" with intelligent routing, lazy hydration, and configurable flush mechanisms.
+> **Validation Finding**: ✅ This dual-store architecture has been validated as providing "optimal performance
+> characteristics while maintaining ACID guarantees where needed" with intelligent routing, lazy hydration, and
+> configurable flush mechanisms.
 
-```pseudocode
+```rust
 -- Dual-store implementation for agent state
 CLASS HybridStateManager {
     PRIVATE kv_store: JetStreamKV
@@ -136,7 +140,7 @@ CLASS HybridStateManager {
 
 ### 2.1 Basic Schema Design with JSONB
 
-```pseudocode
+```rust
 -- Core schema organization
 CREATE SCHEMA agents;
 CREATE SCHEMA tasks;
@@ -171,7 +175,7 @@ CREATE TABLE tasks.queue (
 
 ### 2.2 State Hydration Support
 
-```pseudocode
+```rust
 -- Agent checkpoint table for recovery
 CREATE TABLE agents.checkpoints (
     agent_id UUID,
@@ -199,7 +203,7 @@ $$ LANGUAGE plpgsql;
 
 ### 3.1 Key-Value Store Setup with TTL
 
-```pseudocode
+```rust
 CLASS KVStoreManager {
     FUNCTION createBucket(name: String, ttl_minutes: Integer = 30) -> Bucket {
         config = {
@@ -225,7 +229,7 @@ CLASS KVStoreManager {
 
 ### 3.2 State Operations with Conflict Resolution
 
-```pseudocode
+```rust
 CLASS StateManager {
     PRIVATE kv_bucket: Bucket
     PRIVATE conflict_strategy: ConflictStrategy
@@ -268,7 +272,7 @@ CLASS StateManager {
 
 ### 4.1 Repository Pattern with Dual Store
 
-```pseudocode
+```rust
 INTERFACE Repository<T> {
     FUNCTION save(entity: T) -> Result<T>
     FUNCTION find(id: UUID) -> Result<T>
@@ -333,7 +337,7 @@ CLASS AgentRepository IMPLEMENTS Repository<Agent> {
 
 ### 4.2 State Lifecycle Management
 
-```pseudocode
+```rust
 CLASS StateLifecycleManager {
     PRIVATE kv: KVBucket
     PRIVATE db: DatabaseConnection
@@ -408,7 +412,7 @@ CLASS StateLifecycleManager {
 
 ### 4.3 Enhanced Caching Pattern with TTL
 
-```pseudocode
+```rust
 CLASS TieredCacheRepository {
     PRIVATE repository: Repository
     PRIVATE memory_cache: Map<UUID, CacheEntry>
@@ -477,7 +481,7 @@ CLASS TieredCacheRepository {
 
 ### 5.1 Enterprise Connection Pool Architecture
 
-```pseudocode
+```rust
 INTERFACE ConnectionPoolCoordinator {
     create_postgres_pool(config: PostgresPoolConfig) -> PostgresPool
     create_jetstream_pool(config: JetStreamPoolConfig) -> JetStreamPool
@@ -533,7 +537,7 @@ CLASS EnterpriseConnectionManager {
 
 ### 5.2 Connection Pool Sizing Strategies
 
-```pseudocode
+```rust
 CLASS ConnectionPoolSizer {
     FUNCTION calculate_optimal_pool_size(
         agent_count: Integer,
@@ -606,7 +610,7 @@ CLASS ConnectionPoolSizer {
 
 ### 5.3 Advanced Transaction Isolation and Boundaries
 
-```pseudocode
+```rust
 CLASS AdvancedTransactionManager {
     ENUM TransactionIsolationLevel {
         READ_UNCOMMITTED,   -- Lowest isolation, fastest performance
@@ -751,7 +755,7 @@ CLASS AdvancedTransactionManager {
 
 ### 5.4 Distributed Transaction Coordination
 
-```pseudocode
+```rust
 CLASS DistributedTransactionCoordinator {
     PRIVATE postgres_pool: PostgresPool
     PRIVATE jetstream_kv: JetStreamKV
@@ -890,7 +894,7 @@ CLASS DistributedTransactionCoordinator {
 
 ### 5.5 Connection Pool Health Monitoring
 
-```pseudocode
+```rust
 CLASS ConnectionPoolHealthMonitor {
     PRIVATE postgres_pools: Map<String, PostgresPool>
     PRIVATE jetstream_pools: Map<String, JetStreamKVPool>
@@ -1050,7 +1054,7 @@ CLASS ConnectionPoolHealthMonitor {
 
 ### 5.6 Connection String Templates and Configuration Management
 
-```pseudocode
+```rust
 CLASS DataLayerConfigurationManager {
     FUNCTION build_postgres_connection_string(env: Environment) -> String {
         config = load_postgres_config(env)
@@ -1139,7 +1143,7 @@ CLASS DataLayerConfigurationManager {
 
 ### 6.1 Enhanced Error Types
 
-```pseudocode
+```rust
 ENUM DataError {
     NOT_FOUND,
     DUPLICATE_KEY,
@@ -1166,7 +1170,7 @@ CLASS DataResult<T> {
 
 ### 6.2 Conflict Resolution Strategies
 
-```pseudocode
+```rust
 CLASS ConflictResolver {
     ENUM Strategy {
         LAST_WRITE_WINS,
@@ -1208,7 +1212,7 @@ CLASS ConflictResolver {
 
 ### 6.3 Retry Logic with Backoff
 
-```pseudocode
+```rust
 CLASS RetryHandler {
     FUNCTION withRetry(
         operation: Function, 
@@ -1244,7 +1248,7 @@ CLASS RetryHandler {
 
 ### 7.1 Consistency Metrics
 
-```pseudocode
+```rust
 CLASS ConsistencyMonitor {
     PRIVATE metrics: MetricsCollector
     
@@ -1276,7 +1280,7 @@ CLASS ConsistencyMonitor {
 
 ### 7.2 Health Checks
 
-```pseudocode
+```rust
 CLASS HealthChecker {
     FUNCTION checkDatabase() -> HealthStatus {
         TRY {
@@ -3359,7 +3363,8 @@ verify_cross_system_backup() {
         
         # Update manifest with verification status
         local temp_manifest=$(mktemp)
-        jq '.verification.backup_verified = true | .verification.verification_timestamp = now | .verification.verification_notes = "All checksums verified successfully"' "$manifest_file" > "$temp_manifest"
+        jq '.verification.backup_verified = true | .verification.verification_timestamp = now | 
+           .verification.verification_notes = "All checksums verified successfully"' "$manifest_file" > "$temp_manifest"
         mv "$temp_manifest" "$manifest_file"
         
         return 0
@@ -3554,7 +3559,8 @@ This document now provides a comprehensive, production-ready data persistence an
 9. **Monitoring and maintenance** - Health checks, consistency tracking, and optimization
 10. **Zero-downtime operations** - Migration and deployment strategies for production
 
-The framework balances high performance with durability while maintaining eventual consistency within tight time bounds, providing a solid foundation for the Mister Smith AI Agent Framework's data management needs.
+The framework balances high performance with durability while maintaining eventual consistency within tight time bounds,
+providing a solid foundation for the Mister Smith AI Agent Framework's data management needs.
 
 ### Validation Summary
 >
@@ -3570,6 +3576,7 @@ The framework balances high performance with durability while maintaining eventu
 
 **Agent 6 Database Schema & Migration Specialist - Mission Complete**
 
-Integration points with Agent 5's transport patterns are maintained through the NATS JetStream specifications and PostgreSQL trigger-based event publishing, ensuring seamless data flow between the persistence and transport layers.
+Integration points with Agent 5's transport patterns are maintained through the NATS JetStream specifications
+and PostgreSQL trigger-based event publishing, ensuring seamless data flow between the persistence and transport layers.
 
 > **Validation conducted by**: MS Framework Validation Swarm - Agent 10: Data Persistence Validation Specialist (2025-07-05)

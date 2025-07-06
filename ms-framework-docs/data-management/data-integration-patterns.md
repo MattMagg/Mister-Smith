@@ -19,7 +19,8 @@
 
 ### Integration Philosophy
 
-The Mister Smith framework employs a unified data integration approach that seamlessly connects messaging systems (NATS) with database persistence layers. This integration ensures data consistency, reliability, and performance across all agent operations.
+The Mister Smith framework employs a unified data integration approach that seamlessly connects messaging systems (NATS)
+with database persistence layers. This integration ensures data consistency, reliability, and performance across all agent operations.
 
 ### Core Principles
 
@@ -31,7 +32,7 @@ The Mister Smith framework employs a unified data integration approach that seam
 
 ### System-Wide Data Flow Architecture
 
-```
+```rust
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Agent Layer   │    │  Message Layer  │    │ Database Layer  │
 │                 │    │                 │    │                 │
@@ -44,7 +45,7 @@ The Mister Smith framework employs a unified data integration approach that seam
 │  │   State   │  │    │  │  Store    │  │    │  │   Cache   │  │
 │  └───────────┘  │    │  └───────────┘  │    │  └───────────┘  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-```
+```rust
 
 ## Message-Database Integration Patterns
 
@@ -81,7 +82,7 @@ impl DatabaseEventPublisher {
         Ok(())
     }
 }
-```
+```rust
 
 #### Event-Driven Database Updates
 
@@ -112,7 +113,7 @@ impl DatabaseEventConsumer {
         Ok(())
     }
 }
-```
+```rust
 
 ### 2. Bidirectional Data Flow
 
@@ -144,7 +145,7 @@ impl MessageToDatabaseFlow {
         Ok(())
     }
 }
-```
+```rust
 
 #### Database-to-Message Flow
 
@@ -166,7 +167,7 @@ impl DatabaseToMessageFlow {
         Ok(())
     }
 }
-```
+```rust
 
 ### 3. Message-to-Entity Mapping
 
@@ -191,7 +192,7 @@ pub struct FieldMapping {
     pub entity_field: String,
     pub transformer: Option<FieldTransformer>,
 }
-```
+```rust
 
 #### Dynamic Mapping Implementation
 
@@ -222,7 +223,7 @@ impl MessageEntityMapping {
         Ok(entity)
     }
 }
-```
+```rust
 
 ### 4. Schema Evolution Handling
 
@@ -258,7 +259,7 @@ impl SchemaVersionManager {
         Ok(migrated_message)
     }
 }
-```
+```rust
 
 ## Consistency & Transaction Management
 
@@ -290,7 +291,7 @@ impl EventualConsistencyManager {
         Ok(())
     }
 }
-```
+```rust
 
 #### Strong Consistency Pattern
 
@@ -326,7 +327,7 @@ impl StrongConsistencyManager {
         Ok(())
     }
 }
-```
+```rust
 
 ### 2. Distributed Transaction Patterns
 
@@ -376,7 +377,7 @@ impl SagaOrchestrator {
         Ok(())
     }
 }
-```
+```rust
 
 ### 3. Outbox Pattern Implementation
 
@@ -415,7 +416,7 @@ impl TransactionalOutbox {
         Ok(result)
     }
 }
-```
+```rust
 
 #### Inbox Pattern for Idempotency
 
@@ -453,7 +454,7 @@ impl InboxProcessor {
         Ok(())
     }
 }
-```
+```rust
 
 ### 4. Conflict Resolution Strategies
 
@@ -473,7 +474,7 @@ impl ConflictResolver for LastWriteWinsResolver {
         }
     }
 }
-```
+```rust
 
 #### Semantic Conflict Resolution
 
@@ -490,7 +491,7 @@ impl ConflictResolver for SemanticConflictResolver {
         strategy.merge(local, remote)
     }
 }
-```
+```rust
 
 ## Event Sourcing & CQRS Implementation
 
@@ -516,7 +517,7 @@ pub struct Event {
     pub timestamp: DateTime<Utc>,
     pub metadata: HashMap<String, String>,
 }
-```
+```rust
 
 #### PostgreSQL Event Store Implementation
 
@@ -565,7 +566,7 @@ impl EventStore for PostgresEventStore {
         Ok(events)
     }
 }
-```
+```rust
 
 ### 2. Command/Query Separation
 
@@ -594,7 +595,7 @@ impl CommandHandler {
         Ok(())
     }
 }
-```
+```rust
 
 #### Query Side Implementation
 
@@ -621,7 +622,7 @@ impl QueryHandler {
         }
     }
 }
-```
+```rust
 
 ### 3. Read Model Management
 
@@ -650,7 +651,7 @@ impl ReadModelUpdater {
         Ok(())
     }
 }
-```
+```rust
 
 #### Projection Implementation
 
@@ -683,7 +684,7 @@ impl Projection for EntityProjection {
         Ok(())
     }
 }
-```
+```rust
 
 ### 4. Event Replay Mechanisms
 
@@ -725,7 +726,7 @@ impl EventReplayManager {
         Ok(())
     }
 }
-```
+```rust
 
 ## Performance & Optimization
 
@@ -772,7 +773,7 @@ impl MessageBatchProcessor {
         Ok(())
     }
 }
-```
+```rust
 
 ### 2. Connection Pooling
 
@@ -810,7 +811,7 @@ impl DatabaseConnectionPool {
         self.pool.acquire().await.map_err(Into::into)
     }
 }
-```
+```rust
 
 ### 3. Caching Strategies
 
@@ -846,7 +847,7 @@ impl MultiLevelCache {
         Ok(None)
     }
 }
-```
+```rust
 
 ### 4. Throughput Optimization
 
@@ -893,7 +894,7 @@ impl ParallelProcessingPipeline {
         Ok(())
     }
 }
-```
+```rust
 
 ## Error Handling & Recovery
 
@@ -939,7 +940,7 @@ impl RetryManager {
         unreachable!()
     }
 }
-```
+```rust
 
 ### 2. Circuit Breaker Pattern
 
@@ -1019,7 +1020,7 @@ impl CircuitBreaker {
         }
     }
 }
-```
+```rust
 
 ### 3. Data Reconciliation
 
@@ -1076,7 +1077,7 @@ impl DataReconciliationService {
         }
     }
 }
-```
+```rust
 
 ### 4. Monitoring & Alerting
 
@@ -1124,7 +1125,7 @@ impl HealthCheck for DataIntegrationHealthCheck {
         result
     }
 }
-```
+```rust
 
 ## Testing & Validation
 
@@ -1172,7 +1173,7 @@ mod integration_tests {
         assert_eq!(published_messages[0].entity_id, entity.id);
     }
 }
-```
+```rust
 
 ### 2. Contract Testing
 
@@ -1216,7 +1217,7 @@ mod contract_tests {
         assert!(compatibility_checker.is_forward_compatible(&schema_v2, &schema_v1));
     }
 }
-```
+```rust
 
 ### 3. Data Consistency Validation
 
@@ -1278,7 +1279,7 @@ impl ConsistencyRule for EventualConsistencyRule {
         Ok(violations)
     }
 }
-```
+```rust
 
 ### 4. Performance Benchmarking
 
@@ -1324,7 +1325,7 @@ mod performance_tests {
     criterion_group!(benches, benchmark_message_processing, benchmark_data_consistency_check);
     criterion_main!(benches);
 }
-```
+```rust
 
 ## Implementation Guidelines
 
@@ -1378,7 +1379,7 @@ impl AsyncDataIntegrationService {
         Ok(())
     }
 }
-```
+```rust
 
 ### 2. Agent Coordination Patterns
 
@@ -1422,7 +1423,7 @@ impl MultiAgentDataCoordinator {
         Ok(())
     }
 }
-```
+```rust
 
 ### 3. Security Considerations
 
@@ -1452,7 +1453,7 @@ impl SecureDataIntegrationService {
         Ok(())
     }
 }
-```
+```rust
 
 ### 4. Configuration Management
 
@@ -1501,7 +1502,7 @@ impl DataIntegrationConfig {
         config.try_deserialize()
     }
 }
-```
+```rust
 
 ## Summary
 
@@ -1516,7 +1517,8 @@ This comprehensive data integration patterns specification provides:
 7. **Security**: End-to-end security considerations for data integration
 8. **Monitoring**: Health checks and observability for integration components
 
-These patterns ensure that the Mister Smith AI Agent Framework can handle complex data integration scenarios while maintaining data consistency, performance, and reliability across all agent operations.
+These patterns ensure that the Mister Smith AI Agent Framework can handle complex data integration scenarios
+while maintaining data consistency, performance, and reliability across all agent operations.
 
 ---
 

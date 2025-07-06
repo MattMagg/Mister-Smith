@@ -31,7 +31,9 @@
 
 ## Executive Summary
 
-This document provides complete JSON Schema definitions for all message types in the Mister Smith AI Agent Framework. It establishes message versioning, validation rules, serialization formats, routing schemes, and transformation patterns to enable type-safe, performant agent communication.
+This document provides complete JSON Schema definitions for all message types in the Mister Smith AI Agent Framework.
+It establishes message versioning, validation rules, serialization formats, routing schemes, and transformation patterns
+to enable type-safe, performant agent communication.
 
 ## 1. Foundation Schemas
 
@@ -3910,7 +3912,9 @@ This comprehensive message schema specification provides:
 9. **Implementation guidelines** with code generation and testing strategies
 10. **Future-ready architecture** for emerging technology integration
 
-The schema system integrates seamlessly with the existing transport layer specifications and agent orchestration patterns, providing a comprehensive foundation for type-safe, performant, and evolvable agent communication throughout the Mister Smith AI Agent Framework.
+The schema system integrates seamlessly with the existing transport layer specifications and agent orchestration patterns,
+providing a comprehensive foundation for type-safe, performant, and evolvable agent communication throughout
+the Mister Smith AI Agent Framework.
 
 *Message Schema Definitions v1.0.0 - Agent Framework Communication Protocol*
 *Integration with Transport Layer Specifications and Agent Orchestration Patterns*

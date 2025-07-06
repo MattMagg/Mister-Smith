@@ -4,7 +4,9 @@
 
 ### Executive Summary
 
-This document provides comprehensive technical analysis of Claude Code CLI capabilities and their integration with the Mister Smith multi-agent framework. Research reveals excellent alignment between Claude Code CLI features and the existing framework architecture, with minimal structural changes required for integration.
+This document provides comprehensive technical analysis of Claude Code CLI capabilities and their integration with the Mister Smith multi-agent framework.
+Research reveals excellent alignment between Claude Code CLI features and the existing framework architecture,
+with minimal structural changes required for integration.
 
 **Key Finding**: The Mister Smith framework already includes hook integration points in its NATS subject taxonomy, indicating it was designed with Claude Code CLI integration in mind.
 
@@ -155,7 +157,7 @@ claude mcp serve  # Run Claude Code as MCP server
 
 **Existing Subject Hierarchy**:
 
-```
+```markdown
 agents.{agent_id}.commands     # Agent command dispatch
 agents.{agent_id}.status       # Agent status updates
 agents.{agent_id}.output       # Agent output streams
@@ -166,7 +168,7 @@ cmd.{type}.{target}            # Command routing
 
 **Hook Integration Points (Already Defined)**:
 
-```
+```markdown
 control.startup                # CLI initialization
 agent.{id}.pre                # Pre-task hook processing
 agent.{id}.post               # Post-task hook processing

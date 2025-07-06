@@ -4,7 +4,8 @@
 
 ### Executive Summary
 
-This document summarizes comprehensive research on Claude Code CLI capabilities and provides a complete integration plan for the Mister Smith multi-agent framework. The research confirms excellent alignment between Claude Code CLI features and the existing framework architecture.
+This document summarizes comprehensive research on Claude Code CLI capabilities and provides a complete integration plan for the Mister Smith
+multi-agent framework. The research confirms excellent alignment between Claude Code CLI features and the existing framework architecture.
 
 **Key Finding**: The Mister Smith framework already includes hook integration points in its NATS subject taxonomy, indicating it was designed with Claude Code CLI integration in mind.
 
@@ -58,7 +59,7 @@ This document summarizes comprehensive research on Claude Code CLI capabilities 
 
 The framework already defines hook integration subjects:
 
-```
+```text
 control.startup               # CLI initialization
 agent.{id}.pre               # Pre-task hook processing
 agent.{id}.post              # Post-task hook processing
@@ -121,7 +122,7 @@ ctx.{gid}.file_change        # File change notifications
 
 #### 1. Hook System Integration
 
-```
+```text
 Claude Code Hook → Hook Bridge → NATS Subject → Framework Component
 startup          → control.startup
 pre_task         → agent.{id}.pre
@@ -132,7 +133,7 @@ on_file_change   → ctx.{gid}.file_change
 
 #### 2. Parallel Execution Integration
 
-```
+```text
 Claude CLI Task Tool → Task Output Parser → NATS Routing → Agent Coordination
 "Task(Patch Agent 1)" → agents.1.output
 "Task(Explore code)"  → tasks.explore_code.output
@@ -140,7 +141,7 @@ Claude CLI Task Tool → Task Output Parser → NATS Routing → Agent Coordinat
 
 #### 3. Resource Management Integration
 
-```
+```text
 Spawn Request → Resource Validation → Agent Pool → Claude CLI Process
               → Memory/CPU Check   → Semaphore   → Supervision Tree
 ```
@@ -290,7 +291,8 @@ hook_execution_timeout = 30
 
 ## Conclusion
 
-The research confirms that Claude Code CLI integration with the Mister Smith framework is highly feasible and well-aligned with the existing architecture. The framework's existing hook integration points demonstrate it was designed with this integration in mind.
+The research confirms that Claude Code CLI integration with the Mister Smith framework is highly feasible and well-aligned with the existing architecture.
+The framework's existing hook integration points demonstrate it was designed with this integration in mind.
 
 **Key Advantages**:
 

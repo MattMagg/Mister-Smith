@@ -6,7 +6,9 @@
 
 ### Overview
 
-This document provides complete module hierarchy, type system specifications, and dependency injection patterns for the Mister Smith AI Agent Framework. It enables autonomous developers to understand exact project structure, type relationships, and implementation patterns.
+This document provides complete module hierarchy, type system specifications,
+and dependency injection patterns for the Mister Smith AI Agent Framework.
+It enables autonomous developers to understand exact project structure, type relationships, and implementation patterns.
 
 ---
 
@@ -30,7 +32,7 @@ This document provides complete module hierarchy, type system specifications, an
 
 ### 1.1 Root Module Hierarchy
 
-```
+```text
 src/
 ├── lib.rs                    # Root library with re-exports
 ├── runtime/                  # Tokio runtime management
@@ -828,7 +830,7 @@ impl SystemBuilder {
 
 ### 5.1 Dependency Visualization
 
-```
+```text
 Dependency Flow (← indicates "depends on"):
 
 errors ← (foundation module, no dependencies)
@@ -2046,7 +2048,7 @@ impl EventHandler for MetricsEventHandler {
 
 ---
 
-## Summary
+## Module Organization and Type System Summary
 
 This comprehensive module organization and type system specification provides:
 
@@ -3135,7 +3137,7 @@ pub fn validate_dependencies_macro(input: TokenStream) -> TokenStream {
 
 ---
 
-## Summary
+## Dependency Detection and Analysis Summary
 
 The Dependency Detection & Analysis system provides comprehensive tools for managing dependencies in the Mister Smith AI Agent Framework:
 

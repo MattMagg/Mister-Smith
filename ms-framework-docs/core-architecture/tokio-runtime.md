@@ -6,13 +6,14 @@ tags:
 - '#rust #tokio #runtime #async #implementation'
 ---
 
-# Tokio Runtime Architecture
+## Tokio Runtime Architecture
 
 **Navigation**: [Home](../../README.md) > [Core Architecture](./CLAUDE.md) > Tokio Runtime Architecture
 
 **Quick Links**: [Async Patterns](async-patterns.md) | [Supervision Trees](supervision-trees.md) | [Component Architecture](component-architecture.md)
 
-Implementation-ready Rust specifications for the Mister Smith AI Agent Framework's Tokio runtime system. This module provides concrete implementations for runtime configuration and lifecycle management using Tokio's async runtime.
+Implementation-ready Rust specifications for the Mister Smith AI Agent Framework's Tokio runtime system.
+This module provides concrete implementations for runtime configuration and lifecycle management using Tokio's async runtime.
 
 ## Dependencies
 

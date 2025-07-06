@@ -14,7 +14,6 @@
 > | **TOTAL SCORE** | **14/15** | **✅ DEPLOYMENT APPROVED** |
 >
 > *Validated: 2025-07-05 | Document Lines: 2,134 | Implementation Status: 93%*
-
 > **Purpose**: This document defines message schemas for Claude CLI integration, system operations, and message routing within the Mister Smith AI Agent Framework.
 
 ## Overview
@@ -753,9 +752,9 @@ This file is part of the Message Schema Documentation suite:
 
 ### Quick Access
 
-- **CLI Integration**: [Hook Events](#hook-event-message), [Hook Responses](#hook-response-message)
-- **System Operations**: [System Alerts](#system-alert-message), [Health Checks](#system-health-check-message)
-- **Message Routing**: [NATS Patterns](#nats-subject-pattern-schemas), [Correlation](#message-correlation-strategies)
+- **CLI Integration**: [Hook Events](#51-hook-event-message), [Hook Responses](#52-hook-response-message)
+- **System Operations**: [System Alerts](#61-system-alert-message), [Health Checks](#62-system-health-check-message)
+- **Message Routing**: [NATS Patterns](#91-nats-subject-pattern-schemas), [Correlation](#92-message-correlation-strategies)
 - **Agent Operations**: [Agent Communication](./agent-communication.md), [Agent Integration](./agent-integration.md)
 
 For the complete framework documentation, see the [Data Management Index](./CLAUDE.md).

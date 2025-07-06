@@ -9,7 +9,7 @@ agent: Agent-8
 phase: Phase-1-Group-1B
 ---
 
-# PostgreSQL Implementation Guide
+## PostgreSQL Implementation Guide
 
 ## Extracted Framework Components
 
@@ -60,7 +60,9 @@ This guide consolidates all PostgreSQL implementation details including schema p
 - No column-level encryption specified
 - **Impact**: Limited compliance and security capabilities
 
-**Hybrid Storage Architecture**: This PostgreSQL implementation works in tandem with [JetStream KV Storage](./jetstream-kv.md) to provide a dual-store system where PostgreSQL handles authoritative data storage and complex queries while JetStream KV provides fast-access caching and real-time state management.
+**Hybrid Storage Architecture**: This PostgreSQL implementation works in tandem with [JetStream KV Storage](./jetstream-kv.md)
+to provide a dual-store system where PostgreSQL handles authoritative data storage and complex queries while JetStream KV
+provides fast-access caching and real-time state management.
 
 ## Table of Contents
 
@@ -207,7 +209,7 @@ This PostgreSQL implementation guide works in conjunction with [JetStream KV Sto
 - **PostgreSQL**: Long-term persistence, complex queries, ACID transactions, backup/recovery
 - **JetStream KV**: Fast-access cache layer, session data, real-time agent state
 
-### Key Integration Points
+### Dual-Store Integration Points
 
 1. **Dual-Store Pattern**: PostgreSQL serves as the authoritative data store while JetStream KV provides high-performance caching
 2. **State Hydration**: Agent state is loaded from PostgreSQL into JetStream KV on startup
@@ -222,7 +224,7 @@ This PostgreSQL implementation guide works in conjunction with [JetStream KV Sto
 
 ### 2.1 Basic Schema Design with JSONB
 
-```pseudocode
+```rust
 -- Core schema organization
 CREATE SCHEMA agents;
 CREATE SCHEMA tasks;
@@ -257,9 +259,10 @@ CREATE TABLE tasks.queue (
 
 ### 2.2 State Hydration Support
 
-**Integration with JetStream KV**: This pattern supports loading agent state from PostgreSQL into JetStream KV storage for fast access. See [JetStream KV Hybrid Storage Pattern](./jetstream-kv.md#1-hybrid-storage-pattern) for implementation details.
+**Integration with JetStream KV**: This pattern supports loading agent state from PostgreSQL into JetStream KV storage
+for fast access. See [JetStream KV Hybrid Storage Pattern](./jetstream-kv.md#1-hybrid-storage-pattern) for implementation details.
 
-```pseudocode
+```rust
 -- Agent checkpoint table for recovery
 CREATE TABLE agents.checkpoints (
     agent_id UUID,
@@ -2519,7 +2522,8 @@ verify_cross_system_backup() {
         
         # Update manifest with verification status
         local temp_manifest=$(mktemp)
-        jq '.verification.backup_verified = true | .verification.verification_timestamp = now | .verification.verification_notes = "All checksums verified successfully"' "$manifest_file" > "$temp_manifest"
+        jq '.verification.backup_verified = true | .verification.verification_timestamp = now | 
+           .verification.verification_notes = "All checksums verified successfully"' "$manifest_file" > "$temp_manifest"
         mv "$temp_manifest" "$manifest_file"
         
         return 0
@@ -2768,7 +2772,7 @@ Before production deployment, ensure:
 - **Core Architecture**: [System Integration](../core-architecture/system-integration.md) - Overall system design patterns
 - **Operations Guide**: [Operations Directory](../operations/) - Deployment and monitoring procedures
 
-### Key Integration Points
+### System Integration Points
 
 1. **Hybrid Storage**: Works with JetStream KV for dual-store architecture
 2. **State Hydration**: Agent state loaded from PostgreSQL into JetStream KV

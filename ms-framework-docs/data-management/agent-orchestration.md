@@ -6,7 +6,7 @@ tags:
 - '#revised-document #agent-orchestration #foundation-focus #validation-warnings'
 ---
 
-# ⚠️ CRITICAL: VALIDATION WARNINGS - READ BEFORE IMPLEMENTATION ⚠️
+## ⚠️ CRITICAL: VALIDATION WARNINGS - READ BEFORE IMPLEMENTATION ⚠️
 
 **This document has been validated by Team Alpha on 2025-07-05**  
 **Overall Implementation Readiness: 47% - NOT READY FOR PRODUCTION**
@@ -23,7 +23,7 @@ tags:
 
 ---
 
-# Agent Orchestration & Supervision Architecture
+## Agent Orchestration & Supervision Architecture
 
 ## Foundation Patterns Guide
 
@@ -48,9 +48,13 @@ tags:
 **Timeline**: 8 weeks, HIGH priority  
 **Required Integration**: Full supervision tree implementation  
 
-⚠️ **CRITICAL WARNING**: The Agent Orchestration documentation is technically comprehensive but suffers from critical consistency issues and architectural integration gaps that prevent immediate implementation readiness. DO NOT IMPLEMENT without addressing critical issues below.
+⚠️ **CRITICAL WARNING**: The Agent Orchestration documentation is technically comprehensive
+but suffers from critical consistency issues and architectural integration gaps that prevent
+immediate implementation readiness. DO NOT IMPLEMENT without addressing critical issues below.
 
-This document defines foundational agent orchestration and supervision patterns using Rust's actor model with Tokio runtime. Focus is on basic supervision trees, agent lifecycle management, and simple coordination patterns suitable for learning distributed systems concepts.
+This document defines foundational agent orchestration and supervision patterns using Rust's
+actor model with Tokio runtime. Focus is on basic supervision trees, agent lifecycle management,
+and simple coordination patterns suitable for learning distributed systems concepts.
 
 ### CRITICAL SCHEMA INCONSISTENCIES (Must Fix Before Implementation)
 
@@ -86,7 +90,7 @@ This document defines foundational agent orchestration and supervision patterns 
 
 ### 1.1 Agent Types
 
-```pseudocode
+```rust
 ENUM AgentType {
     SUPERVISOR,    // Manages other agents
     WORKER,        // Performs tasks
@@ -376,7 +380,7 @@ trait Memory {
 
 #### 1.3.3 Agent Lifecycle Management
 
-```pseudocode
+```rust
 CLASS AgentLifecycle {
     PRIVATE state: AgentState
     PRIVATE transitionRules: StateTransitionRules
@@ -465,7 +469,7 @@ trait RoutingStrategy {
 
 ### 2.3 Basic Supervision Tree
 
-```pseudocode
+```rust
 CLASS Supervisor {
     PRIVATE children: Map<String, Agent>
     PRIVATE strategy: SupervisionStrategy
@@ -489,7 +493,7 @@ ENUM RestartStrategy {
 
 ### 2.4 Simple Restart Logic
 
-```pseudocode
+```rust
 CLASS RestartPolicy {
     PRIVATE maxRestarts: Integer
     PRIVATE timeWindow: Duration
@@ -610,7 +614,9 @@ impl Blackboard {
 
 ### 3.4 Complete Message Schema Definitions
 
-**⚠️ CRITICAL WARNING [Team Alpha]**: These schemas contain the priority scale inconsistencies that MUST be fixed before implementation. Each schema below requires validation updates after standardization decision.
+**⚠️ CRITICAL WARNING [Team Alpha]**: These schemas contain the priority scale inconsistencies
+that MUST be fixed before implementation. Each schema below requires validation updates after
+standardization decision.
 
 #### 3.4.1 Base Message Schema
 
@@ -667,7 +673,9 @@ impl Blackboard {
       "maximum": 9,
       "description": "Message priority (0=lowest, 9=highest)",
       "default": 5,
-      "$comment": "⚠️ CRITICAL INCONSISTENCY [Team Alpha]: Implementation uses 5 priority levels (0-4), not 10 levels (0-9). This WILL cause runtime array index out of bounds errors. FIX REQUIRED before production."
+      "$comment": "⚠️ CRITICAL INCONSISTENCY [Team Alpha]: Implementation uses 5 priority levels (0-4), 
+                  not 10 levels (0-9). This WILL cause runtime array index out of bounds errors. 
+                  FIX REQUIRED before production."
     }
   },
   "$defs": {
@@ -675,7 +683,9 @@ impl Blackboard {
       "type": "string",
       "pattern": "^agent-[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}$",
       "description": "Unique agent identifier",
-      "$comment": "⚠️ CRITICAL INCONSISTENCY [Team Alpha]: Some components may expect simpler pattern like '^[a-zA-Z0-9_-]+$'. This WILL cause validation failures between system components. STANDARDIZATION REQUIRED before implementation."
+      "$comment": "⚠️ CRITICAL INCONSISTENCY [Team Alpha]: Some components may expect simpler pattern like 
+                  '^[a-zA-Z0-9_-]+$'. This WILL cause validation failures between system components. 
+                  STANDARDIZATION REQUIRED before implementation."
     },
     "RoutingInfo": {
       "oneOf": [
@@ -1016,7 +1026,7 @@ impl Blackboard {
 
 #### 3.5.1 Runtime Message Validation
 
-```pseudocode
+```rust
 STRUCT MessageValidator {
     schemas: HashMap<String, MessageSchema>,
     validation_cache: Arc<RwLock<LruCache<String, ValidationResult>>>,
@@ -1120,7 +1130,7 @@ IMPL ValidationRule FOR AgentCapabilityRule {
 
 #### 3.5.2 Priority-Based Mailbox with Backpressure
 
-```pseudocode
+```rust
 STRUCT AgentMailbox {
     priority_queues: [VecDeque<Message>; 5], // ⚠️ CRITICAL INCONSISTENCY [Team Alpha]: Only 5 levels but schemas define 0-9 scale
     capacity_per_priority: [usize; 5],       // ⚠️ CRITICAL: Will cause runtime array index out of bounds for priorities 5-9
@@ -1193,19 +1203,127 @@ IMPL AgentMailbox {
         // Record metrics
         self.metrics.record_message_enqueued(&message.message_type, message.priority)
         
-        tracing::debug!(\n            message_id = %message.id,\n            message_type = %message.message_type,\n            priority = ?message.priority,\n            queue_size = new_size,\n            \"Message enqueued successfully\"\n        )
+        tracing::debug!(
+            message_id = %message.id,
+            message_type = %message.message_type,
+            priority = ?message.priority,
+            queue_size = new_size,
+            "Message enqueued successfully"
+        )
         
         Ok(SendResult::Enqueued { queue_position: self.estimate_queue_position(&message) })
     }
     
     #[tracing::instrument(skip(self))]
-    ASYNC FUNCTION receive(&self, timeout: Option<Duration>) -> Result<Message, MailboxError> {\n        deadline = timeout.map(|t| Instant::now() + t)\n        start_time = Instant::now()\n        \n        LOOP {\n            // Check priority queues in order (highest priority first)\n            FOR priority_index IN 0..5 {\n                IF LET Some(message) = self.priority_queues[priority_index].pop_front() {\n                    self.current_size.fetch_sub(1, Ordering::Release)\n                    wait_time = start_time.elapsed()\n                    \n                    // Send notification\n                    mailbox_event = MailboxEvent::MessageDequeued {\n                        message_id: message.id.clone(),\n                        wait_time\n                    }\n                    self.notification_channel.try_send(mailbox_event).ok()\n                    \n                    // Record metrics\n                    self.metrics.record_message_dequeued(&message.message_type, message.priority, wait_time)\n                    \n                    tracing::debug!(\n                        message_id = %message.id,\n                        message_type = %message.message_type,\n                        priority = ?message.priority,\n                        wait_time = ?wait_time,\n                        \"Message dequeued\"\n                    )\n                    \n                    RETURN Ok(message)\n                }\n            }\n            \n            // No messages available, check timeout\n            IF LET Some(deadline) = deadline {\n                IF Instant::now() >= deadline {\n                    RETURN Err(MailboxError::ReceiveTimeout)\n                }\n            }\n            \n            // Wait for new messages with exponential backoff\n            wait_duration = Duration::from_millis(1 << min(5, start_time.elapsed().as_millis() / 100))\n            tokio::time::sleep(wait_duration).await\n        }\n    }\n    \n    ASYNC FUNCTION handle_capacity_exceeded(&self, message: Message) -> Result<SendResult, MailboxError> {\n        MATCH &self.backpressure_strategy {\n            BackpressureStrategy::Block => {\n                // Wait for space with exponential backoff\n                backoff = ExponentialBackoff::new(Duration::from_millis(1), Duration::from_secs(1))\n                \n                WHILE self.current_size.load(Ordering::Acquire) >= self.total_capacity {\n                    tokio::time::sleep(backoff.next_delay()).await\n                }\n                \n                self.send(message).await\n            },\n            BackpressureStrategy::Drop(min_priority) => {\n                IF message.priority >= *min_priority {\n                    // Try to make space by dropping lower priority messages\n                    dropped_count = self.drop_lower_priority_messages(message.priority)\n                    IF dropped_count > 0 {\n                        self.send(message).await\n                    } ELSE {\n                        self.metrics.record_message_dropped(&message.message_type, \"no_space_after_drop\")\n                        Err(MailboxError::Dropped(\"Unable to make space\".to_string()))\n                    }\n                } ELSE {\n                    self.metrics.record_message_dropped(&message.message_type, \"low_priority\")\n                    Err(MailboxError::Dropped(\"Message priority too low\".to_string()))\n                }\n            },\n            BackpressureStrategy::Overflow(max_overflow) => {\n                current_overflow = self.current_size.load(Ordering::Acquire) - self.total_capacity\n                IF current_overflow < *max_overflow {\n                    // Allow temporary overflow\n                    self.priority_queues[message.priority as usize].push_back(message.clone())\n                    self.current_size.fetch_add(1, Ordering::Release)\n                    \n                    // Schedule cleanup task\n                    self.schedule_overflow_cleanup().await\n                    \n                    Ok(SendResult::Overflowed { overflow_count: current_overflow + 1 })\n                } ELSE {\n                    Err(MailboxError::OverflowLimitExceeded)\n                }\n            },\n            BackpressureStrategy::Reject => {\n                self.metrics.record_message_rejected(&message.message_type)\n                Err(MailboxError::Rejected(\"Mailbox at capacity\".to_string()))\n            },\n            BackpressureStrategy::SpillToSecondary(storage_path) => {\n                // Spill to secondary storage\n                spill_result = self.spill_to_storage(&message, storage_path).await\n                MATCH spill_result {\n                    Ok(spill_id) => Ok(SendResult::Spilled { spill_id }),\n                    Err(e) => Err(MailboxError::SpillFailed(e))\n                }\n            }\n        }\n    }\n}
+    ASYNC FUNCTION receive(&self, timeout: Option<Duration>) -> Result<Message, MailboxError> {
+        deadline = timeout.map(|t| Instant::now() + t)
+        start_time = Instant::now()
+        
+        LOOP {
+            // Check priority queues in order (highest priority first)
+            FOR priority_index IN 0..5 {
+                IF LET Some(message) = self.priority_queues[priority_index].pop_front() {
+                    self.current_size.fetch_sub(1, Ordering::Release)
+                    wait_time = start_time.elapsed()
+                    
+                    // Send notification
+                    mailbox_event = MailboxEvent::MessageDequeued {
+                        message_id: message.id.clone(),
+                        wait_time
+                    }
+                    self.notification_channel.try_send(mailbox_event).ok()
+                    
+                    // Record metrics
+                    self.metrics.record_message_dequeued(&message.message_type, message.priority, wait_time)
+                    
+                    tracing::debug!(
+                        message_id = %message.id,
+                        message_type = %message.message_type,
+                        priority = ?message.priority,
+                        wait_time = ?wait_time,
+                        "Message dequeued"
+                    )
+                    
+                    RETURN Ok(message)
+                }
+            }
+            
+            // No messages available, check timeout
+            IF LET Some(deadline) = deadline {
+                IF Instant::now() >= deadline {
+                    RETURN Err(MailboxError::ReceiveTimeout)
+                }
+            }
+            
+            // Wait for new messages with exponential backoff
+            wait_duration = Duration::from_millis(1 << min(5, start_time.elapsed().as_millis() / 100))
+            tokio::time::sleep(wait_duration).await
+        }
+    }
+    
+    ASYNC FUNCTION handle_capacity_exceeded(&self, message: Message) -> Result<SendResult, MailboxError> {
+        MATCH &self.backpressure_strategy {
+            BackpressureStrategy::Block => {
+                // Wait for space with exponential backoff
+                backoff = ExponentialBackoff::new(Duration::from_millis(1), Duration::from_secs(1))
+                
+                WHILE self.current_size.load(Ordering::Acquire) >= self.total_capacity {
+                    tokio::time::sleep(backoff.next_delay()).await
+                }
+                
+                self.send(message).await
+            },
+            BackpressureStrategy::Drop(min_priority) => {
+                IF message.priority >= *min_priority {
+                    // Try to make space by dropping lower priority messages
+                    dropped_count = self.drop_lower_priority_messages(message.priority)
+                    IF dropped_count > 0 {
+                        self.send(message).await
+                    } ELSE {
+                        self.metrics.record_message_dropped(&message.message_type, "no_space_after_drop")
+                        Err(MailboxError::Dropped("Unable to make space".to_string()))
+                    }
+                } ELSE {
+                    self.metrics.record_message_dropped(&message.message_type, "low_priority")
+                    Err(MailboxError::Dropped("Message priority too low".to_string()))
+                }
+            },
+            BackpressureStrategy::Overflow(max_overflow) => {
+                current_overflow = self.current_size.load(Ordering::Acquire) - self.total_capacity
+                IF current_overflow < *max_overflow {
+                    // Allow temporary overflow
+                    self.priority_queues[message.priority as usize].push_back(message.clone())
+                    self.current_size.fetch_add(1, Ordering::Release)
+                    
+                    // Schedule cleanup task
+                    self.schedule_overflow_cleanup().await
+                    
+                    Ok(SendResult::Overflowed { overflow_count: current_overflow + 1 })
+                } ELSE {
+                    Err(MailboxError::OverflowLimitExceeded)
+                }
+            },
+            BackpressureStrategy::Reject => {
+                self.metrics.record_message_rejected(&message.message_type)
+                Err(MailboxError::Rejected("Mailbox at capacity".to_string()))
+            },
+            BackpressureStrategy::SpillToSecondary(storage_path) => {
+                // Spill to secondary storage
+                spill_result = self.spill_to_storage(&message, storage_path).await
+                MATCH spill_result {
+                    Ok(spill_id) => Ok(SendResult::Spilled { spill_id }),
+                    Err(e) => Err(MailboxError::SpillFailed(e))
+                }
+            }
+        }
+    }
+}
 
 ### 3.6 Agent State Machine Management
 
 #### 3.6.1 State Persistence with Event Sourcing
 
-```pseudocode
+```rust
 // Event sourcing for agent state management
 STRUCT AgentStateManager {
     event_store: EventStore,
@@ -1371,7 +1489,7 @@ IMPL AgentStateManager {
 
 #### 3.6.2 State Machine with Supervision Integration
 
-```pseudocode
+```rust
 STRUCT AgentStateMachine {
     current_state: Arc<RwLock<AgentLifecycleState>>,
     allowed_transitions: HashMap<AgentLifecycleState, Vec<AgentLifecycleState>>,
@@ -1557,7 +1675,7 @@ IMPL StateHandler FOR IdleStateHandler {
 
 ### 4.1 Work Queue Pattern
 
-```pseudocode
+```rust
 CLASS TaskDistributor {
     PRIVATE workers: List<WorkerAgent>
     PRIVATE taskQueue: Queue<Task>
@@ -1592,7 +1710,7 @@ CLASS TaskDistributor {
 - Health-based routing decisions
 - Failover mechanisms
 
-```pseudocode
+```rust
 CLASS LoadBalancer {
     PRIVATE agents: List<Agent>
     PRIVATE currentIndex: Integer = 0
@@ -1622,7 +1740,7 @@ CLASS LoadBalancer {
 
 ### 5.1 Request-Response Pattern
 
-```pseudocode
+```rust
 CLASS RequestHandler {
     PRIVATE pendingRequests: Map<UUID, ResponseCallback>
     
@@ -1648,7 +1766,7 @@ CLASS RequestHandler {
 
 ### 5.2 Publish-Subscribe Pattern
 
-```pseudocode
+```rust
 CLASS EventBus {
     PRIVATE subscribers: Map<String, List<Agent>>
     
@@ -1672,7 +1790,7 @@ CLASS EventBus {
 
 ### 6.1 Registry Pattern
 
-```pseudocode
+```rust
 CLASS AgentRegistry {
     PRIVATE agents: Map<String, AgentInfo>
     
@@ -1695,7 +1813,7 @@ CLASS AgentRegistry {
 
 ### 6.2 Health Monitoring
 
-```pseudocode
+```rust
 CLASS HealthMonitor {
     PRIVATE agents: Map<String, HealthStatus>
     PRIVATE checkInterval: Duration
@@ -1728,7 +1846,7 @@ CLASS HealthMonitor {
 
 ### 7.1 Sequential Workflow
 
-```pseudocode
+```rust
 CLASS SequentialWorkflow {
     PRIVATE steps: List<WorkflowStep>
     
@@ -1750,7 +1868,7 @@ CLASS SequentialWorkflow {
 
 ### 7.2 Parallel Workflow
 
-```pseudocode
+```rust
 CLASS ParallelWorkflow {
     PRIVATE tasks: List<Task>
     
@@ -1776,7 +1894,7 @@ CLASS ParallelWorkflow {
 
 ### 8.1 Basic Error Recovery
 
-```pseudocode
+```rust
 CLASS ErrorHandler {
     FUNCTION handleAgentError(agent: Agent, error: Error) {
         SWITCH error.type {
@@ -1805,7 +1923,7 @@ CLASS ErrorHandler {
 - Half-open state testing strategies
 - Metric-based threshold adjustments
 
-```pseudocode
+```rust
 CLASS CircuitBreaker {
     PRIVATE state: BreakerState = CLOSED
     PRIVATE failureCount: Integer = 0
@@ -1850,7 +1968,7 @@ CLASS CircuitBreaker {
 
 ### 9.1 Agent Metrics
 
-```pseudocode
+```rust
 CLASS AgentMetrics {
     PRIVATE messageCount: Counter
     PRIVATE taskCompletionTime: Histogram

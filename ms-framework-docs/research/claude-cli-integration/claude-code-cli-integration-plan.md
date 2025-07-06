@@ -4,7 +4,8 @@
 
 ### Overview
 
-This document provides a comprehensive integration plan for incorporating Claude Code CLI capabilities into the Mister Smith multi-agent framework. The integration leverages existing framework architecture while adding minimal new components.
+This document provides a comprehensive integration plan for incorporating Claude Code CLI capabilities into the Mister Smith multi-agent framework.
+The integration leverages existing framework architecture while adding minimal new components.
 
 ---
 
@@ -12,7 +13,7 @@ This document provides a comprehensive integration plan for incorporating Claude
 
 ### 1. Component Integration Map
 
-```
+```text
 Mister Smith Framework (Rust)
 ├── NATS Server (existing messaging backbone)
 ├── Agent Supervisor (existing Tokio-based)
@@ -31,7 +32,7 @@ Mister Smith Framework (Rust)
 
 ### 2. Data Flow Architecture
 
-```
+```text
 User Request → Framework → Claude CLI Controller → Claude CLI Instance
                 ↓                                        ↓
          NATS Subjects ← Hook Bridge ← Claude Hooks ← Task Execution
@@ -205,7 +206,7 @@ impl AgentOrchestrator {
 
 **Hook Integration Subjects** (already defined, just document usage):
 
-```
+```text
 control.startup               # Claude CLI initialization
 agent.{id}.pre               # Pre-task hook processing
 agent.{id}.post              # Post-task hook processing  

@@ -9,7 +9,7 @@ tags:
 - '#agent-focused'
 ---
 
-# Security Patterns - Core Framework Implementation
+## Security Patterns - Core Framework Implementation
 
 ## Validation Status
 
@@ -32,7 +32,8 @@ As stated in the canonical framework: "Agents: use this framework as the canonic
 
 ## Purpose
 
-Essential security patterns, guidelines, templates, and sandbox configurations for agent implementation. This document provides the foundational security building blocks that agents need to implement secure systems.
+Essential security patterns, guidelines, templates, and sandbox configurations for agent implementation.
+This document provides the foundational security building blocks that agents need to implement secure systems.
 
 ## Core Security Components
 
@@ -42,7 +43,7 @@ Essential security patterns, guidelines, templates, and sandbox configurations f
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Basic JWT Authentication Flow
 function authenticate_request(request):
     token = extract_bearer_token(request.headers)
@@ -94,7 +95,7 @@ authentication:
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Role-Based Access Control Pattern
 function check_permission(user_id, resource, action):
     user_roles = get_user_roles(user_id)
@@ -176,7 +177,7 @@ authorization:
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // TLS Server Setup
 function create_tls_server(cert_path, key_path):
     tls_config = {
@@ -220,7 +221,7 @@ tls:
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Environment-Based Secrets (Use only for development)
 function load_secrets():
     secrets = {
@@ -290,7 +291,7 @@ secrets:
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Security Headers Middleware
 function security_headers_middleware(request, response, next):
     response.headers.add("X-Content-Type-Options", "nosniff")
@@ -344,7 +345,7 @@ function rate_limit_middleware(request, response, next):
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Security Event Logging
 function log_security_event(event_type, details):
     event = {
@@ -409,7 +410,7 @@ security_events = [
 
 **Pseudocode Pattern - mTLS Configuration:**
 
-```pseudocode
+```rust
 // Initialize secure NATS connection with mTLS
 function init_secure_nats(tenant_id):
     // Load certificates from secure storage
@@ -521,7 +522,7 @@ jetstream_limits:
 
 **Key Rotation Pattern:**
 
-```pseudocode
+```rust
 // Zero-downtime key rotation state machine
 key_rotation_states = [
     "KEY_A_ACTIVE",
@@ -684,7 +685,7 @@ security:
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Hook execution with privilege isolation
 function execute_hook_safely(hook_script, payload):
     // Ensure hook runs under non-root user
@@ -771,7 +772,7 @@ hook_security:
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Validate hook scripts before execution
 function validate_hook_script(script_path):
     // Check file permissions
@@ -951,7 +952,7 @@ incident_response:
     - ddos_attack
 ```
 
-2. **Enterprise Secrets Management Integration**
+1. **Enterprise Secrets Management Integration**
 
 ```yaml
 secrets_management:
@@ -965,7 +966,7 @@ secrets_management:
     track_rotation: true
 ```
 
-3. **Encryption at Rest Patterns**
+1. **Encryption at Rest Patterns**
 
 ```yaml
 encryption_at_rest:
@@ -980,7 +981,7 @@ encryption_at_rest:
 
 ### Short-Term Improvements (High Priority)
 
-4. **Real-Time Security Monitoring**
+1. **Real-Time Security Monitoring**
 
 ```yaml
 security_monitoring:
@@ -995,7 +996,7 @@ security_monitoring:
     anomaly_threshold: 2_standard_deviations
 ```
 
-5. **Enhanced Web Application Security**
+1. **Enhanced Web Application Security**
 
 ```yaml
 web_security:
@@ -1102,7 +1103,7 @@ web_security:
 
 **Incident Response Pattern:**
 
-```pseudocode
+```rust
 // Incident Detection Pattern
 function detect_security_incident(event):
     incident_indicators = analyze_event_for_threats(event)
@@ -1206,7 +1207,7 @@ incident_response:
 
 **Compliance Reporting Pattern:**
 
-```pseudocode
+```rust
 // Compliance Incident Assessment
 function assess_compliance_impact(incident):
     impact_assessment = ComplianceImpactAssessment()
@@ -1257,7 +1258,7 @@ function generate_compliance_reports(incident, assessment):
 
 **Evidence Collection Pattern:**
 
-```pseudocode
+```rust
 // Evidence Chain of Custody
 function create_evidence_chain(incident_id, investigator_id):
     chain = EvidenceChain()
@@ -1368,7 +1369,7 @@ forensic_investigation:
 
 **User Activity Reconstruction Pattern:**
 
-```pseudocode
+```rust
 // Comprehensive User Activity Analysis
 function reconstruct_user_activity(user_id, time_range, include_related_entities):
     reconstruction = UserActivityReconstruction()
@@ -1430,7 +1431,7 @@ function correlate_events_across_systems(correlation_id, time_window):
 
 **Compliance Validation Pattern:**
 
-```pseudocode
+```rust
 // Automated Compliance Assessment
 function validate_compliance_posture(framework_type):
     assessment = ComplianceAssessment(framework_type)

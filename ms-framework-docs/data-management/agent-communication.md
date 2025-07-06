@@ -6,7 +6,7 @@ tags:
 - '#revised-document #agent-communication #message-passing #task-distribution #coordination'
 ---
 
-# Agent Communication Architecture
+## Agent Communication Architecture
 
 ## Message Passing, Task Distribution & Coordination
 
@@ -22,12 +22,14 @@ tags:
 > | **TOTAL SCORE** | **14/15** | **✅ DEPLOYMENT APPROVED** |
 >
 > *Validated: 2025-07-05 | Document Lines: 2,156 | Implementation Status: 93%*
-
 > **Canonical Reference**: See `tech-framework.md` for authoritative technology stack specifications
 
 ## Executive Summary
 
-This document defines the communication protocols, message passing patterns, task distribution mechanisms, and coordination strategies for agent interactions within the Mister Smith framework. It covers direct RPC, publish/subscribe, blackboard patterns, comprehensive message schemas, and coordination mechanisms for distributed agent systems.
+This document defines the communication protocols, message passing patterns, task distribution mechanisms,
+and coordination strategies for agent interactions within the Mister Smith framework. It covers direct RPC,
+publish/subscribe, blackboard patterns, comprehensive message schemas, and coordination mechanisms
+for distributed agent systems.
 
 ## 3. Message Passing and Communication Patterns
 
@@ -537,7 +539,7 @@ impl Blackboard {
 
 #### 3.5.1 Runtime Message Validation
 
-```pseudocode
+```rust
 STRUCT MessageValidator {
     schemas: HashMap<String, MessageSchema>,
     validation_cache: Arc<RwLock<LruCache<String, ValidationResult>>>,
@@ -641,7 +643,7 @@ IMPL ValidationRule FOR AgentCapabilityRule {
 
 #### 3.5.2 Priority-Based Mailbox with Backpressure
 
-```pseudocode
+```rust
 STRUCT AgentMailbox {
     priority_queues: [VecDeque<Message>; 5], // One queue per priority level
     capacity_per_priority: [usize; 5],
@@ -834,7 +836,7 @@ IMPL AgentMailbox {
 
 #### 3.6.1 State Persistence with Event Sourcing
 
-```pseudocode
+```rust
 // Event sourcing for agent state management
 STRUCT AgentStateManager {
     event_store: EventStore,
@@ -1000,7 +1002,7 @@ IMPL AgentStateManager {
 
 #### 3.6.2 State Machine with Supervision Integration
 
-```pseudocode
+```rust
 STRUCT AgentStateMachine {
     current_state: Arc<RwLock<AgentLifecycleState>>,
     allowed_transitions: HashMap<AgentLifecycleState, Vec<AgentLifecycleState>>,
@@ -1188,7 +1190,7 @@ IMPL StateHandler FOR IdleStateHandler {
 
 ### 4.1 Work Queue Pattern
 
-```pseudocode
+```rust
 CLASS TaskDistributor {
     PRIVATE workers: List<WorkerAgent>
     PRIVATE taskQueue: Queue<Task>
@@ -1217,7 +1219,7 @@ CLASS TaskDistributor {
 
 ### 4.2 Load Balancing
 
-```pseudocode
+```rust
 CLASS LoadBalancer {
     PRIVATE agents: List<Agent>
     PRIVATE currentIndex: Integer = 0
@@ -1240,7 +1242,7 @@ CLASS LoadBalancer {
 
 ### 5.1 Request-Response Pattern
 
-```pseudocode
+```rust
 CLASS RequestHandler {
     PRIVATE pendingRequests: Map<UUID, ResponseCallback>
     
@@ -1266,7 +1268,7 @@ CLASS RequestHandler {
 
 ### 5.2 Publish-Subscribe Pattern
 
-```pseudocode
+```rust
 CLASS EventBus {
     PRIVATE subscribers: Map<String, List<Agent>>
     

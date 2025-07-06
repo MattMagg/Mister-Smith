@@ -14,8 +14,9 @@
 > | **TOTAL SCORE** | **15/15** | **✅ DEPLOYMENT APPROVED** |
 >
 > *Validated: 2025-07-05 | Document Lines: 3,672 | Implementation Status: 100%*
-
-> **Purpose**: This document defines the validation framework, serialization specifications, event correlation logic, transformation patterns, version management, implementation guidelines, security considerations, and performance optimizations for the message schema system.
+> **Purpose**: This document defines the validation framework, serialization specifications, event correlation logic,
+> transformation patterns, version management, implementation guidelines, security considerations, and performance
+> optimizations for the message schema system.
 
 ## Overview
 
@@ -2048,11 +2049,13 @@ This file is part of the Message Schema Documentation suite:
 
 ### Technical Implementation
 
-- **Validation**: [Rules](#validation-rules-and-levels), [Error Codes](#error-code-classification), [Performance](#performance-optimization-1)
-- **Serialization**: [JSON Standards](#json-serialization-standards), [Binary Formats](#binary-serialization-alternatives)
-- **Event Correlation**: [Correlation ID Tracking](#correlation-id-generation-and-tracking), [Event Aggregation](#event-aggregation-patterns), [Temporal Windows](#temporal-correlation-windows), [Causality Chains](#causality-chain-tracking), [Deduplication](#event-deduplication), [Performance](#performance-optimizations-for-high-volume-events)
-- **Transformation**: [Protocol Adaptation](#protocol-adaptation), [Enrichment](#message-enrichment), [Content Mapping](#content-transformation)
-- **Management**: [Versioning](#versioning-strategy), [Compatibility](#compatibility-matrix), [Registry](#schema-registry)
+- **Validation**: [Rules](#71-validation-rules-and-levels), [Error Codes](#72-error-code-classification), [Performance](#73-performance-optimization)
+- **Serialization**: [JSON Standards](#81-json-serialization-standards), [Binary Formats](#82-binary-serialization-alternatives)
+- **Event Correlation**: [Correlation ID Tracking](#91-correlation-id-generation-and-tracking), [Event Aggregation](#92-event-aggregation-patterns),
+  [Temporal Windows](#9-event-correlation-logic), [Causality Chains](#9-event-correlation-logic),
+  [Deduplication](#9-event-correlation-logic), [Performance](#9-event-correlation-logic)
+- **Transformation**: [Protocol Adaptation](#8-serialization-specifications), [Enrichment](#8-serialization-specifications), [Content Mapping](#95-content-based-routing)
+- **Management**: [Versioning](#8-serialization-specifications), [Compatibility](#8-serialization-specifications), [Registry](#94-topic-based-routing)
 
 For the complete framework documentation, see the [Data Management Index](./CLAUDE.md).
 

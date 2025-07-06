@@ -6,7 +6,7 @@ tags:
 - '#data-management #storage-architecture #repository-patterns #foundation'
 ---
 
-# Storage Architecture & Repository Patterns
+## Storage Architecture & Repository Patterns
 
 ## Foundation Storage Patterns Guide
 
@@ -22,24 +22,25 @@ tags:
 > | **TOTAL SCORE** | **15/15** | **✅ DEPLOYMENT APPROVED** |
 >
 > *Validated: 2025-07-05 | Document Lines: 2,456 | Implementation Status: 100%*
-
 > **Navigation**: Part of the modularized data persistence framework
 >
 > - **Core Trilogy**: [[connection-management]] ⟷ [[persistence-operations]] ⟷ **storage-patterns**
 > - Related: [[stream-processing]] | [[schema-definitions]] | [[data-management/CLAUDE]]
 > - External: [[../core-architecture/integration-implementation]]
-
 > **Canonical Reference**: See `tech-framework.md` for authoritative technology stack specifications
 
 ## Executive Summary
 
-This document defines foundational data persistence and memory management patterns using PostgreSQL 15 with SQLx 0.7 as the primary data layer, complemented by JetStream KV for distributed state management. The architecture implements a dual-store approach with short-term state in NATS JetStream KV and long-term state in PostgreSQL, achieving high throughput while maintaining durability. Focus is on teachable patterns and basic architectural principles.
+This document defines foundational data persistence and memory management patterns using PostgreSQL 15 with SQLx 0.7
+as the primary data layer, complemented by JetStream KV for distributed state management. The architecture implements
+a dual-store approach with short-term state in NATS JetStream KV and long-term state in PostgreSQL, achieving high
+throughput while maintaining durability. Focus is on teachable patterns and basic architectural principles.
 
 ## 1. Basic Storage Architecture
 
 ### 1.1 Storage Pattern Overview
 
-```pseudocode
+```rust
 DEFINE StorageLayer ENUM {
     MEMORY_CACHE,     // In-process cache
     DISTRIBUTED_KV,   // JetStream KV (short-term)
@@ -57,7 +58,7 @@ INTERFACE DataStorage {
 
 ### 1.2 Data Categories & Two-Tier Architecture
 
-```pseudocode
+```rust
 DEFINE DataType ENUM {
     SESSION_DATA,     // Temporary user sessions (KV)
     AGENT_STATE,      // Agent runtime state (KV → SQL)
@@ -86,7 +87,7 @@ CLASS DataRouter {
 
 ### 1.3 Hybrid Storage Pattern
 
-```pseudocode
+```rust
 -- Dual-store implementation for agent state
 CLASS HybridStateManager {
     PRIVATE kv_store: JetStreamKV
@@ -131,7 +132,7 @@ CLASS HybridStateManager {
 
 ### 2.1 Basic Schema Design with JSONB
 
-```pseudocode
+```rust
 -- Core schema organization
 CREATE SCHEMA agents;
 CREATE SCHEMA tasks;
@@ -166,7 +167,7 @@ CREATE TABLE tasks.queue (
 
 ### 2.2 State Hydration Support
 
-```pseudocode
+```rust
 -- Agent checkpoint table for recovery
 CREATE TABLE agents.checkpoints (
     agent_id UUID,
@@ -194,7 +195,7 @@ $$ LANGUAGE plpgsql;
 
 ### 4.1 Repository Pattern with Dual Store
 
-```pseudocode
+```rust
 INTERFACE Repository<T> {
     FUNCTION save(entity: T) -> Result<T>
     FUNCTION find(id: UUID) -> Result<T>
@@ -259,7 +260,7 @@ CLASS AgentRepository IMPLEMENTS Repository<Agent> {
 
 ### 4.2 State Lifecycle Management
 
-```pseudocode
+```rust
 CLASS StateLifecycleManager {
     PRIVATE kv: KVBucket
     PRIVATE db: DatabaseConnection
@@ -334,7 +335,7 @@ CLASS StateLifecycleManager {
 
 ### 4.3 Enhanced Caching Pattern with TTL
 
-```pseudocode
+```rust
 CLASS TieredCacheRepository {
     PRIVATE repository: Repository
     PRIVATE memory_cache: Map<UUID, CacheEntry>

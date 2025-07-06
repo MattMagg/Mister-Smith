@@ -4,7 +4,9 @@
 
 ## Overview
 
-This document establishes comprehensive coding standards for the Mister Smith AI Agent Framework. These standards ensure consistent, maintainable, and secure code across all framework components, enabling autonomous agents to implement features following established patterns and best practices.
+This document establishes comprehensive coding standards for the Mister Smith AI Agent Framework.
+These standards ensure consistent, maintainable, and secure code across all framework components,
+enabling autonomous agents to implement features following established patterns and best practices.
 
 ---
 
@@ -172,7 +174,7 @@ pub async fn start_system() -> SystemResult<SystemCore> { /* ... */ }
 
 Each module should follow this structure:
 
-```
+```markdown
 module_name/
 ├── mod.rs              # Module declaration and re-exports
 ├── types.rs            # Type definitions and enums
@@ -220,7 +222,7 @@ mod tests;
 
 Modules must follow this dependency order (no circular dependencies):
 
-```
+```markdown
 errors ← (foundation module)
 config ← errors
 events ← errors, config

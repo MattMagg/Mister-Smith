@@ -11,7 +11,7 @@
   "MD033": false,
   "MD036": false,
   "MD040": { 
-    "allowed_languages": ["", "bash", "markdown", "shell", "sh", "yml", "yaml", "json", "javascript", "typescript", "rust", "toml", "python"],
+    "allowed_languages": ["", "bash", "markdown", "shell", "sh", "yml", "yaml", "json", "javascript", "typescript", "rust", "toml", "python", "sql", "text", "regex", "protobuf", "dockerfile", "makefile", "hcl", "ini", "prometheus", "http", "mermaid", "hocon"],
     "language_only": false 
   },
   "MD041": false,

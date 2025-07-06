@@ -4,7 +4,8 @@
 
 ### Overview
 
-This document specifies the core architecture for integrating Claude Code CLI capabilities into the Mister Smith multi-agent framework. The integration adds new components while preserving existing framework architecture and patterns.
+This document specifies the core architecture for integrating Claude Code CLI capabilities into the Mister Smith multi-agent framework.
+The integration adds new components while preserving existing framework architecture and patterns.
 
 ---
 

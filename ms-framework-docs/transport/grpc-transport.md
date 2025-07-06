@@ -4,7 +4,7 @@ type: specification
 permalink: transport/grpc-transport
 ---
 
-# gRPC Transport Protocol Specification
+## gRPC Transport Protocol Specification
 
 ## Mister Smith AI Agent Framework
 
@@ -39,7 +39,8 @@ Reference: `/Users/mac-main/Mister-Smith/MisterSmith/validation-swarm/batch5-spe
 
 ## Overview
 
-This document specifies the gRPC transport protocol implementation for agent communication within the Mister Smith framework. gRPC provides high-performance, cross-language RPC capabilities using Protocol Buffers for serialization.
+This document specifies the gRPC transport protocol implementation for agent communication within the Mister Smith framework.
+gRPC provides high-performance, cross-language RPC capabilities using Protocol Buffers for serialization.
 
 **Technology Stack**:
 
@@ -65,7 +66,7 @@ This document specifies the gRPC transport protocol implementation for agent com
 
 ### 1.1 Basic Service Definition
 
-```pseudocode
+```rust
 SERVICE AgentCommunication:
     METHOD send_message(request) -> response
     METHOD get_status(agent_id) -> status
@@ -79,7 +80,7 @@ MESSAGE TYPES:
 
 ### 1.2 Streaming Patterns
 
-```pseudocode
+```rust
 STREAMING_PATTERNS:
     
     SERVER_STREAMING:
@@ -373,7 +374,7 @@ GRPC_SERVER_CONFIG:
 
 ### 4.1 Connection Pool Architecture
 
-```pseudocode
+```rust
 -- gRPC Connection Pool
 CLASS GrpcConnectionPool IMPLEMENTS ConnectionPoolManager {
     FUNCTION create_grpc_pool(config: GrpcConfig) -> GrpcPool {
@@ -449,7 +450,7 @@ GRPC_CONNECTION_POOL:
 
 gRPC integrates with the framework's transport abstraction layer as one of the available implementations:
 
-```pseudocode
+```rust
 INTERFACE Transport:
     connect(config)
     disconnect()

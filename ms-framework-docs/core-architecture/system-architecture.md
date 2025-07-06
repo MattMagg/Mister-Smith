@@ -6,13 +6,15 @@ tags:
 - '#rust #implementation #tokio #async #supervision'
 ---
 
-# Core System Architecture - Rust Implementation Specifications
+## Core System Architecture - Rust Implementation Specifications
 
 Implementation-ready Rust specifications for the Mister Smith AI Agent Framework
 
 ## Overview
 
-This document provides concrete Rust implementations for agent system architecture using Tokio runtime, async patterns, and supervision trees. **⚠️ WARNING: Not all code is implementation-ready** - critical components like supervision trees remain as pseudocode. See validation status below for details.
+This document provides concrete Rust implementations for agent system architecture using Tokio runtime, async patterns, and supervision trees.
+**⚠️ WARNING: Not all code is implementation-ready** - critical components like supervision trees remain as pseudocode.
+See validation status below for details.
 
 ## 🔍 VALIDATION STATUS
 
@@ -38,7 +40,9 @@ This document provides concrete Rust implementations for agent system architectu
 
 ### Critical Implementation Notes
 
-This document transitions from concrete Rust implementations to pseudocode starting at the Supervision Tree section. The validation team has identified critical gaps that must be addressed before production use. See inline implementation recommendations throughout.
+This document transitions from concrete Rust implementations to pseudocode starting at the Supervision Tree section.
+The validation team has identified critical gaps that must be addressed before production use.
+See inline implementation recommendations throughout.
 
 ## Dependencies
 
@@ -298,7 +302,7 @@ impl SystemError {
         }
     }
 }
-```
+```rust
 
 ## 1. Tokio Runtime Architecture
 
@@ -372,7 +376,7 @@ impl RuntimeConfig {
         builder.build().map_err(RuntimeError::BuildFailed)
     }
 }
-```
+```rust
 
 ### 1.2 Runtime Lifecycle Management
 
@@ -517,7 +521,7 @@ impl RuntimeManager {
         &self.runtime
     }
 }
-```
+```rust
 
 ## 2. Async Patterns Architecture
 
@@ -745,7 +749,7 @@ impl TaskExecutor {
         &self.metrics
     }
 }
-```
+```rust
 
 ### 2.2 Stream Processing Architecture
 
@@ -957,7 +961,7 @@ pub fn create_rate_limited_stream<T>(
         })
     )
 }
-```
+```rust
 
 ### 2.3 Actor Model Implementation
 
@@ -1297,7 +1301,7 @@ impl Clone for ActorSystem {
         }
     }
 }
-```
+```rust
 
 ### 2.4 Core Type Definitions
 
@@ -1476,7 +1480,7 @@ pub mod constants {
     pub const DEFAULT_TOOL_TIMEOUT: Duration = Duration::from_secs(30);
     pub const MAX_TOOL_RETRIES: u32 = 3;
 }
-```
+```rust
 
 ### 2.5 Agent-as-Tool Pattern
 
@@ -1594,7 +1598,7 @@ pub trait SupervisorToolIntegration {
 }
 
 // Example implementation would be added to supervisor structs
-```
+```rust
 
 ### 2.6 Tool System Core
 
@@ -1844,7 +1848,7 @@ pub mod builtin {
         }
     }
 }
-```
+```rust
 
 ## 3. Supervision Tree Architecture
 
@@ -2210,11 +2214,11 @@ IMPL SupervisorNode {
         RETURN Err(SupervisionError::RestartLimitExceeded)
     }
 }
-```
+```yaml
 
 ### 3.2 Failure Detection and Recovery
 
-```pseudocode
+```rust
 STRUCT FailureDetector {
     heartbeat_interval: Duration,
     failure_threshold: u32,
@@ -2287,7 +2291,7 @@ IMPL CircuitBreaker {
         }
     }
 }
-```
+```rust
 
 ## 4. Event System Implementation
 
@@ -2619,7 +2623,7 @@ impl EventBuilder {
         self.event
     }
 }
-```
+```rust
 
 ## 5. Health Monitoring Implementation
 
@@ -2818,13 +2822,13 @@ impl HealthCheck for RuntimeHealthCheck {
         Duration::from_secs(10)
     }
 }
-```
+```yaml
 
 ## 6. Foundational System Design
 
 ### 4.1 Component Architecture
 
-```pseudocode
+```rust
 STRUCT SystemCore {
     runtime_manager: RuntimeManager,
     actor_system: ActorSystem,
@@ -2880,11 +2884,11 @@ IMPL SystemCore {
         RETURN Ok(())
     }
 }
-```
+```rust
 
 ### 4.2 Event-Driven Architecture
 
-```pseudocode
+```rust
 STRUCT EventBus {
     channels: Arc<RwLock<HashMap<EventType, Vec<EventChannel>>>>,
     event_store: EventStore,
@@ -2938,11 +2942,11 @@ IMPL EventBus {
         RETURN Ok(subscription_id)
     }
 }
-```
+```yaml
 
 ### 4.3 Resource Management
 
-```pseudocode
+```rust
 STRUCT ResourceManager {
     connection_pools: HashMap<PoolType, ConnectionPool>,
     memory_manager: MemoryManager,
@@ -3000,11 +3004,11 @@ IMPL<R: Resource> ConnectionPool<R> {
         RETURN Ok(())
     }
 }
-```
+```rust
 
 ### 4.4 Configuration Management
 
-```pseudocode
+```rust
 STRUCT ConfigurationManager {
     config_store: Arc<RwLock<ConfigurationStore>>,
     watchers: Arc<Mutex<Vec<ConfigurationWatcher>>>,
@@ -3052,7 +3056,7 @@ IMPL ConfigurationManager {
         RETURN Ok(watcher_id)
     }
 }
-```
+```rust
 
 ## 5. Integration Patterns
 
@@ -3060,7 +3064,7 @@ IMPL ConfigurationManager {
 
 #### 5.1.1 Hierarchical Message Addressing
 
-```pseudocode
+```rust
 // AsyncAPI-inspired addressing scheme with NATS subject patterns
 ENUM MessageAddress {
     // Agent lifecycle: agents.{supervisor_id}.{operation}.{agent_type}.{agent_id}
@@ -3115,11 +3119,11 @@ IMPL MessageAddress {
         true
     }
 }
-```
+```rust
 
 #### 5.1.2 Message Schema Validation
 
-```pseudocode
+```rust
 // AsyncAPI-inspired message schema with validation
 STRUCT MessageSchema {
     message_type: String,
@@ -3166,11 +3170,11 @@ IMPL MessageValidator {
         self.schemas.insert(schema.message_type.clone(), schema)
     }
 }
-```
+```rust
 
 #### 5.1.3 Enhanced Message Bridge
 
-```pseudocode
+```rust
 STRUCT MessageBridge {
     routing_table: Arc<RwLock<HashMap<String, Vec<ComponentId>>>>,
     message_validator: MessageValidator,
@@ -3317,11 +3321,11 @@ IMPL MessageBridge {
         }
     }
 }
-```
+```rust
 
 ### 5.3 Shared Tool Registry Pattern
 
-```pseudocode
+```rust
 STRUCT ToolBus {
     tools: Arc<RwLock<HashMap<ToolId, Box<dyn Tool>>>>,
     permissions: HashMap<AgentId, Vec<ToolId>>
@@ -3348,11 +3352,11 @@ IMPL ToolBus {
         RETURN tools.get(&tool_id)?.execute(params).await
     }
 }
-```
+```rust
 
 ### 5.4 Role-Based Agent Spawning
 
-```pseudocode
+```rust
 ENUM AgentRole {
     ProductManager { sop: StandardProcedure },
     Architect { design_patterns: Vec<Pattern> },
@@ -3382,11 +3386,11 @@ STRUCT RoleSpawner {
         RETURN self.spawn_controller.spawn_bounded(role).await
     }
 }
-```
+```rust
 
 ### 5.2 Health Check and Monitoring
 
-```pseudocode
+```rust
 STRUCT HealthCheckManager {
     health_checks: Arc<RwLock<HashMap<ComponentId, Box<dyn HealthCheck>>>>,
     check_interval: Duration,
@@ -3428,13 +3432,13 @@ IMPL HealthCheckManager {
         }
     }
 }
-```
+```yaml
 
 ### 5.4 State Persistence & Recovery
 
 #### 5.4.1 Event Sourcing for State Management
 
-```pseudocode
+```rust
 // Event sourcing pattern for agent state persistence
 STRUCT EventStore {
     storage: Arc<dyn EventStorage>,
@@ -3527,11 +3531,11 @@ IMPL AgentStateManager {
         Ok(())
     }
 }
-```
+```rust
 
 #### 5.4.2 Distributed State Coordination
 
-```pseudocode
+```rust
 // CQRS pattern for read/write separation
 STRUCT CommandHandler {
     event_store: EventStore,
@@ -3676,13 +3680,13 @@ IMPL SagaOrchestrator {
         Ok(())
     }
 }
-```
+```rust
 
 ### 5.5 Async Message Flow Patterns
 
 #### 5.5.1 Stream-Based Message Processing
 
-```pseudocode
+```rust
 // Tokio streams for message processing with backpressure
 STRUCT MessageStream {
     inner: Pin<Box<dyn Stream<Item = Result<Message, MessageError>>>>,
@@ -3760,11 +3764,11 @@ IMPL MessageProcessor {
         Ok(())
     }
 }
-```
+```rust
 
 #### 5.5.2 Future Composition for Message Flows
 
-```pseudocode
+```rust
 // Complex message flows with proper error handling
 STRUCT MessageFlow {
     flow_id: String,
@@ -3891,13 +3895,13 @@ IMPL MessageFlowExecutor {
         Ok(merged_context)
     }
 }
-```
+```rust
 
 ## 6. Implementation Guidelines
 
 ### 6.1 Error Handling Strategy
 
-```pseudocode
+```rust
 ENUM SystemError {
     Runtime(RuntimeError),
     Supervision(SupervisionError),
@@ -3930,11 +3934,11 @@ IMPL SystemError {
         }
     }
 }
-```
+```yaml
 
 ### 6.2 Testing Framework
 
-```pseudocode
+```rust
 STRUCT SystemTestHarness {
     mock_runtime: MockRuntime,
     test_supervision_tree: TestSupervisionTree,
@@ -3961,13 +3965,13 @@ IMPL SystemTestHarness {
         RETURN TestResult::Passed
     }
 }
-```
+```rust
 
 ### 6.3 Critical Anti-Patterns to Avoid
 
 #### 6.3.1 Uncontrolled Agent Spawning
 
-```pseudocode
+```rust
 // ❌ BAD: Unlimited spawning without resource bounds
 ASYNC FUNCTION handle_task_badly(task: Task) {
     FOR subtask IN task.decompose() {
@@ -3988,11 +3992,11 @@ STRUCT SpawnController {
         RETURN Ok(BoundedAgent::new(role, self.active.clone()))
     }
 }
-```
+```rust
 
 #### 6.3.2 Context Overflow
 
-```pseudocode
+```rust
 // ❌ BAD: Accumulating unlimited context memory
 STRUCT NaiveAgent {
     context: Vec<Message>, // Grows forever, causing memory issues
@@ -4011,11 +4015,11 @@ STRUCT SmartAgent {
         }
     }
 }
-```
+```rust
 
 #### 6.3.3 Synchronous Tool Blocking
 
-```pseudocode
+```rust
 // ❌ BAD: Blocking tool calls that freeze the runtime
 IMPL Tool FOR WebSearch {
     ASYNC FUNCTION execute(&self, query: Value) -> Result<Value> {
@@ -4035,33 +4039,33 @@ IMPL Tool FOR AsyncWebSearch {
         ).await??
     }
 }
-```
+```rust
 
 #### 6.3.4 Monolithic Supervisor
 
-```pseudocode
+```rust
 // ❌ BAD: Single supervisor managing all agents directly
 // This creates a bottleneck and single point of failure
 
 // ✅ GOOD: Hierarchical supervisors with domain-specific delegation
 // Distribute supervision responsibility across multiple levels
-```
+```rust
 
 #### 6.3.5 Static Role Assignment
 
-```pseudocode
+```rust
 // ❌ BAD: Fixed teams for all projects regardless of needs
 // Wastes resources and limits flexibility
 
 // ✅ GOOD: Dynamic team composition based on task analysis
 // Spawn only the agents needed for each specific project
-```
+```rust
 
 ## 7. Extension Mechanisms
 
 ### 7.1 Middleware Pattern
 
-```pseudocode
+```rust
 TRAIT AgentMiddleware: Send + Sync {
     ASYNC FUNCTION before_process(&self, msg: &Message) -> Result<()>
     ASYNC FUNCTION after_process(&self, msg: &Message, result: &Value) -> Result<()>
@@ -4093,11 +4097,11 @@ STRUCT Agent {
 STRUCT LoggingMiddleware { logger: Logger }
 STRUCT MetricsMiddleware { metrics: MetricsCollector }
 STRUCT AuthMiddleware { auth_service: AuthService }
-```
+```rust
 
 ### 7.2 Event Emitter Pattern
 
-```pseudocode
+```rust
 ENUM SystemEvent {
     AgentSpawned(AgentId),
     TaskCompleted(TaskId, Value),
@@ -4130,11 +4134,11 @@ STRUCT EventBus {
             .push(Box::new(handler))
     }
 }
-```
+```rust
 
 ### 7.3 Custom Routing Strategies
 
-```pseudocode
+```rust
 // Extension hook for custom routing logic
 TRAIT RoutingStrategy {
     FUNCTION select_recipient(&self, msg: &Message, agents: &[AgentId]) -> AgentId
@@ -4160,13 +4164,13 @@ IMPL MessageBus {
         self.routing_strategies.insert(name, strategy)
     }
 }
-```
+```yaml
 
 ## 8. Agent Implementation Configuration
 
 ### 7.1 Agent Implementation Settings
 
-```pseudocode
+```rust
 AGENT_CONFIG = {
     runtime: {
         worker_threads: CONFIGURABLE_VALUE,
@@ -4184,11 +4188,11 @@ AGENT_CONFIG = {
         log_level: CONFIGURABLE_VALUE
     }
 }
-```
+```yaml
 
 ### 7.2 Orchestration Patterns
 
-```pseudocode
+```rust
 ORCHESTRATION_CONFIG = {
     replicas: CONFIGURABLE_VALUE,
     resources: {
@@ -4205,7 +4209,7 @@ ORCHESTRATION_CONFIG = {
         scaling_policy: ADAPTIVE_SCALING_POLICY
     }
 }
-```
+```rust
 
 ## Module Organization Structure
 
@@ -4235,9 +4239,9 @@ pub mod prelude {
     pub use crate::types::*;
     pub use crate::errors::*;
 }
-```
+```rust
 
-```
+```rust
 src/
 ├── lib.rs                    // Main crate exports and prelude
 ├── core/                     // Core system components
@@ -4280,7 +4284,7 @@ src/
 │   └── agent_tool.rs        // AgentTool pattern
 ├── errors.rs                 // Central error types
 └── types.rs                  // Core type definitions
-```
+```rust
 
 ## Implementation Completeness Checklist
 
@@ -4357,11 +4361,12 @@ async fn main() -> Result<(), SystemError> {
     
     Ok(())
 }
-```
+```rust
 
 ## Summary
 
-This document provides **partially implementation-ready Rust specifications** for the Mister Smith AI Agent Framework core architecture. **⚠️ CRITICAL: Not all pseudocode has been transformed** - supervision trees, event system, and resource management remain as pseudocode:
+This document provides **partially implementation-ready Rust specifications** for the Mister Smith AI Agent Framework core architecture. 
+**⚠️ CRITICAL: Not all pseudocode has been transformed** - supervision trees, event system, and resource management remain as pseudocode:
 
 - **Zero Implementation Ambiguity**: All types, traits, and structures are fully specified
 - **Production-Ready Error Handling**: Comprehensive error types with recovery strategies
@@ -4459,7 +4464,7 @@ The implemented portions follow Rust best practices but **the framework is NOT r
        failure_detector: Arc<FailureDetector>,
        restart_policies: HashMap<NodeType, RestartPolicy>,
    }
-   ```
+```rust
 
 2. **Implement Event Bus**
    ```rust
@@ -4468,7 +4473,7 @@ The implemented portions follow Rust best practices but **the framework is NOT r
        subscribers: Arc<RwLock<HashMap<TypeId, Vec<Box<dyn EventHandler>>>>>,
        event_queue: Arc<Mutex<VecDeque<SystemEvent>>>,
    }
-   ```
+```rust
 
 3. **Add Health Monitoring**
    ```rust
@@ -4478,13 +4483,15 @@ The implemented portions follow Rust best practices but **the framework is NOT r
        health_checks: Vec<Box<dyn HealthCheck>>,
        status: Arc<RwLock<HashMap<ComponentId, HealthStatus>>>,
    }
-   ```
+```rust
 
 ### Production Readiness Recommendation
 
-**Status**: The System Architecture document demonstrates exceptional technical design with production-ready implementations for core components. However, the transition to pseudocode for critical systems like supervision and events creates a significant implementation gap.
+**Status**: The System Architecture document demonstrates exceptional technical design with production-ready implementations for core components. 
+However, the transition to pseudocode for critical systems like supervision and events creates a significant implementation gap.
 
-**Recommendation**: Approve with mandatory completion of supervision tree and event bus implementations before framework can be considered production-ready. The existing implementations provide an excellent foundation, but the missing components are essential for system reliability and coordination.
+**Recommendation**: Approve with mandatory completion of supervision tree and event bus implementations before framework can be considered production-ready. 
+The existing implementations provide an excellent foundation, but the missing components are essential for system reliability and coordination.
 
 ## 8. Architectural Consistency Validation Results
 
@@ -4511,7 +4518,7 @@ async-nats = "0.34"      # NATS transport - consistent version
 tonic = "0.11"           # gRPC transport - unified implementation
 axum = "0.8"             # HTTP transport - standardized
 serde = "1.0"            # Serialization - universal
-```
+```toml
 
 ### 8.2 Critical Implementation Gaps
 
@@ -4539,13 +4546,13 @@ serde = "1.0"            # Serialization - universal
 
 Validated dependency flow:
 
-```
+```rust
 Core Architecture (this document)
 ├── Data Management (depends on agent traits, supervision)
 ├── Security Framework (extends error types, uses auth traits)
 ├── Transport Layer (implements async patterns, message types)
 └── Operations (instruments all components, requires event bus)
-```
+```rust
 
 ### 8.5 Neural Training Integration Note
 
@@ -4640,7 +4647,7 @@ impl MetricsCollector {
         Ok(())
     }
 }
-```
+```rust
 
 ## 10. Risk Assessment and Production Readiness
 
@@ -4736,7 +4743,9 @@ Before deploying to production, ensure:
 
 ### 10.5 Validation Summary
 
-**Overall Assessment**: The Mister Smith AI Agent Framework demonstrates exceptional architectural design with production-ready implementations for many core components. The validation process has identified critical gaps that have been addressed with concrete implementations. With the completion of remaining components and thorough testing, this framework will provide a robust foundation for building resilient AI agent systems.
+**Overall Assessment**: The Mister Smith AI Agent Framework demonstrates exceptional architectural design with production-ready implementations for many core components. 
+The validation process has identified critical gaps that have been addressed with concrete implementations. 
+With the completion of remaining components and thorough testing, this framework will provide a robust foundation for building resilient AI agent systems.
 
 **Final Score**: 8.5/10 (up from 7.5/10 after integrating validation findings)
 

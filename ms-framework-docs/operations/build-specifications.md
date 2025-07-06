@@ -40,7 +40,9 @@
 
 ### Overview
 
-This document provides comprehensive build specifications for the Mister Smith AI Agent Framework. It defines complete Cargo.toml configurations, build scripts, feature flags, cross-compilation targets, release optimizations, CI/CD pipelines, and development configurations that enable autonomous agents to build and deploy the framework without manual intervention.
+This document provides comprehensive build specifications for the Mister Smith AI Agent Framework. It defines complete Cargo.toml configurations,
+build scripts, feature flags, cross-compilation targets, release optimizations, CI/CD pipelines, and development configurations that enable
+autonomous agents to build and deploy the framework without manual intervention.
 
 ---
 
@@ -56,7 +58,7 @@ This document provides comprehensive build specifications for the Mister Smith A
 
 ### 1.2 Build Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                      BUILD PIPELINE                         │
 ├─────────────────────────────────────────────────────────────┤
@@ -1655,4 +1657,6 @@ These build scripts are specifically designed for the MS Framework and include:
 
 ---
 
-This comprehensive build specification provides all necessary information for autonomous agents to build and deploy the Mister Smith Framework across multiple platforms and configurations without requiring manual intervention or decision-making. The included automation scripts ensure reproducible, secure, and optimized builds for all deployment scenarios.
+This comprehensive build specification provides all necessary information for autonomous agents to build and deploy the Mister Smith Framework
+across multiple platforms and configurations without requiring manual intervention or decision-making. The included automation scripts ensure
+reproducible, secure, and optimized builds for all deployment scenarios.

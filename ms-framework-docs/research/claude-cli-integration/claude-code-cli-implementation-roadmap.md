@@ -4,17 +4,18 @@
 
 ### Implementation Overview
 
-This roadmap provides a systematic approach to integrating Claude Code CLI capabilities into the Mister Smith multi-agent framework. The implementation is structured in phases that build upon each other while maintaining system stability.
+This roadmap provides a systematic approach to integrating Claude Code CLI capabilities into the Mister Smith multi-agent framework.
+The implementation is structured in phases that build upon each other while maintaining system stability.
 
 ---
 
 ## Phase 1: Core CLI Integration Foundation
 
-### Objective
+### Phase 1 Objective
 
 Establish basic Claude CLI process management and NATS integration.
 
-### Technical Deliverables
+### Phase 1 Technical Deliverables
 
 #### 1.1 Claude CLI Controller Implementation
 
@@ -80,7 +81,7 @@ SUBJECT="agent.${AGENT_ID}.${HOOK_TYPE}"
 echo "$INPUT" | nats pub "$SUBJECT" --stdin
 ```
 
-### Framework Modifications
+### Phase 1 Framework Modifications
 
 #### Update System Architecture
 
@@ -94,7 +95,7 @@ Add Claude CLI Controller as new component in architecture diagram and component
 
 Hook message formats already added. Verify integration with existing NATS subject taxonomy.
 
-### Success Criteria
+### Phase 1 Success Criteria
 
 - Claude CLI instances can be spawned and terminated
 - Basic hook events are published to NATS subjects
@@ -105,11 +106,11 @@ Hook message formats already added. Verify integration with existing NATS subjec
 
 ## Phase 2: Hook System Integration
 
-### Objective
+### Phase 2 Objective
 
 Complete hook system integration with comprehensive error handling and timeout management.
 
-### Technical Deliverables
+### Phase 2 Technical Deliverables
 
 #### 2.1 Enhanced Hook Bridge
 
@@ -221,7 +222,7 @@ impl HookBridge {
 }
 ```
 
-### Framework Modifications
+### Phase 2 Framework Modifications
 
 #### Update Observability Framework
 
@@ -234,7 +235,7 @@ Add hook execution metrics:
 - Hook timeout occurrences
 - NATS message delivery metrics
 
-### Success Criteria
+### Phase 2 Success Criteria
 
 - All 5 hook types (startup, pre_task, post_task, on_error, on_file_change) are functional
 - Hook responses can control Claude CLI execution (approve/block/continue)
@@ -245,11 +246,11 @@ Add hook execution metrics:
 
 ## Phase 3: Parallel Execution Enhancement
 
-### Objective
+### Phase 3 Objective
 
 Implement robust parallel task coordination and resource management for 25-30 concurrent agents.
 
-### Technical Deliverables
+### Phase 3 Technical Deliverables
 
 #### 3.1 Task Output Parser
 
@@ -383,7 +384,7 @@ impl ResourceManager {
 }
 ```
 
-### Framework Modifications
+### Phase 3 Framework Modifications
 
 #### Update Agent Orchestration
 
@@ -401,7 +402,7 @@ Add scaling patterns for 25-30 concurrent Claude CLI agents:
 - Load balancing patterns
 - Performance optimization guidelines
 
-### Success Criteria
+### Phase 3 Success Criteria
 
 - 25-30 concurrent Claude CLI agents can be sustained
 - Task output is correctly parsed and routed
@@ -412,11 +413,11 @@ Add scaling patterns for 25-30 concurrent Claude CLI agents:
 
 ## Phase 4: MCP Integration
 
-### Objective
+### Phase 4 Objective
 
 Integrate Model Context Protocol servers for extended tool capabilities.
 
-### Technical Deliverables
+### Phase 4 Technical Deliverables
 
 #### 4.1 MCP Server Integration
 
@@ -482,7 +483,7 @@ impl ToolRegistry {
 }
 ```
 
-### Framework Modifications
+### Phase 4 Framework Modifications
 
 #### Create MCP Integration Specifications
 
@@ -495,7 +496,7 @@ New document defining:
 - Permission system integration
 - Error handling patterns
 
-### Success Criteria
+### Phase 4 Success Criteria
 
 - MCP servers can be registered and managed
 - MCP tools are available through framework tool registry
@@ -506,11 +507,11 @@ New document defining:
 
 ## Phase 5: Advanced Features and Optimization
 
-### Objective
+### Phase 5 Objective
 
 Implement advanced coordination patterns and performance optimizations.
 
-### Technical Deliverables
+### Phase 5 Technical Deliverables
 
 #### 5.1 Advanced Coordination Patterns
 
@@ -533,7 +534,7 @@ Implement advanced coordination patterns and performance optimizations.
 - Multi-tenant isolation
 - Backup and recovery procedures
 
-### Success Criteria
+### Phase 5 Success Criteria
 
 - System can handle peak loads efficiently
 - Advanced coordination patterns are functional

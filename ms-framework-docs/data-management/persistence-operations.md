@@ -6,7 +6,7 @@ tags:
 - '#data-management #error-handling #monitoring #migrations #operations'
 ---
 
-# Persistence Operations & Maintenance
+## Persistence Operations & Maintenance
 
 ## Error Handling, Monitoring & Migration Framework
 
@@ -22,7 +22,6 @@ tags:
 > | **TOTAL SCORE** | **15/15** | **✅ DEPLOYMENT APPROVED** |
 >
 > *Validated: 2025-07-05 | Document Lines: 2,876 | Implementation Status: 100%*
-
 > **Navigation**: Part of the modularized data persistence framework
 >
 > - **Core Trilogy**: [[persistence-operations]] ⟷ [[storage-patterns]] ⟷ [[connection-management]]
@@ -31,13 +30,16 @@ tags:
 
 ## Executive Summary
 
-This document defines operational patterns for the Mister Smith AI Agent Framework's data persistence layer, covering error handling strategies, conflict resolution mechanisms, monitoring frameworks, and zero-downtime migration procedures. It ensures robust operation, observability, and maintainability of the dual-store architecture across PostgreSQL and JetStream KV.
+This document defines operational patterns for the Mister Smith AI Agent Framework's data persistence layer,
+covering error handling strategies, conflict resolution mechanisms, monitoring frameworks, and zero-downtime
+migration procedures. It ensures robust operation, observability, and maintainability of the dual-store
+architecture across PostgreSQL and JetStream KV.
 
 ## 6. Error Handling and Conflict Resolution
 
 ### 6.1 Enhanced Error Types
 
-```pseudocode
+```rust
 ENUM DataError {
     NOT_FOUND,
     DUPLICATE_KEY,
@@ -64,7 +66,7 @@ CLASS DataResult<T> {
 
 ### 6.2 Conflict Resolution Strategies
 
-```pseudocode
+```rust
 CLASS ConflictResolver {
     ENUM Strategy {
         LAST_WRITE_WINS,
@@ -106,7 +108,7 @@ CLASS ConflictResolver {
 
 ### 6.3 Retry Logic with Backoff
 
-```pseudocode
+```rust
 CLASS RetryHandler {
     FUNCTION withRetry(
         operation: Function, 
@@ -140,7 +142,7 @@ CLASS RetryHandler {
 
 ### 6.4 Advanced Error Recovery Patterns
 
-```pseudocode
+```rust
 CLASS ErrorRecoveryManager {
     PRIVATE circuit_breaker: CircuitBreaker
     PRIVATE fallback_strategy: FallbackStrategy
@@ -261,7 +263,7 @@ CLASS FallbackStrategy {
 
 ### 7.1 Consistency Metrics
 
-```pseudocode
+```rust
 CLASS ConsistencyMonitor {
     PRIVATE metrics: MetricsCollector
     
@@ -293,7 +295,7 @@ CLASS ConsistencyMonitor {
 
 ### 7.2 Health Checks
 
-```pseudocode
+```rust
 CLASS HealthChecker {
     FUNCTION checkDatabase() -> HealthStatus {
         TRY {
@@ -343,7 +345,7 @@ CLASS HealthChecker {
 
 ### 7.3 Comprehensive Monitoring Framework
 
-```pseudocode
+```rust
 CLASS PersistenceMonitoringFramework {
     PRIVATE metrics_collector: MetricsCollector
     PRIVATE alert_manager: AlertManager
@@ -745,7 +747,7 @@ $$ LANGUAGE plpgsql;
 
 ### 10.4 Migration Orchestration Framework
 
-```pseudocode
+```rust
 CLASS MigrationOrchestrator {
     PRIVATE migration_repository: MigrationRepository
     PRIVATE validator: MigrationValidator
@@ -869,7 +871,8 @@ For complete operational readiness:
 2. **Infrastructure [[connection-management]]**: Connection pools and transactions must be configured
 3. **Operations (This Document)**: Implement comprehensive error handling, monitoring, and maintenance
 
-> **Prerequisites**: This document builds upon [[storage-patterns]] foundation and [[connection-management]] infrastructure. Implement these operational patterns last to complete the data layer trilogy.
+> **Prerequisites**: This document builds upon [[storage-patterns]] foundation and [[connection-management]] infrastructure.
+> Implement these operational patterns last to complete the data layer trilogy.
 
 ## Related Documentation
 

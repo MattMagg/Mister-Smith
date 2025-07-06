@@ -4,7 +4,7 @@ type: note
 permalink: revision-swarm/transport/transport-layer-specifications-revised
 ---
 
-# Transport Layer Specifications - Foundation Patterns
+## Transport Layer Specifications - Foundation Patterns
 
 ## Agent Implementation Framework
 
@@ -61,7 +61,7 @@ This document defines foundational transport patterns for agent communication us
 
 ### 1.1 Request-Response Pattern
 
-```pseudocode
+```rust
 PATTERN RequestResponse:
     AGENT sends REQUEST to TARGET_AGENT
     TARGET_AGENT processes REQUEST
@@ -75,7 +75,7 @@ PATTERN RequestResponse:
 
 ### 1.2 Publish-Subscribe Pattern
 
-```pseudocode
+```rust
 PATTERN PublishSubscribe:
     PUBLISHER_AGENT publishes MESSAGE to TOPIC
     ALL SUBSCRIBER_AGENTS on TOPIC receive MESSAGE
@@ -88,7 +88,7 @@ PATTERN PublishSubscribe:
 
 ### 1.3 Queue Group Pattern
 
-```pseudocode
+```rust
 PATTERN QueueGroup:
     PRODUCER_AGENT sends TASK to QUEUE
     ONE WORKER_AGENT from GROUP receives TASK
@@ -101,7 +101,7 @@ PATTERN QueueGroup:
 
 ### 1.4 Blackboard Pattern
 
-```pseudocode
+```rust
 PATTERN Blackboard:
     AGENTS write/read from SHARED_KNOWLEDGE_SPACE
     ALL AGENTS can observe changes to BLACKBOARD
@@ -121,7 +121,7 @@ PATTERN Blackboard:
 
 ### 2.1 Basic NATS Subjects
 
-```pseudocode
+```rust
 SUBJECT_HIERARCHY:
     agents.{agent_id}.commands    # Direct agent commands
     agents.{agent_id}.status      # Agent status updates
@@ -164,7 +164,7 @@ TOPIC_CONVENTIONS:
 
 ### 2.1.1 Claude CLI Hook Message Formats
 
-```pseudocode
+```rust
 HOOK_EVENT_MESSAGE_FORMAT:
     {
         "hook_type": "startup" | "pre_task" | "post_task" | "on_error" | "on_file_change",
@@ -206,7 +206,7 @@ TASK_OUTPUT_MESSAGE_FORMAT:
 
 ### 2.2 NATS Performance Characteristics
 
-```pseudocode
+```rust
 PERFORMANCE_BENCHMARKS:
     CORE_NATS:
         throughput: 3+ million msgs/sec
@@ -222,7 +222,7 @@ PERFORMANCE_BENCHMARKS:
 
 ### 2.3 JetStream Persistence
 
-```pseudocode
+```rust
 STREAM_CONFIGURATION:
     CREATE STREAM "agent-events"
         subjects: ["agents.*.events"]
@@ -246,7 +246,7 @@ STREAM_CONFIGURATION:
 
 ### 2.4 Basic Message Flow
 
-```pseudocode
+```rust
 AGENT_COMMUNICATION_FLOW:
     1. SENDER creates MESSAGE
     2. MESSAGE includes:
@@ -287,7 +287,7 @@ MESSAGE_SCHEMAS:
 
 ### 3.1 Basic Service Definition
 
-```pseudocode
+```rust
 SERVICE AgentCommunication:
     METHOD send_message(request) -> response
     METHOD get_status(agent_id) -> status
@@ -301,7 +301,7 @@ MESSAGE TYPES:
 
 ### 3.2 Streaming Patterns
 
-```pseudocode
+```rust
 STREAMING_PATTERNS:
     
     SERVER_STREAMING:
@@ -323,7 +323,7 @@ STREAMING_PATTERNS:
 
 ### 4.1 RESTful Endpoints
 
-```pseudocode
+```rust
 API_STRUCTURE:
     GET  /agents              # List agents
     POST /agents              # Register agent
@@ -337,7 +337,7 @@ API_STRUCTURE:
 
 ### 4.2 WebSocket Communication
 
-```pseudocode
+```rust
 WEBSOCKET_PROTOCOL:
     CONNECTION:
         Client connects to /ws
@@ -358,7 +358,7 @@ WEBSOCKET_PROTOCOL:
 
 ### 5.1 Generic Transport Interface
 
-```pseudocode
+```rust
 INTERFACE Transport:
     connect(config)
     disconnect()
@@ -373,7 +373,7 @@ IMPLEMENTATIONS:
 
 ### 5.2 Message Routing
 
-```pseudocode
+```rust
 ROUTING_LOGIC:
     RECEIVE message
     EXTRACT destination
@@ -390,7 +390,7 @@ FALLBACK:
 
 ### 6.1 Core Agent Message Interfaces
 
-```pseudocode
+```rust
 AGENT_INTERFACES:
     Planner:
         create_plan(goal) -> TaskList
@@ -416,7 +416,7 @@ AGENT_INTERFACES:
 
 ### 6.2 Coordination Topologies
 
-```pseudocode
+```rust
 CENTRALIZED_PATTERN:
     ORCHESTRATOR maintains global_state
     ORCHESTRATOR assigns tasks to AGENTS
@@ -437,7 +437,7 @@ PEER_TO_PEER_PATTERN:
 
 ### 7.1 Connection Pool Architecture
 
-```pseudocode
+```rust
 INTERFACE ConnectionPoolManager {
     create_pool(config: PoolConfig) -> Pool
     monitor_health() -> HealthMetrics
@@ -465,7 +465,7 @@ CLASS AdvancedConnectionPool {
 
 ### 7.2 Protocol-Specific Pool Configurations
 
-```pseudocode
+```rust
 -- NATS Connection Pool with Deadpool Pattern
 CLASS NatsConnectionPool IMPLEMENTS ConnectionPoolManager {
     FUNCTION create_nats_pool(config: NatsConfig) -> NatsPool {
@@ -536,7 +536,7 @@ CLASS GrpcConnectionPool IMPLEMENTS ConnectionPoolManager {
 
 ### 7.3 Connection String Templates and Configuration
 
-```pseudocode
+```rust
 CLASS ConnectionStringManager {
     ENUM ProtocolType {
         NATS,
@@ -628,7 +628,7 @@ CLASS EnvironmentConfigLoader {
 
 ### 7.4 Advanced Health Checking and Recovery
 
-```pseudocode
+```rust
 CLASS AdvancedHealthMonitor {
     PRIVATE health_checkers: Map<ProtocolType, HealthChecker>
     PRIVATE circuit_breakers: Map<String, CircuitBreaker>
@@ -750,7 +750,7 @@ CLASS ConnectionCircuitBreaker {
 
 ### 7.5 Resource Limits and Backpressure Management
 
-```pseudocode
+```rust
 CLASS ResourceLimitManager {
     STRUCT ResourceLimits {
         max_memory_usage: Bytes = 512_MB
@@ -828,7 +828,7 @@ CLASS ResourceLimitManager {
 
 ### 7.6 Performance Monitoring and Metrics
 
-```pseudocode
+```rust
 CLASS ConnectionPerformanceMonitor {
     PRIVATE metrics_collector: MetricsCollector
     PRIVATE alert_manager: AlertManager
@@ -909,7 +909,7 @@ CLASS ConnectionPerformanceMonitor {
 
 ### 8.1 Basic Retry Logic
 
-```pseudocode
+```rust
 RETRY_PATTERN:
     attempts = 0
     WHILE attempts < max_retries:
@@ -924,7 +924,7 @@ RETRY_PATTERN:
 
 ### 8.2 Timeout Handling
 
-```pseudocode
+```rust
 TIMEOUT_PATTERN:
     START timer(timeout_duration)
     SEND request
@@ -940,7 +940,7 @@ TIMEOUT_PATTERN:
 
 ### 9.1 TLS Configuration
 
-```pseudocode
+```rust
 TLS_SETUP:
     LOAD certificates
     CONFIGURE tls_config:
@@ -965,7 +965,7 @@ mTLS_PATTERN:
 
 ### 9.2 Authentication Pattern
 
-```pseudocode
+```rust
 AUTH_FLOW:
     CLIENT sends credentials
     SERVER validates credentials
@@ -998,7 +998,7 @@ SUBJECT_AUTHORIZATION:
 
 ### 9.3 Zero-Downtime Key Rotation
 
-```pseudocode
+```rust
 KEY_ROTATION_PATTERN:
     STATE_MACHINE:
         KeyAActive -> StagingNewKey
@@ -1026,7 +1026,7 @@ Agents implementing transport should:
 
 ### 10.2 Testing Patterns
 
-```pseudocode
+```rust
 TEST_SCENARIOS:
     - Connection establishment
     - Message delivery
@@ -1039,7 +1039,7 @@ TEST_SCENARIOS:
 
 ### 11.1 NATS Configuration
 
-```pseudocode
+```rust
 NATS_CONFIG:
     servers: ["nats://localhost:4222"]
     max_reconnects: 5
@@ -1049,7 +1049,7 @@ NATS_CONFIG:
 
 ### 11.2 gRPC Configuration
 
-```pseudocode
+```rust
 GRPC_CONFIG:
     address: "localhost:50051"
     timeout: 30_seconds
@@ -1059,7 +1059,7 @@ GRPC_CONFIG:
 
 ### 11.3 HTTP Configuration
 
-```pseudocode
+```rust
 HTTP_CONFIG:
     bind_address: "0.0.0.0:8080"
     request_timeout: 30_seconds

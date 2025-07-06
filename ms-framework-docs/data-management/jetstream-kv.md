@@ -6,7 +6,7 @@ tags:
 - '#jetstream #key-value #distributed-storage #caching #state-management'
 ---
 
-# JetStream KV Storage Patterns & Configuration
+## JetStream KV Storage Patterns & Configuration
 
 > **📊 VALIDATION STATUS: PRODUCTION READY**
 >
@@ -23,14 +23,16 @@ tags:
 
 ## Executive Summary
 
-This document specifies the JetStream Key-Value storage patterns and configuration for the Mister Smith AI Agent Framework. JetStream KV provides a distributed, persistent key-value store built on NATS JetStream, offering:
+This document specifies the JetStream Key-Value storage patterns and configuration for the Mister Smith AI Agent Framework.
+JetStream KV provides a distributed, persistent key-value store built on NATS JetStream, offering:
 
 - **High-Performance Caching**: Sub-millisecond access for hot data
 - **TTL-Based Expiration**: Automatic cleanup of temporary state
 - **Distributed State Management**: Consistent state across agent clusters
 - **Dual-Store Architecture**: Seamless integration with PostgreSQL for durability
 
-The patterns defined here implement a hybrid storage approach where JetStream KV serves as the primary fast-access layer for agent state, session data, and caching, while PostgreSQL provides long-term persistence and complex querying capabilities.
+The patterns defined here implement a hybrid storage approach where JetStream KV serves as the primary fast-access layer
+for agent state, session data, and caching, while PostgreSQL provides long-term persistence and complex querying capabilities.
 
 > **Related Documentation**:
 >
@@ -53,7 +55,7 @@ The patterns defined here implement a hybrid storage approach where JetStream KV
 
 **PostgreSQL Integration**: This pattern integrates with [PostgreSQL Schema Patterns](./postgresql-implementation.md#2-postgresql-schema-patterns) for state hydration and persistence.
 
-```pseudocode
+```rust
 -- Dual-store implementation for agent state
 CLASS HybridStateManager {
     PRIVATE kv_store: JetStreamKV
@@ -98,7 +100,7 @@ CLASS HybridStateManager {
 
 ### 2.1 Key-Value Store Setup with TTL
 
-```pseudocode
+```rust
 CLASS KVStoreManager {
     FUNCTION createBucket(name: String, ttl_minutes: Integer = 30) -> Bucket {
         config = {
@@ -124,7 +126,7 @@ CLASS KVStoreManager {
 
 ### 2.2 State Operations with Conflict Resolution
 
-```pseudocode
+```rust
 CLASS StateManager {
     PRIVATE kv_bucket: Bucket
     PRIVATE conflict_strategy: ConflictStrategy
@@ -165,7 +167,7 @@ CLASS StateManager {
 
 ## 3. Repository Pattern with Dual Store
 
-```pseudocode
+```rust
 CLASS AgentRepository IMPLEMENTS Repository<Agent> {
     PRIVATE db: DatabaseConnection
     PRIVATE kv: KVBucket
@@ -224,7 +226,7 @@ CLASS AgentRepository IMPLEMENTS Repository<Agent> {
 
 ## 4. State Lifecycle Management
 
-```pseudocode
+```rust
 CLASS StateLifecycleManager {
     PRIVATE kv: KVBucket
     PRIVATE db: DatabaseConnection
@@ -299,7 +301,7 @@ CLASS StateLifecycleManager {
 
 ## 5. Enhanced Caching Pattern with TTL
 
-```pseudocode
+```rust
 CLASS TieredCacheRepository {
     PRIVATE repository: Repository
     PRIVATE memory_cache: Map<UUID, CacheEntry>

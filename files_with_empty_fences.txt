@@ -1,0 +1,14 @@
+ms-framework-docs/core-architecture/claude-code-cli-technical-analysis.md
+ms-framework-docs/core-architecture/coding-standards.md
+ms-framework-docs/core-architecture/component-architecture.md
+ms-framework-docs/core-architecture/dependency-specifications.md
+ms-framework-docs/core-architecture/implementation-config.md
+ms-framework-docs/core-architecture/module-organization-type-system.md
+ms-framework-docs/core-architecture/system-architecture.md
+ms-framework-docs/core-architecture/type-definitions.md
+ms-framework-docs/data-management/data-integration-patterns.md
+ms-framework-docs/operations/build-specifications.md
+ms-framework-docs/operations/configuration-management.md
+ms-framework-docs/operations/PROCESS_MANAGEMENT_COMPLETION_SUMMARY.md
+ms-framework-docs/operations/process-management-specifications.md
+ms-framework-docs/testing/testing-framework.md

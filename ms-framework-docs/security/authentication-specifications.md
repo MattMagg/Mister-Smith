@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document provides comprehensive authentication implementation specifications for the Mister Smith AI Agent Framework, building on the security framework foundation and integrating with transport layer protocols.
+This document provides comprehensive authentication implementation specifications for the Mister Smith AI Agent Framework,
+building on the security framework foundation and integrating with transport layer protocols.
 
 **Integration Points**:
 
