@@ -4,7 +4,9 @@
 
 ```bash
 # Create the main linting fix task with full context
-/task:create "Fix 1016 markdown linting errors in internal-operations blocking CI pipeline" \
+/task:create "Fix 1016 markdown linting errors in internal-operations blocking CI pipeline \
+Per GitHub Actions workflow session 2025-07-06: MD013(400+), MD024(250+), MD025(150+), MD040(200+) \
+Deployment plan: /internal-operations/working-prompts/deployment-plans/Markdown_Linting_Resolution_SuperClaude_Deployment.md" \
   --persona-qa --ultrathink --validate --strict --evidence
 
 # Load all context and memory references
@@ -16,8 +18,12 @@
 ## Quick Deploy All Teams
 
 ```bash
-# Deploy all 40 agents across teams in parallel
-/spawn --task "Deploy 40-agent markdown linting resolution operation" \
+# Deploy all 40 agents across teams in parallel with full context
+/spawn --task "Deploy 40-agent markdown linting operation per deployment plan at \
+/internal-operations/working-prompts/deployment-plans/Markdown_Linting_Resolution_SuperClaude_Deployment.md \
+Fix: MD013(400+ line-length), MD024(250+ duplicates), MD025(150+ multi-H1), MD040(200+ code-fence) \
+Target: /internal-operations/*.md, preserve content integrity \
+Memory refs: projects/mister-smith/workflows/markdown-linting-fix-super-claude-multi-agent-deployment-plan" \
        --parallel --specialized --collaborative --sync --merge \
        --validate --strict --coverage --evidence
 ```

@@ -165,22 +165,35 @@ validation: Zero errors, content preserved
 #### **Phase 2: Parallel Deployment (90 minutes)**
 ```bash
 # Deploy Team Alpha - Line Length Resolution (12 agents)
-/spawn --task "Fix MD013 line length errors in internal-operations" \
+/spawn --task "Fix MD013 line length errors (400+ instances) in /internal-operations/ \
+Files: claude-code-cli-*.md, claude-flow-rust-migration-analysis/*.md \
+Max line length: 200 chars. Break at logical points, preserve URLs/links. \
+Reference: memory://projects/mister-smith/workflows/markdown-linting-fix-super-claude-multi-agent-deployment-plan" \
        --parallel --specialized --collaborative --sync \
        --persona-editor --validate --strict --coverage
 
 # Deploy Team Beta - Duplicate Heading Resolution (8 agents)  
-/spawn --task "Fix MD024 duplicate heading errors" \
+/spawn --task "Fix MD024 duplicate heading errors (250+ instances) in /internal-operations/ \
+Common duplicates: 'Technical Deliverables', 'Objective', 'Success Criteria' \
+Rename with unique context-aware variations. \
+Reference: memory://projects/mister-smith/workflows/markdown-linting-fix-super-claude-multi-agent-deployment-plan" \
        --parallel --specialized --collaborative --sync \
        --persona-architect --think --evidence --merge
 
 # Deploy Team Gamma - Multiple H1 Resolution (6 agents)
-/spawn --task "Fix MD025 multiple H1 errors" \
+/spawn --task "Fix MD025 multiple H1 errors (150+ instances) in /internal-operations/ \
+Files: Claude-Flow_Rust_Rewrite_Comprehensive_Standards_Document.md (5 H1s), \
+Claude-Flow_Rust_Rewrite_Multi-Agent_Deployment_Plan.md (3 H1s) \
+Convert to single H1 with proper H2/H3 hierarchy. \
+Reference: memory://projects/mister-smith/workflows/markdown-linting-fix-super-claude-multi-agent-deployment-plan" \
        --parallel --specialized --collaborative --sync \
        --persona-architect --think-hard --validate --strict
 
 # Deploy Team Delta - Code Fence Language Addition (8 agents)
-/spawn --task "Fix MD040 missing code fence languages" \
+/spawn --task "Fix MD040 missing code fence languages (200+ instances) in /internal-operations/ \
+Detect language from content: bash/shell (~100), config (~50), text (~50) \
+Add appropriate language specifier to all code fences. \
+Reference: memory://projects/mister-smith/workflows/markdown-linting-fix-super-claude-multi-agent-deployment-plan" \
        --parallel --specialized --collaborative --sync \
        --persona-backend --seq --validate --merge
 
@@ -341,13 +354,13 @@ This operation directly enables the documentation improvement workflows fixed in
 /analyze --forensic --deep --code --files internal-operations/ --persona-qa --strict
 
 # 3. Deploy Teams (Run All Simultaneously)
-/spawn --task "Alpha: MD013" --parallel --specialized --persona-editor --validate
-/spawn --task "Beta: MD024" --parallel --specialized --persona-architect --think
-/spawn --task "Gamma: MD025" --parallel --specialized --persona-architect --think-hard
-/spawn --task "Delta: MD040" --parallel --specialized --persona-backend --seq
+/spawn --task "Alpha: Fix 400+ MD013 line-length errors in /internal-operations/*.md, max 200 chars, ref: memory://projects/mister-smith/workflows/markdown-linting-fix-super-claude-multi-agent-deployment-plan" --parallel --specialized --persona-editor --validate
+/spawn --task "Beta: Fix 250+ MD024 duplicate headings in /internal-operations/*.md, ref: memory://projects/mister-smith/workflows/markdown-linting-fix-super-claude-multi-agent-deployment-plan" --parallel --specialized --persona-architect --think
+/spawn --task "Gamma: Fix 150+ MD025 multiple H1s in /internal-operations/*.md, ref: memory://projects/mister-smith/workflows/markdown-linting-fix-super-claude-multi-agent-deployment-plan" --parallel --specialized --persona-architect --think-hard
+/spawn --task "Delta: Fix 200+ MD040 code fences in /internal-operations/*.md, ref: memory://projects/mister-smith/workflows/markdown-linting-fix-super-claude-multi-agent-deployment-plan" --parallel --specialized --persona-backend --seq
 
 # 4. Validate
-/spawn --task "Epsilon: Final" --specialized --persona-qa --ultrathink --strict
+/spawn --task "Epsilon: Validate all markdown fixes in /internal-operations/, ensure 0 errors, ref: deployment plan at /internal-operations/working-prompts/deployment-plans/Markdown_Linting_Resolution_SuperClaude_Deployment.md" --specialized --persona-qa --ultrathink --strict
 
 # 5. Complete
 /git --commit --validate --pre-commit
