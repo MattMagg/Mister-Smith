@@ -10,7 +10,10 @@
 
 ## Executive Summary
 
-This document provides advanced integration patterns for error handling, event-driven architecture, and dependency injection within the Mister Smith framework. Building upon the core contracts established in the [Integration Contracts](./integration-contracts.md), these patterns enable robust cross-component communication, unified error recovery, and flexible service composition.
+This document provides advanced integration patterns for error handling, event-driven architecture,
+and dependency injection within the Mister Smith framework.
+Building upon the core contracts established in the [Integration Contracts](./integration-contracts.md),
+these patterns enable robust cross-component communication, unified error recovery, and flexible service composition.
 
 **Key Focus Areas:**
 
@@ -2449,7 +2452,8 @@ impl DataFlowMonitor {
 
 ### Architectural Consistency Verification
 
-Based on comprehensive validation (ref: `/validation-bridge/team-alpha-validation/agent04-architectural-consistency-validation.md`), the integration patterns demonstrate **STRONG** consistency and completeness across all framework domains:
+Based on comprehensive validation (ref: `/validation-bridge/team-alpha-validation/agent04-architectural-consistency-validation.md`),
+the integration patterns demonstrate **STRONG** consistency and completeness across all framework domains:
 
 #### Integration Points Validated ✅
 
@@ -2526,7 +2530,10 @@ pub enum DomainError {
 
 ## Conclusion
 
-This document establishes comprehensive integration patterns for error handling, event-driven communication, and dependency injection within the Mister Smith framework. These patterns build upon the foundation provided by the integration contracts to enable robust, scalable, and maintainable multi-agent systems.
+This document establishes comprehensive integration patterns for error handling, event-driven communication,
+and dependency injection within the Mister Smith framework.
+These patterns build upon the foundation provided by the integration contracts to enable robust,
+scalable, and maintainable multi-agent systems.
 
 **Key Achievements:**
 

@@ -26,7 +26,7 @@
 
 ### Testing Hierarchy
 
-```
+```text
 P0: Critical Path Tests (agent lifecycle, security, data integrity)
 P1: Core Functionality Tests (communication, persistence, configuration)
 P2: Edge Case and Error Handling Tests
@@ -1397,7 +1397,7 @@ async fn test_concurrent_agent_operations() {
 
 ### Test Organization
 
-```
+```text
 tests/
 ├── unit/                    # Unit tests co-located with source
 ├── integration/             # Integration tests

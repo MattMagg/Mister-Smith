@@ -6,7 +6,7 @@ tags:
 - '#agent-orchestration #operations #discovery #workflow #error-handling #metrics'
 ---
 
-# Agent Operations Architecture
+## Agent Operations Architecture
 
 ## Discovery, Workflow, Error Handling & Metrics
 
@@ -22,7 +22,6 @@ tags:
 > | **TOTAL SCORE** | **14/15** | **✅ DEPLOYMENT APPROVED** |
 >
 > *Validated: 2025-07-05 | Document Lines: 2,718 | Implementation Status: 93%*
-
 > **Cross-References**:
 >
 > - See `agent-lifecycle.md` for basic agent architecture and supervision patterns (sections 1-3)
@@ -38,7 +37,10 @@ tags:
 
 ## Executive Summary
 
-This document defines operational patterns for agent systems including agent discovery mechanisms, workflow orchestration patterns, error handling strategies, and basic metrics collection. These patterns build upon the fundamental agent architecture and provide the operational layer for managing agent lifecycles and interactions.
+This document defines operational patterns for agent systems including agent discovery mechanisms,
+workflow orchestration patterns, error handling strategies, and basic metrics collection.
+These patterns build upon the fundamental agent architecture and provide the operational layer
+for managing agent lifecycles and interactions.
 
 ## 6. Agent Discovery
 
@@ -48,7 +50,7 @@ This document defines operational patterns for agent systems including agent dis
 
 ### 6.1 Registry Pattern
 
-```pseudocode
+```rust
 CLASS AgentRegistry {
     PRIVATE agents: Map<String, AgentInfo>
     
@@ -71,7 +73,7 @@ CLASS AgentRegistry {
 
 ### 6.2 Health Monitoring
 
-```pseudocode
+```rust
 CLASS HealthMonitor {
     PRIVATE agents: Map<String, HealthStatus>
     PRIVATE checkInterval: Duration
@@ -104,7 +106,7 @@ CLASS HealthMonitor {
 
 ### 7.1 Sequential Workflow
 
-```pseudocode
+```rust
 CLASS SequentialWorkflow {
     PRIVATE steps: List<WorkflowStep>
     
@@ -126,7 +128,7 @@ CLASS SequentialWorkflow {
 
 ### 7.2 Parallel Workflow
 
-```pseudocode
+```rust
 CLASS ParallelWorkflow {
     PRIVATE tasks: List<Task>
     
@@ -152,7 +154,7 @@ CLASS ParallelWorkflow {
 
 ### 8.1 Basic Error Recovery
 
-```pseudocode
+```rust
 CLASS ErrorHandler {
     FUNCTION handleAgentError(agent: Agent, error: Error) {
         SWITCH error.type {
@@ -173,7 +175,7 @@ CLASS ErrorHandler {
 
 ### 8.2 Circuit Breaker Pattern
 
-```pseudocode
+```rust
 CLASS CircuitBreaker {
     PRIVATE state: BreakerState = CLOSED
     PRIVATE failureCount: Integer = 0
@@ -212,7 +214,7 @@ CLASS CircuitBreaker {
 
 ### 9.1 Agent Metrics
 
-```pseudocode
+```rust
 CLASS AgentMetrics {
     PRIVATE messageCount: Counter
     PRIVATE taskCompletionTime: Histogram
@@ -236,7 +238,7 @@ CLASS AgentMetrics {
 
 ### 10.1 Load Balancing and Task Distribution
 
-```pseudocode
+```rust
 CLASS LoadBalancer {
     PRIVATE agents: List<Agent>
     PRIVATE strategy: LoadBalancingStrategy
@@ -271,7 +273,7 @@ CLASS LoadBalancer {
 
 ### 10.2 Agent Pool Management
 
-```pseudocode
+```rust
 CLASS AgentPool {
     PRIVATE minSize: Integer = 5
     PRIVATE maxSize: Integer = 25
@@ -313,7 +315,7 @@ CLASS AgentPool {
 
 ### 10.3 Deadline and Timeout Management
 
-```pseudocode
+```rust
 CLASS DeadlineManager {
     PRIVATE scheduledTasks: PriorityQueue<ScheduledTask>
     
@@ -349,7 +351,7 @@ CLASS DeadlineManager {
 
 ### 11.1 Comprehensive Metrics Collection
 
-```pseudocode
+```rust
 CLASS OperationalMetrics {
     PRIVATE counters: Map<String, Counter>
     PRIVATE histograms: Map<String, Histogram>
@@ -387,7 +389,7 @@ CLASS OperationalMetrics {
 
 ### 11.2 Distributed Tracing
 
-```pseudocode
+```rust
 CLASS DistributedTracing {
     FUNCTION startTrace(operation: String) -> TraceContext {
         traceId = generateTraceId()

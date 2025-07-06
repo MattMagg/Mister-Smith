@@ -30,7 +30,8 @@
 
 ## Document Purpose & Scope
 
-This document contains the foundational system design specifications extracted from the comprehensive system architecture. It focuses on the core components that form the basis of the Mister Smith AI Agent Framework, including:
+This document contains the foundational system design specifications extracted from the comprehensive system architecture.
+It focuses on the core components that form the basis of the Mister Smith AI Agent Framework, including:
 
 - **Component Architecture**: Core system structure and initialization
 - **Event-Driven Architecture**: Asynchronous event handling and routing
@@ -45,17 +46,8 @@ These components represent the fundamental building blocks upon which all other 
 
 1. [Overview](#overview)
 2. [Component Architecture](#41-component-architecture)
-   - [System Core Structure](#system-core-structure)
-   - [Component Initialization](#component-initialization)
-   - [Component Wiring](#component-wiring)
 3. [Event-Driven Architecture](#42-event-driven-architecture)
-   - [Event Bus Implementation](#event-bus-implementation)
-   - [Event Handler Trait](#event-handler-trait)
-   - [Message Routing](#message-routing)
-4. [Resource Management](#43-resource-management)
-   - [Resource Trait](#resource-trait)
-   - [Connection Pool Implementation](#connection-pool-implementation)
-   - [Resource Lifecycle](#resource-lifecycle)
+4. [Resource Management](#43-resource-management-with-mtls-security)
 5. [Data Management Architecture](#45-data-management-architecture)
    - [Database Integration Layer](#database-integration-layer)
    - [Migration Framework](#migration-framework)
@@ -63,9 +55,6 @@ These components represent the fundamental building blocks upon which all other 
    - [Event Sourcing and CQRS](#event-sourcing-and-cqrs)
    - [Data Security and Compliance](#data-security-and-compliance)
 6. [Configuration Management](#46-configuration-management)
-   - [Configuration Manager](#configuration-manager)
-   - [Configuration Trait](#configuration-trait)
-   - [Reload Strategies](#reload-strategies)
 7. [Cross-References](#cross-references)
 8. [Implementation Best Practices](#implementation-best-practices)
 9. [Integration with Supervision Trees](#integration-with-supervision-trees)
@@ -75,7 +64,8 @@ These components represent the fundamental building blocks upon which all other 
 
 ## Overview
 
-The Foundational System Design represents the core architectural components that provide the essential infrastructure for the Mister Smith framework. These components are designed with the following principles:
+The Foundational System Design represents the core architectural components that provide the essential infrastructure
+for the Mister Smith framework. These components are designed with the following principles:
 
 ### Design Principles
 
@@ -87,7 +77,7 @@ The Foundational System Design represents the core architectural components that
 
 ### Component Relationships
 
-```
+```text
 SystemCore
     ├── RuntimeManager (Tokio runtime management)
     ├── ActorSystem (Actor lifecycle and messaging)
@@ -111,7 +101,7 @@ SystemCore
 
 ### 4.1 Component Architecture
 
-```pseudocode
+```rust
 STRUCT SystemCore {
     runtime_manager: RuntimeManager,
     actor_system: ActorSystem,
@@ -250,7 +240,7 @@ IMPL SystemCore {
 
 ### 4.2 Event-Driven Architecture
 
-```pseudocode
+```rust
 STRUCT EventBus {
     channels: Arc<RwLock<HashMap<EventType, Vec<EventChannel>>>>,
     event_store: EventStore,
@@ -394,11 +384,12 @@ IMPL EventBus {
 
 ### 4.3 Resource Management with mTLS Security
 
-> **Transport Security Integration**: Resource management enhanced with comprehensive mTLS certificate lifecycle and performance optimization based on Agent 17 validation findings (87/100 overall score).
+> **Transport Security Integration**: Resource management enhanced with comprehensive mTLS certificate lifecycle
+> and performance optimization based on Agent 17 validation findings (87/100 overall score).
 
 #### 4.3.1 Secure Resource Pool Management
 
-```pseudocode
+```rust
 STRUCT ResourceManager {
     connection_pools: HashMap<PoolType, ConnectionPool>,
     memory_manager: MemoryManager,
@@ -801,11 +792,13 @@ IMPL<R: Resource> ConnectionPool<R> {
 
 ### 4.5 Data Management Architecture
 
-Based on comprehensive baseline findings from the MS Framework Validation Bridge (Agent-14), this section establishes production-ready data management foundations for the MS Framework, addressing critical gaps in database integration, migration frameworks, and data persistence patterns.
+Based on comprehensive baseline findings from the MS Framework Validation Bridge (Agent-14),
+this section establishes production-ready data management foundations for the MS Framework,
+addressing critical gaps in database integration, migration frameworks, and data persistence patterns.
 
 #### Database Integration Layer
 
-```pseudocode
+```rust
 STRUCT DatabaseManager {
     postgresql_pool: Arc<PostgreSQLPool>,
     redis_pools: HashMap<RedisPoolType, Arc<RedisPool>>,
@@ -924,7 +917,7 @@ IMPL DatabaseManager {
 
 Critical implementation addressing the identified gap in database versioning and schema evolution:
 
-```pseudocode
+```rust
 STRUCT MigrationFramework {
     db_connection: Arc<PostgreSQLPool>,
     migration_directory: PathBuf,
@@ -1041,7 +1034,7 @@ IMPL MigrationFramework {
 
 Repository pattern implementation for clean data access:
 
-```pseudocode
+```rust
 // Base repository trait for all entities
 TRAIT Repository<T, ID> {
     ASYNC FUNCTION create(&self, entity: T) -> Result<T>
@@ -1133,7 +1126,7 @@ IMPL Repository<Agent, AgentId> for AgentRepository {
 
 Event sourcing implementation for audit trails and state reconstruction:
 
-```pseudocode
+```rust
 STRUCT EventStore {
     db_pool: Arc<PostgreSQLPool>,
     event_handlers: Arc<RwLock<HashMap<EventType, Vec<EventHandler>>>>,
@@ -1282,7 +1275,7 @@ Comprehensive security implementation for data protection, audit compliance, and
 **Compliance Frameworks**: SOC 2, GDPR, ISO 27001 implementation-ready
 **Critical Success Metrics**: Zero-trust architecture, 100% automated certificate lifecycle, multi-layer authentication, real-time security monitoring
 
-```pseudocode
+```rust
 STRUCT DataSecurityManager {
     encryption: EncryptionService,
     access_control: AccessControlService,
@@ -1903,7 +1896,7 @@ Based on production deployment findings and validation results:
 
 ### 4.6 Configuration Management
 
-```pseudocode
+```rust
 STRUCT ConfigurationManager {
     config_store: Arc<RwLock<ConfigurationStore>>,
     watchers: Arc<Mutex<Vec<ConfigurationWatcher>>>,
@@ -2106,7 +2099,7 @@ IMPL ConfigurationManager {
 
 #### Exponential Backoff Implementation
 
-```pseudocode
+```rust
 STRUCT ExponentialBackoff {
     initial_interval: Duration,
     max_interval: Duration,
@@ -2139,7 +2132,7 @@ IMPL ExponentialBackoff {
 
 #### Circuit Breaker Pattern
 
-```pseudocode
+```rust
 ENUM CircuitState {
     Closed { failure_count: u32 },
     Open { opened_at: Instant },
@@ -2186,7 +2179,7 @@ IMPL CircuitBreaker {
 
 #### Bulkhead Isolation Pattern
 
-```pseudocode
+```rust
 STRUCT Bulkhead {
     semaphore: Arc<Semaphore>,
     max_concurrent: usize,
@@ -2242,7 +2235,7 @@ IMPL Bulkhead {
 
 #### Component Operation Latency Targets
 
-```
+```yaml
 EventBus::publish
   - p50: < 100μs
   - p95: < 500μs
@@ -2266,7 +2259,7 @@ SupervisedComponent::health_check
 
 #### Throughput Requirements
 
-```
+```yaml
 EventBus
   - Target: 100,000 events/second
   - Burst: 500,000 events/second
@@ -2285,7 +2278,7 @@ MetricsRegistry
 
 #### Resource Utilization Targets
 
-```
+```yaml
 Memory Usage
   - Base footprint: < 100MB
   - Per connection: < 1MB
@@ -2377,13 +2370,15 @@ config_manager.watchers().status()
 
 ## Integration with Supervision Trees
 
-The Component Architecture integrates closely with the [Supervision Tree Architecture](./supervision-trees.md) to provide comprehensive fault tolerance for all SystemCore components. This integration ensures that component failures are handled gracefully with appropriate recovery strategies.
+The Component Architecture integrates closely with the [Supervision Tree Architecture](./supervision-trees.md)
+to provide comprehensive fault tolerance for all SystemCore components. This integration ensures that component failures
+are handled gracefully with appropriate recovery strategies.
 
 ### Supervised Component Lifecycle
 
 All SystemCore components are designed to be supervised from initialization:
 
-```pseudocode
+```rust
 // Supervision integration in SystemCore initialization
 SystemCore::initialize() -> {
     // Create components
@@ -2407,7 +2402,7 @@ The EventBus serves as the central communication channel for supervision events:
 
 #### Failure Event Publishing
 
-```pseudocode
+```rust
 // EventBus publishes component failure events
 EventBus::handle_component_failure(component_id, failure_info) -> {
     failure_event = ComponentFailureEvent::new(component_id, failure_info)
@@ -2418,7 +2413,7 @@ EventBus::handle_component_failure(component_id, failure_info) -> {
 
 #### Supervision Event Handling
 
-```pseudocode
+```rust
 // Components subscribe to supervision events
 EventHandler::handle_event(SupervisionEvent) -> {
     MATCH event.event_type {
@@ -2441,7 +2436,7 @@ Resource pools are supervised with specialized strategies:
 
 #### Resource Pool Integration Example
 
-```pseudocode
+```rust
 ConnectionPool<DatabaseConnection>::create_supervised() -> {
     pool = ConnectionPool::new(config)
     
@@ -2461,7 +2456,7 @@ ConnectionPool<DatabaseConnection>::create_supervised() -> {
 
 Dynamic configuration updates are coordinated with supervision policies:
 
-```pseudocode
+```rust
 ConfigurationManager::reload_config_with_supervision(config_type) -> {
     new_config = self.load_config(config_type)
     
@@ -2488,7 +2483,7 @@ All SystemCore components implement supervision-aware patterns:
 
 #### Component Interface with Supervision
 
-```pseudocode
+```rust
 TRAIT SupervisedComponent {
     /// Standard component lifecycle - initialize and start the component
     /// Called by supervision tree during system startup or restart
@@ -2522,7 +2517,7 @@ TRAIT SupervisedComponent {
 
 #### Dependency-Aware Restart Ordering
 
-```pseudocode
+```rust
 // Supervision tree coordinates restart order based on dependencies
 SupervisionTree::restart_with_dependencies(failed_component) -> {
     dependencies = dependency_graph.get_dependents(failed_component)
@@ -2544,7 +2539,7 @@ SupervisionTree::restart_with_dependencies(failed_component) -> {
 }
 ```
 
-### Integration Benefits
+### Supervision Tree Integration Benefits
 
 1. **Automatic Recovery**: Component failures trigger appropriate supervision strategies
 2. **Dependency Management**: Supervision coordinates restart order based on component dependencies  
@@ -2573,7 +2568,9 @@ SupervisionTree::restart_with_dependencies(failed_component) -> {
 
 ### Agent 12 Validation Patterns Applied
 
-This component architecture has been enhanced with comprehensive data flow integrity validation patterns based on Agent 12's validation findings (Overall Score: 92/100). The following key integrations ensure robust data flow management across all system components:
+This component architecture has been enhanced with comprehensive data flow integrity validation patterns
+based on Agent 12's validation findings (Overall Score: 92/100). The following key integrations ensure robust
+data flow management across all system components:
 
 #### 1. Event Bus Data Flow Validation (Score: 95/100)
 
@@ -2671,7 +2668,7 @@ self.consistency_monitor.verify_reload(consistency_token).await?;
 - Audit trail for compliance and security monitoring
 - Transformation chain tracking for security analysis
 
-### Integration Benefits
+### Data Flow Validation Integration Benefits
 
 1. **End-to-End Validation**: Complete data flow tracking from source to destination
 2. **Performance Assurance**: Real-time monitoring against defined SLA thresholds
@@ -2692,11 +2689,14 @@ self.consistency_monitor.verify_reload(consistency_token).await?;
 
 ### Keywords & Concepts
 
-**Primary Keywords**: component-architecture, foundational-design, system-core, event-bus, resource-management, data-management, configuration-management, initialization, wiring, database-integration, migration-framework
+**Primary Keywords**: component-architecture, foundational-design, system-core, event-bus, resource-management,
+data-management, configuration-management, initialization, wiring, database-integration, migration-framework
 
-**Component Names**: SystemCore, RuntimeManager, ActorSystem, SupervisionTree, EventBus, MetricsRegistry, ConfigurationManager, ResourceManager, ConnectionPool, DatabaseManager, MigrationFramework, EventStore, AgentRepository
+**Component Names**: SystemCore, RuntimeManager, ActorSystem, SupervisionTree, EventBus, MetricsRegistry,
+ConfigurationManager, ResourceManager, ConnectionPool, DatabaseManager, MigrationFramework, EventStore, AgentRepository
 
-**Pattern Keywords**: event-driven, async-first, type-safety, resource-pooling, configuration-watching, dead-letter-queue, health-checking, event-sourcing, cqrs, repository-pattern, data-persistence, audit-logging
+**Pattern Keywords**: event-driven, async-first, type-safety, resource-pooling, configuration-watching,
+dead-letter-queue, health-checking, event-sourcing, cqrs, repository-pattern, data-persistence, audit-logging
 
 ### Quick Search Patterns
 
@@ -2757,9 +2757,12 @@ audit|compliance        # Compliance tracking
 
 ## Navigation Footer
 
-[← Previous: System Architecture](./system-architecture.md) | [↑ Up: Core Architecture](./CLAUDE.md) | [Supervision Trees](./supervision-trees.md) | [Next: Integration Patterns →](./integration-patterns.md)
+[← Previous: System Architecture](./system-architecture.md) | [↑ Up: Core Architecture](./CLAUDE.md) |
+[Supervision Trees](./supervision-trees.md) | [Next: Integration Patterns →](./integration-patterns.md)
 
-**See Also**: [Supervision Tree Architecture](./supervision-trees.md) | [Failure Detection](./supervision-trees.md#32-failure-detection-and-recovery) | [Component Supervision](./supervision-trees.md#usage-examples)
+**See Also**: [Supervision Tree Architecture](./supervision-trees.md) |
+[Failure Detection](./supervision-trees.md#32-failure-detection-and-recovery) |
+[Component Supervision](./supervision-trees.md#usage-examples)
 
 ---
 

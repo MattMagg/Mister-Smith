@@ -55,7 +55,8 @@
 
 ## Overview
 
-This document provides comprehensive authorization policy and implementation specifications for the Mister Smith AI Agent Framework. It builds upon the RBAC foundations established in the security framework and extends them with attribute-based access control (ABAC) capabilities.
+This document provides comprehensive authorization policy and implementation specifications for the Mister Smith AI Agent Framework.
+It builds upon the RBAC foundations established in the security framework and extends them with attribute-based access control (ABAC) capabilities.
 
 ### Core Principles
 
@@ -1816,25 +1817,25 @@ pub struct ExportedDataInfo {
 
 ### Medium Priority Enhancements
 
-3. **Policy Simulation Tools** (Not Implemented)
+1. **Policy Simulation Tools** (Not Implemented)
    - **Implementation**: Add policy impact analysis and simulation capabilities
    - **Expected Impact**: Better policy testing and validation before deployment
 
-4. **Advanced Metrics** (Basic Implementation)
+2. **Advanced Metrics** (Basic Implementation)
    - **Implementation**: Detailed authorization performance and security metrics
    - **Expected Impact**: Enhanced monitoring and optimization capabilities
 
-5. **Policy Versioning UI** (Command-line Only)
+3. **Policy Versioning UI** (Command-line Only)
    - **Implementation**: Management interface for policy version control
    - **Expected Impact**: Improved policy governance and management
 
 ### Low Priority Enhancements
 
-6. **ML-Based Risk Scoring** (Future Enhancement)
+1. **ML-Based Risk Scoring** (Future Enhancement)
    - **Implementation**: Machine learning for dynamic risk assessment
    - **Expected Impact**: Adaptive security based on behavioral patterns
 
-7. **Advanced Delegation Patterns** (Basic Support)
+2. **Advanced Delegation Patterns** (Basic Support)
    - **Implementation**: Time-bound and scoped delegation mechanisms
    - **Expected Impact**: More flexible temporary access patterns
 

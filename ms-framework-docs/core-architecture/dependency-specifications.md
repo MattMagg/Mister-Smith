@@ -6,7 +6,9 @@
 
 ### Overview
 
-This document provides comprehensive dependency management specifications for the Mister Smith AI Agent Framework. It defines exact versions, feature selections, security requirements, and management strategies for all dependencies used across the framework ecosystem.
+This document provides comprehensive dependency management specifications for the Mister Smith AI Agent Framework.
+It defines exact versions, feature selections, security requirements, and management strategies
+for all dependencies used across the framework ecosystem.
 
 ---
 
@@ -50,25 +52,25 @@ This document provides comprehensive dependency management specifications for th
 
 ### 2.1 Dependency Hierarchy Visualization
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     CORE DEPENDENCIES                          │
-│  tokio, serde, async-trait, uuid, thiserror, futures          │
-└─────────────────────┬───────────────────────────────────────────┘
+```text
+┌───────────────────────────────────────────────────────────┐
+│                     CORE DEPENDENCIES                     │
+│  tokio, serde, async-trait, uuid, thiserror, futures     │
+└─────────────────────┬─────────────────────────────────────┘
                       │
-┌─────────────────────┴───────────────────────────────────────────┐
-│                  FEATURE DEPENDENCIES                          │
-├─ SECURITY: ring, jwt-simple, aes-gcm, chacha20poly1305         │
-├─ PERSISTENCE: sqlx, redis, sled                                │
-├─ CLUSTERING: raft, async-nats                                  │
-├─ MONITORING: prometheus, metrics, tracing                      │
-├─ HTTP: reqwest, url                                            │
-└─ UTILITIES: chrono, config, notify, crossbeam                  │
+┌─────────────────────┴─────────────────────────────────────┐
+│                  FEATURE DEPENDENCIES                     │
+├─ SECURITY: ring, jwt-simple, aes-gcm, chacha20poly1305   │
+├─ PERSISTENCE: sqlx, redis, sled                          │
+├─ CLUSTERING: raft, async-nats                            │
+├─ MONITORING: prometheus, metrics, tracing                │
+├─ HTTP: reqwest, url                                      │
+└─ UTILITIES: chrono, config, notify, crossbeam            │
                       │
-┌─────────────────────┴───────────────────────────────────────────┐
-│                DEVELOPMENT DEPENDENCIES                        │
-│  tokio-test, mockall, criterion, proptest, wiremock            │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────┴─────────────────────────────────────┐
+│                DEVELOPMENT DEPENDENCIES                   │
+│  tokio-test, mockall, criterion, proptest, wiremock      │
+└───────────────────────────────────────────────────────────┘
 ```
 
 ### 2.2 Dependency Categories
@@ -903,7 +905,8 @@ cargo-tree = "0.32.0"
 
 ### Architectural Consistency Verification
 
-Based on comprehensive validation (ref: `/validation-bridge/team-alpha-validation/agent04-architectural-consistency-validation.md`), the dependency specifications demonstrate **EXCELLENT** consistency across all framework domains:
+Based on comprehensive validation (ref: `/validation-bridge/team-alpha-validation/agent04-architectural-consistency-validation.md`),
+the dependency specifications demonstrate **EXCELLENT** consistency across all framework domains:
 
 #### Unified Technology Stack ✅
 
@@ -987,4 +990,6 @@ ring = "0.17"            # Cryptography - standardized
 
 ---
 
-This comprehensive dependency management specification provides the foundation for building secure, performant, and maintainable AI agent systems within the Mister Smith framework. Regular review and updates ensure the dependency strategy evolves with the ecosystem while maintaining security and performance standards.
+This comprehensive dependency management specification provides the foundation for building secure, performant,
+and maintainable AI agent systems within the Mister Smith framework. Regular review and updates ensure
+the dependency strategy evolves with the ecosystem while maintaining security and performance standards.

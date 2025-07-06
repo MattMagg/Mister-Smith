@@ -10,7 +10,9 @@
 
 ## Executive Summary
 
-This document provides the foundational integration contracts and core architecture specifications for the Mister Smith framework. Building upon Agent 14's cross-document validation (which revealed critical gaps in trait compatibility and component contracts), this specification establishes the concrete integration foundation required for seamless component interaction.
+This document provides the foundational integration contracts and core architecture specifications for the Mister Smith framework.
+Building upon Agent 14's cross-document validation (which revealed critical gaps in trait compatibility and component contracts),
+this specification establishes the concrete integration foundation required for seamless component interaction.
 
 **Key Focus Areas:**
 
@@ -23,7 +25,9 @@ This document provides the foundational integration contracts and core architect
 
 **Target Achievement**: Elevate component integration from 65-71% to 85-94% compatibility across all critical interfaces.
 
-**Quick Navigation**: Jump directly to [Agent Contracts](#21-core-agent-integration-contract), [Transport Interface](#22-unified-transport-interface), or [Configuration Management](#23-configuration-management-integration) for specific implementations.
+**Quick Navigation**: Jump directly to [Agent Contracts](#21-core-agent-integration-contract),
+[Transport Interface](#22-unified-transport-interface),
+or [Configuration Management](#24-configuration-management-integration) for specific implementations.
 
 **Related Documents:**
 
@@ -58,7 +62,7 @@ This document provides the foundational integration contracts and core architect
 2. [Cross-Component Integration Contracts](#2-cross-component-integration-contracts)
    - [Core Agent Integration Contract](#21-core-agent-integration-contract)
    - [Unified Transport Interface](#22-unified-transport-interface)
-   - [Configuration Management Integration](#23-configuration-management-integration)
+   - [Configuration Management Integration](#24-configuration-management-integration)
 
 ---
 
@@ -66,7 +70,8 @@ This document provides the foundational integration contracts and core architect
 
 ### 1.1 Shared Contracts Library
 
-The `mister-smith-contracts` crate provides the foundation for all component integration. This shared library implements the contracts detailed in [Section 2](#2-cross-component-integration-contracts) below:
+The `mister-smith-contracts` crate provides the foundation for all component integration.
+This shared library implements the contracts detailed in [Section 2](#2-cross-component-integration-contracts) below:
 
 ```rust
 // Core integration traits
@@ -94,9 +99,9 @@ pub use mister_smith_contracts::testing::{
 |----------------|--------|-------|---------------------|-----------|
 | Core ↔ Transport | 69% | 92% | Unified messaging contracts + protocol bridging | [Transport Interface](#22-unified-transport-interface) |
 | Data ↔ Orchestration | 69% | 90% | Event-driven state management + schema mapping | [Agent Contract](#21-core-agent-integration-contract) |
-| Security ↔ All Components | 71% | 94% | Cross-cutting authentication + authorization patterns | [Configuration Management](#23-configuration-management-integration) |
+| Security ↔ All Components | 71% | 94% | Cross-cutting authentication + authorization patterns | [Configuration Management](#24-configuration-management-integration) |
 | Observability ↔ All | 71% | 88% | Unified tracing + metrics collection contracts | [Error, Event, and Dependency Injection Patterns](./integration-patterns.md) |
-| Deployment ↔ All | 63% | 85% | Configuration standardization + health check contracts | [Configuration Management](#23-configuration-management-integration) |
+| Deployment ↔ All | 63% | 85% | Configuration standardization + health check contracts | [Configuration Management](#24-configuration-management-integration) |
 | Claude CLI ↔ Framework | 58% | 87% | Process isolation + security bridge patterns | [System Integration](system-integration.md) |
 
 ---
@@ -758,7 +763,8 @@ pub enum SecurityError {
 
 **Addresses**: Configuration format conflicts (Agent 14: 45-55% consistency, Agent 11: 80% compatibility) | Data Consistency Validation (Agent 12: Cross-component configuration integrity)
 
-**Implementation**: The hierarchical configuration system is implemented through the [Shared Contracts Library](#11-shared-contracts-library) with support for multiple providers and comprehensive data flow validation.
+**Implementation**: The hierarchical configuration system is implemented through the [Shared Contracts Library](#11-shared-contracts-library)
+with support for multiple providers and comprehensive data flow validation.
 
 **See Also**:
 
@@ -1071,7 +1077,10 @@ impl ConfigMapper {
 
 ## Conclusion
 
-This document establishes the core integration contracts and architecture patterns that form the foundation of the Mister Smith framework's component integration strategy. By providing unified trait definitions, protocol bridging capabilities, and configuration standardization, we create a solid base for seamless component interaction.
+This document establishes the core integration contracts and architecture patterns that form the foundation
+of the Mister Smith framework's component integration strategy. By providing unified trait definitions,
+protocol bridging capabilities, and configuration standardization,
+we create a solid base for seamless component interaction.
 
 **Key Achievements:**
 

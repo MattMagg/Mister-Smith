@@ -4,12 +4,12 @@ type: note
 permalink: ms-framework/transport/transport-core
 ---
 
-# Transport Core - Abstraction, Connection, Error & Security Patterns
+## Transport Core - Abstraction, Connection, Error & Security Patterns
 
 ## Agent Implementation Framework
 
-> **Modularization Note**: This document contains core transport abstractions extracted from the complete transport layer specifications. For protocol-specific implementations, see companion files for NATS, gRPC, and HTTP specifics.
-
+> **Modularization Note**: This document contains core transport abstractions extracted from the complete transport layer specifications.
+> For protocol-specific implementations, see companion files for NATS, gRPC, and HTTP specifics.
 > **Canonical Reference**: See `/Users/mac-main/Mister-Smith/Mister-Smith/tech-framework.md` for authoritative technology stack specifications
 
 ## 🔍 VALIDATION STATUS
@@ -50,7 +50,8 @@ As stated in the canonical source:
 
 ## Overview
 
-This document defines foundational transport patterns for agent communication using the Claude-Flow Rust Stack. Focus is on core abstractions, connection management, error handling, and security suitable for learning distributed systems.
+This document defines foundational transport patterns for agent communication using the Claude-Flow Rust Stack.
+Focus is on core abstractions, connection management, error handling, and security suitable for learning distributed systems.
 
 **Technology Stack** (from tech-framework.md):
 
@@ -63,7 +64,7 @@ This document defines foundational transport patterns for agent communication us
 
 ### 1.1 Request-Response Pattern
 
-```pseudocode
+```rust
 PATTERN RequestResponse:
     AGENT sends REQUEST to TARGET_AGENT
     TARGET_AGENT processes REQUEST
@@ -77,7 +78,7 @@ PATTERN RequestResponse:
 
 ### 1.2 Publish-Subscribe Pattern
 
-```pseudocode
+```rust
 PATTERN PublishSubscribe:
     PUBLISHER_AGENT publishes MESSAGE to TOPIC
     ALL SUBSCRIBER_AGENTS on TOPIC receive MESSAGE
@@ -90,7 +91,7 @@ PATTERN PublishSubscribe:
 
 ### 1.3 Queue Group Pattern
 
-```pseudocode
+```rust
 PATTERN QueueGroup:
     PRODUCER_AGENT sends TASK to QUEUE
     ONE WORKER_AGENT from GROUP receives TASK
@@ -103,7 +104,7 @@ PATTERN QueueGroup:
 
 ### 1.4 Blackboard Pattern
 
-```pseudocode
+```rust
 PATTERN Blackboard:
     AGENTS write/read from SHARED_KNOWLEDGE_SPACE
     ALL AGENTS can observe changes to BLACKBOARD
@@ -123,7 +124,7 @@ PATTERN Blackboard:
 
 ### 5.1 Generic Transport Interface
 
-```pseudocode
+```rust
 INTERFACE Transport:
     connect(config)
     disconnect()
@@ -138,7 +139,7 @@ IMPLEMENTATIONS:
 
 ### 5.2 Message Routing
 
-```pseudocode
+```rust
 ROUTING_LOGIC:
     RECEIVE message
     EXTRACT destination
@@ -155,7 +156,7 @@ FALLBACK:
 
 ### 6.1 Core Agent Message Interfaces
 
-```pseudocode
+```rust
 AGENT_INTERFACES:
     Planner:
         create_plan(goal) -> TaskList
@@ -181,7 +182,7 @@ AGENT_INTERFACES:
 
 ### 6.2 Coordination Topologies
 
-```pseudocode
+```rust
 CENTRALIZED_PATTERN:
     ORCHESTRATOR maintains global_state
     ORCHESTRATOR assigns tasks to AGENTS
@@ -202,7 +203,7 @@ PEER_TO_PEER_PATTERN:
 
 ### 7.1 Connection Pool Architecture
 
-```pseudocode
+```rust
 INTERFACE ConnectionPoolManager {
     create_pool(config: PoolConfig) -> Pool
     monitor_health() -> HealthMetrics
@@ -230,7 +231,7 @@ CLASS AdvancedConnectionPool {
 
 ### 7.2 Protocol-Specific Pool Configurations
 
-```pseudocode
+```rust
 -- NATS Connection Pool with Deadpool Pattern
 CLASS NatsConnectionPool IMPLEMENTS ConnectionPoolManager {
     FUNCTION create_nats_pool(config: NatsConfig) -> NatsPool {
@@ -301,7 +302,7 @@ CLASS GrpcConnectionPool IMPLEMENTS ConnectionPoolManager {
 
 ### 7.3 Connection String Templates and Configuration
 
-```pseudocode
+```rust
 CLASS ConnectionStringManager {
     ENUM ProtocolType {
         NATS,
@@ -393,7 +394,7 @@ CLASS EnvironmentConfigLoader {
 
 ### 7.4 Advanced Health Checking and Recovery
 
-```pseudocode
+```rust
 CLASS AdvancedHealthMonitor {
     PRIVATE health_checkers: Map<ProtocolType, HealthChecker>
     PRIVATE circuit_breakers: Map<String, CircuitBreaker>
@@ -515,7 +516,7 @@ CLASS ConnectionCircuitBreaker {
 
 ### 7.5 Resource Limits and Backpressure Management
 
-```pseudocode
+```rust
 CLASS ResourceLimitManager {
     STRUCT ResourceLimits {
         max_memory_usage: Bytes = 512_MB
@@ -593,7 +594,7 @@ CLASS ResourceLimitManager {
 
 ### 7.6 Performance Monitoring and Metrics
 
-```pseudocode
+```rust
 CLASS ConnectionPerformanceMonitor {
     PRIVATE metrics_collector: MetricsCollector
     PRIVATE alert_manager: AlertManager
@@ -674,7 +675,7 @@ CLASS ConnectionPerformanceMonitor {
 
 ### 8.1 Basic Retry Logic
 
-```pseudocode
+```rust
 RETRY_PATTERN:
     attempts = 0
     WHILE attempts < max_retries:
@@ -689,7 +690,7 @@ RETRY_PATTERN:
 
 ### 8.2 Timeout Handling
 
-```pseudocode
+```rust
 TIMEOUT_PATTERN:
     START timer(timeout_duration)
     SEND request
@@ -705,7 +706,7 @@ TIMEOUT_PATTERN:
 
 ### 9.1 TLS Configuration
 
-```pseudocode
+```rust
 TLS_SETUP:
     LOAD certificates
     CONFIGURE tls_config:
@@ -730,7 +731,7 @@ mTLS_PATTERN:
 
 ### 9.2 Authentication Pattern
 
-```pseudocode
+```rust
 AUTH_FLOW:
     CLIENT sends credentials
     SERVER validates credentials
@@ -763,7 +764,7 @@ SUBJECT_AUTHORIZATION:
 
 ### 9.3 Zero-Downtime Key Rotation
 
-```pseudocode
+```rust
 KEY_ROTATION_PATTERN:
     STATE_MACHINE:
         KeyAActive -> StagingNewKey
@@ -791,7 +792,7 @@ Agents implementing transport should:
 
 ### 10.2 Testing Patterns
 
-```pseudocode
+```rust
 TEST_SCENARIOS:
     - Connection establishment
     - Message delivery
@@ -804,7 +805,7 @@ TEST_SCENARIOS:
 
 ### 11.1 NATS Configuration
 
-```pseudocode
+```rust
 NATS_CONFIG:
     servers: ["nats://localhost:4222"]
     max_reconnects: 5
@@ -814,7 +815,7 @@ NATS_CONFIG:
 
 ### 11.2 gRPC Configuration
 
-```pseudocode
+```rust
 GRPC_CONFIG:
     address: "localhost:50051"
     timeout: 30_seconds
@@ -824,7 +825,7 @@ GRPC_CONFIG:
 
 ### 11.3 HTTP Configuration
 
-```pseudocode
+```rust
 HTTP_CONFIG:
     bind_address: "0.0.0.0:8080"
     request_timeout: 30_seconds
@@ -1446,7 +1447,8 @@ This document contains **16 major sections** covering:
 - **Sections 7-9**: Connection management and security
 - **Sections 10-16**: Advanced features, configuration, and serialization
 
-**File Size Note**: At 1,386 lines, this document serves as the comprehensive foundation for all transport protocols. Protocol-specific details have been extracted to companion files to improve navigability while maintaining complete core specifications.
+**File Size Note**: At 1,386 lines, this document serves as the comprehensive foundation for all transport protocols.
+Protocol-specific details have been extracted to companion files to improve navigability while maintaining complete core specifications.
 
 ---
 

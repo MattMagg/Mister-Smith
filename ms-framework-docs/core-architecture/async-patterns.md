@@ -1841,7 +1841,9 @@ pub mod builtin {
 
 ### Architectural Consistency Findings
 
-Based on comprehensive validation (ref: `/validation-bridge/team-alpha-validation/agent04-architectural-consistency-validation.md`), the async patterns demonstrate **EXCELLENT** consistency across all framework domains:
+Based on comprehensive validation (ref:
+`/validation-bridge/team-alpha-validation/agent04-architectural-consistency-validation.md`),
+the async patterns demonstrate **EXCELLENT** consistency across all framework domains:
 
 #### Unified Async Implementation ✅
 
@@ -1864,7 +1866,7 @@ trait Planner {
 
 **Transport Layer**:
 
-```pseudocode
+```rust
 PATTERN RequestResponse:
     AGENT sends REQUEST to TARGET_AGENT (async)
     TARGET_AGENT processes REQUEST (async)
@@ -1873,14 +1875,14 @@ PATTERN RequestResponse:
 
 **Security Framework**:
 
-```pseudocode
+```rust
 function authenticate_request(request) // async pattern
     // Consistent with core async authentication traits
 ```
 
 **Operations Domain**:
 
-```pseudocode
+```rust
 PATTERN AgentInstrumentation:
     initialize_telemetry_context() // async initialization
     configure_data_exporters() // async configuration
@@ -1895,7 +1897,9 @@ PATTERN AgentInstrumentation:
 
 #### Architectural Debt Note
 
-While async patterns are consistently implemented, the supervision tree implementation (system-architecture.md lines 1833-1983) remains in pseudocode. This is the primary blocker for production-ready async supervision patterns.
+While async patterns are consistently implemented, the supervision tree implementation
+(system-architecture.md lines 1833-1983) remains in pseudocode. This is the primary blocker
+for production-ready async supervision patterns.
 
 ### 2.7 Distributed Tracing Integration
 

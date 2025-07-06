@@ -6,7 +6,7 @@ tags:
 - '#revised-document #agent-lifecycle #supervision-patterns #foundation-focus'
 ---
 
-# Agent Lifecycle & Supervision Architecture
+## Agent Lifecycle & Supervision Architecture
 
 ## Foundation Patterns Guide
 
@@ -14,7 +14,9 @@ tags:
 
 ## Executive Summary
 
-This document defines foundational agent lifecycle management and supervision patterns using Rust's actor model with Tokio runtime. Focus is on agent state machines, lifecycle transitions, supervision trees, and restart policies essential for robust distributed agent systems.
+This document defines foundational agent lifecycle management and supervision patterns using Rust's actor model
+with Tokio runtime. Focus is on agent state machines, lifecycle transitions, supervision trees,
+and restart policies essential for robust distributed agent systems.
 
 > **Validation Status**: Production Ready (14.5/15 points) - Minor enhancements needed for resource quotas, memory pressure handling, and supervision metrics collection for perfect production readiness.
 
@@ -22,7 +24,7 @@ This document defines foundational agent lifecycle management and supervision pa
 
 ### 1.1 Agent Types
 
-```pseudocode
+```rust
 ENUM AgentType {
     SUPERVISOR,    // Manages other agents
     WORKER,        // Performs tasks
@@ -129,7 +131,9 @@ trait Memory {
 
 #### 1.3.1 Agent State Schema
 
-> **Validation Note**: Consider using Protocol Buffers for state schema versioning in distributed deployments. The JSON Schema below provides a solid foundation but may benefit from protobuf for evolution support.
+> **Validation Note**: Consider using Protocol Buffers for state schema versioning in
+> distributed deployments. The JSON Schema below provides a solid foundation but may benefit
+> from protobuf for evolution support.
 
 ```json
 {
@@ -315,7 +319,7 @@ trait Memory {
 
 > **Validation Enhancement**: For distributed scenarios, consider implementing consensus mechanisms for state transitions to ensure consistency across nodes.
 
-```pseudocode
+```rust
 CLASS AgentLifecycle {
     PRIVATE state: AgentState
     PRIVATE transitionRules: StateTransitionRules
@@ -412,7 +416,7 @@ trait RoutingStrategy {
 
 ### 2.3 Basic Supervision Tree
 
-```pseudocode
+```rust
 CLASS Supervisor {
     PRIVATE children: Map<String, Agent>
     PRIVATE strategy: SupervisionStrategy
@@ -436,7 +440,7 @@ ENUM RestartStrategy {
 
 ### 2.4 Simple Restart Logic
 
-```pseudocode
+```rust
 CLASS RestartPolicy {
     PRIVATE maxRestarts: Integer
     PRIVATE timeWindow: Duration

@@ -4,7 +4,7 @@ type: note
 permalink: revision-swarm/operations/deployment-architecture-specifications-revised
 ---
 
-# Deployment Architecture Specifications - Revised
+## Deployment Architecture Specifications - Revised
 
 ## Multi-Agent Platform Deployment Patterns
 
@@ -59,13 +59,15 @@ permalink: revision-swarm/operations/deployment-architecture-specifications-revi
 
 ### Executive Summary
 
-This document provides deployment architecture patterns for multi-agent platforms, focusing on containerization strategies, orchestration patterns, and scalable infrastructure designs. All patterns have been validated as production-ready with comprehensive Kubernetes orchestration, sophisticated service mesh integration, and enterprise-grade scaling strategies.
+This document provides deployment architecture patterns for multi-agent platforms, focusing on containerization strategies, orchestration patterns,
+and scalable infrastructure designs. All patterns have been validated as production-ready with comprehensive Kubernetes orchestration,
+sophisticated service mesh integration, and enterprise-grade scaling strategies.
 
 ### 1. Container Architecture Patterns
 
 #### 1.1 Base Container Strategy Pattern
 
-```pseudocode
+```rust
 PATTERN MultiStageContainer:
     STAGES:
         build_stage:
@@ -84,7 +86,7 @@ PATTERN MultiStageContainer:
 
 #### 1.2 Agent Container Types Pattern
 
-```pseudocode
+```rust
 PATTERN AgentContainerTypes:
     CONTAINER_CATEGORIES:
         orchestrator_container:
@@ -105,7 +107,7 @@ PATTERN AgentContainerTypes:
 
 #### 1.3 Sidecar Pattern Implementation
 
-```pseudocode
+```rust
 PATTERN SidecarArchitecture:
     SIDECAR_TYPES:
         coordination_proxy:
@@ -128,7 +130,7 @@ PATTERN SidecarArchitecture:
 
 #### 2.1 DAG vs FSM Orchestration Pattern
 
-```pseudocode
+```rust
 PATTERN OrchestrationModelSelection:
     DAG_PATTERN:
         characteristics:
@@ -177,7 +179,7 @@ PATTERN OrchestrationModelSelection:
 
 #### 2.2 Workflow Retry Pattern
 
-```pseudocode
+```rust
 PATTERN RetryStrategies:
     RETRY_POLICIES:
         exponential_backoff:
@@ -214,7 +216,7 @@ PATTERN RetryStrategies:
 
 #### 2.3 Namespace Organization Pattern
 
-```pseudocode
+```rust
 PATTERN NamespaceArchitecture:
     NAMESPACE_CATEGORIES:
         system_namespace:
@@ -240,7 +242,7 @@ PATTERN NamespaceArchitecture:
 
 #### 2.4 Deployment Topology Pattern
 
-```pseudocode
+```rust
 PATTERN DeploymentTopology:
     ORCHESTRATOR_DEPLOYMENT:
         replica_strategy: "odd_number_for_consensus"
@@ -257,7 +259,7 @@ PATTERN DeploymentTopology:
 
 #### 2.5 Service Discovery Pattern
 
-```pseudocode
+```rust
 PATTERN ServiceDiscovery:
     DISCOVERY_METHODS:
         dns_based:
@@ -280,7 +282,7 @@ PATTERN ServiceDiscovery:
 
 #### 3.1 Horizontal Scaling Pattern
 
-```pseudocode
+```rust
 PATTERN HorizontalScaling:
     SCALING_TRIGGERS:
         resource_based:
@@ -311,7 +313,7 @@ PATTERN HorizontalScaling:
 
 #### 3.2 Cluster Autoscaling Pattern
 
-```pseudocode
+```rust
 PATTERN ClusterAutoscaling:
     NODE_GROUPS:
         control_plane_nodes:
@@ -332,7 +334,7 @@ PATTERN ClusterAutoscaling:
 
 #### 3.3 Resource Allocation Pattern
 
-```pseudocode
+```rust
 PATTERN ResourceAllocation:
     RESOURCE_TIERS:
         minimal_tier:
@@ -353,7 +355,7 @@ PATTERN ResourceAllocation:
 
 #### 3.4 Orchestration Autoscale Pattern
 
-```pseudocode
+```rust
 PATTERN OrchestrationAutoscale:
     SCALING_STRATEGIES:
         queue_based_scaling:
@@ -402,7 +404,7 @@ PATTERN OrchestrationAutoscale:
 
 #### 4.1 Helm Chart Structure Pattern
 
-```pseudocode
+```rust
 PATTERN ChartOrganization:
     STRUCTURE:
         chart_metadata:
@@ -424,7 +426,7 @@ PATTERN ChartOrganization:
 
 #### 4.2 Configuration Management Pattern
 
-```pseudocode
+```rust
 PATTERN ConfigurationHierarchy:
     LEVELS:
         base_configuration:
@@ -442,7 +444,7 @@ PATTERN ConfigurationHierarchy:
 
 #### 4.3 Claude-CLI Configuration Pattern
 
-```pseudocode
+```rust
 PATTERN ClaudeCLIConfiguration:
     PARALLEL_EXECUTION_SETTINGS:
         environment_variables:
@@ -472,7 +474,7 @@ PATTERN ClaudeCLIConfiguration:
 
 #### 5.1 Network Segmentation Pattern
 
-```pseudocode
+```rust
 PATTERN NetworkSegmentation:
     SEGMENTS:
         control_plane_network:
@@ -564,7 +566,7 @@ spec:
 
 #### 5.2 Service Mesh Pattern
 
-```pseudocode
+```rust
 PATTERN ServiceMesh:
     CAPABILITIES:
         traffic_management:
@@ -609,7 +611,7 @@ PATTERN ServiceMesh:
 
 #### 6.1 GitOps Pattern
 
-```pseudocode
+```rust
 PATTERN GitOpsDeployment:
     WORKFLOW:
         source_of_truth: "git_repository"
@@ -628,7 +630,7 @@ PATTERN GitOpsDeployment:
 
 #### 6.2 Progressive Delivery Pattern
 
-```pseudocode
+```rust
 PATTERN ProgressiveDelivery:
     STAGES:
         canary_release:
@@ -652,7 +654,7 @@ PATTERN ProgressiveDelivery:
 
 #### 7.1 Environment Tiers Pattern
 
-```pseudocode
+```rust
 PATTERN EnvironmentTiers:
     TIER_DEFINITIONS:
         tier_1_experimental:
@@ -676,7 +678,7 @@ PATTERN EnvironmentTiers:
 
 #### 7.2 Environment Promotion Pattern
 
-```pseudocode
+```rust
 PATTERN EnvironmentPromotion:
     PROMOTION_FLOW:
         build_artifacts()
@@ -693,7 +695,7 @@ PATTERN EnvironmentPromotion:
 
 #### 8.1 Multi-Region Deployment Pattern
 
-```pseudocode
+```rust
 PATTERN MultiRegionDeployment:
     TOPOLOGY:
         active_active:
@@ -709,7 +711,7 @@ PATTERN MultiRegionDeployment:
 
 #### 8.2 Disaster Recovery Pattern
 
-```pseudocode
+```rust
 PATTERN DisasterRecovery:
     COMPONENTS:
         backup_strategy:
@@ -728,7 +730,7 @@ PATTERN DisasterRecovery:
 
 #### 9.1 Zero Trust Architecture Pattern
 
-```pseudocode
+```rust
 PATTERN ZeroTrustSecurity:
     PRINCIPLES:
         never_trust_always_verify()
@@ -746,7 +748,7 @@ PATTERN ZeroTrustSecurity:
 
 #### 9.2 Secret Management Pattern
 
-```pseudocode
+```rust
 PATTERN SecretManagement:
     SECRET_LIFECYCLE:
         generation: "automated_strong_secrets"
@@ -760,7 +762,7 @@ PATTERN SecretManagement:
 
 #### 10.1 Observability Stack Pattern
 
-```pseudocode
+```rust
 PATTERN ObservabilityIntegration:
     COMPONENTS:
         metrics_pipeline:
@@ -786,7 +788,7 @@ PATTERN ObservabilityIntegration:
 
 #### 11.1 Resource Optimization Pattern
 
-```pseudocode
+```rust
 PATTERN ResourceOptimization:
     STRATEGIES:
         right_sizing:
@@ -809,7 +811,7 @@ PATTERN ResourceOptimization:
 
 #### 12.1 Deployment Orchestration Pattern
 
-```pseudocode
+```rust
 PATTERN DeploymentOrchestration:
     PHASES:
         infrastructure_preparation:
@@ -3569,4 +3571,6 @@ subjects:
 
 ---
 
-This deployment architecture specification provides comprehensive patterns and concrete implementation templates for deploying multi-agent systems at scale, including Docker best practices, Kubernetes manifests, service mesh configuration, blue-green deployments, automated CI/CD pipelines, infrastructure as code, and advanced auto-scaling strategies suitable for production deployment of the Mister Smith AI Agent Framework.
+This deployment architecture specification provides comprehensive patterns and concrete implementation templates for deploying multi-agent systems at scale,
+including Docker best practices, Kubernetes manifests, service mesh configuration, blue-green deployments, automated CI/CD pipelines, infrastructure as code,
+and advanced auto-scaling strategies suitable for production deployment of the Mister Smith AI Agent Framework.

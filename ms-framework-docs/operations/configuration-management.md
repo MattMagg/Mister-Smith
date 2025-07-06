@@ -39,7 +39,9 @@
 
 ### Overview
 
-This document provides comprehensive configuration management specifications for the Mister Smith AI Agent Framework. It defines complete configuration file schemas, environment variable specifications, validation rules, default value hierarchies, and configuration override patterns that support the framework's multi-tier deployment architecture and feature-based modularity.
+This document provides comprehensive configuration management specifications for the Mister Smith AI Agent Framework. It defines complete configuration file schemas,
+environment variable specifications, validation rules, default value hierarchies, and configuration override patterns that support the framework's multi-tier
+deployment architecture and feature-based modularity.
 
 ---
 
@@ -55,7 +57,7 @@ This document provides comprehensive configuration management specifications for
 
 ### 1.2 Configuration Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    CONFIGURATION LAYERS                    │
 ├─────────────────────────────────────────────────────────────┤
@@ -1119,7 +1121,7 @@ max_control_line = 4096
 
 #### 6.1.1 Precedence Order (Highest to Lowest)
 
-```
+```text
 1. Command Line Arguments (--config-key=value)
 2. Environment Variables (MISTER_SMITH_*)
 3. Environment-Specific Config Files (tier_1.toml, tier_2.toml, tier_3.toml)
@@ -2103,4 +2105,6 @@ mister-smith config rotate-secrets --dry-run
 
 ---
 
-This comprehensive configuration management specification provides the foundation for a flexible, secure, and maintainable configuration system that supports the Mister Smith AI Agent Framework's multi-tier architecture and feature-based modularity while maintaining strong security and operational practices. The Infrastructure-as-Code integration ensures seamless deployment across various cloud platforms and orchestration systems.
+This comprehensive configuration management specification provides the foundation for a flexible, secure, and maintainable configuration system
+that supports the Mister Smith AI Agent Framework's multi-tier architecture and feature-based modularity while maintaining strong security
+and operational practices. The Infrastructure-as-Code integration ensures seamless deployment across various cloud platforms and orchestration systems.

@@ -12,9 +12,11 @@
 **Team Omega Validation**: ✅ CONFIRMED CRITICAL GAP #2  
 **Timeline to Production**: 10 weeks, CRITICAL priority  
 
-The Supervision Tree Architecture **specifies** (but does not implement) a hierarchical fault-tolerance system for the Mister Smith framework. This module defines the core supervision patterns intended to ensure system reliability through structured error handling and recovery strategies.
+The Supervision Tree Architecture **specifies** (but does not implement) a hierarchical fault-tolerance system for the Mister Smith framework.
+This module defines the core supervision patterns intended to ensure system reliability through structured error handling and recovery strategies.
 
-**CRITICAL WARNING**: The current file contains only pseudocode and architectural specifications. No actual Rust implementation exists, meaning the framework has NO fault tolerance capabilities in its current state.
+**CRITICAL WARNING**: The current file contains only pseudocode and architectural specifications.
+No actual Rust implementation exists, meaning the framework has NO fault tolerance capabilities in its current state.
 
 ### Team Omega Assessment (2025-07-05)
 
@@ -24,7 +26,7 @@ The Supervision Tree Architecture **specifies** (but does not implement) a hiera
 - **Dependencies**: Required by all 15 specialized agent domains
 - **Resource Requirement**: 2 senior Rust developers, 10 weeks
 
-## Cross-References
+## Document Cross-References
 
 **Parent Document**: [System Architecture](system-architecture.md)  
 **Related Modules**:
@@ -44,7 +46,7 @@ The Supervision Tree Architecture **specifies** (but does not implement) a hiera
 3. [Failure Detection and Recovery](#32-failure-detection-and-recovery)
 4. [Implementation Patterns](#implementation-patterns)
 5. [Usage Examples](#usage-examples)
-6. [Cross-References](#cross-references)
+6. [Cross-References](#technical-cross-references)
 7. [Integration with Component Architecture](#integration-with-component-architecture)
 
 ## 🔍 VALIDATION STATUS
@@ -79,11 +81,15 @@ The supervision tree architecture is built on several key principles:
 4. **FailureDetector**: Monitors system health and detects failures
 5. **CircuitBreaker**: Prevents cascading failures through smart circuit breaking
 
-**Integration with Component Architecture**: The supervision tree integrates closely with the [SystemCore](component-architecture.md#41-component-architecture) to provide fault tolerance for all framework components. See [Component Architecture - Event-Driven Architecture](component-architecture.md#42-event-driven-architecture) for event handling patterns used in failure detection.
+**Integration with Component Architecture**: The supervision tree integrates closely with the [SystemCore](component-architecture.md#41-component-architecture)
+to provide fault tolerance for all framework components.
+See [Component Architecture - Event-Driven Architecture](component-architecture.md#42-event-driven-architecture) for event handling patterns used in failure detection.
 
 ---
 
-*⚠️ TECHNICAL ACCURACY NOTE: Contrary to the statement above, NO concrete Rust implementations exist. All code in this file is pseudocode only. The supervision tree functionality is NOT implemented and requires complete development before the framework can provide any fault tolerance.*
+*⚠️ TECHNICAL ACCURACY NOTE: Contrary to the statement above, NO concrete Rust implementations exist.
+All code in this file is pseudocode only.
+The supervision tree functionality is NOT implemented and requires complete development before the framework can provide any fault tolerance.*
 
 ## [Additional Sections Abbreviated]
 
@@ -93,7 +99,8 @@ The supervision tree architecture is built on several key principles:
 
 **⚠️ IMPLEMENTATION STATUS: PSEUDOCODE ONLY - NOT IMPLEMENTED**
 
-The supervisor hierarchy **intends to implement** a flexible tree structure for managing agent lifecycles and failure recovery. The hub-and-spoke pattern is designed to enable centralized routing while maintaining clear supervision boundaries.
+The supervisor hierarchy **intends to implement** a flexible tree structure for managing agent lifecycles and failure recovery.
+The hub-and-spoke pattern is designed to enable centralized routing while maintaining clear supervision boundaries.
 
 **REQUIRED FOR IMPLEMENTATION**:
 
@@ -102,7 +109,7 @@ The supervisor hierarchy **intends to implement** a flexible tree structure for 
 - Add error boundary specifications
 - Implement actual fault detection and recovery mechanisms
 
-```pseudocode
+```rust
 STRUCT SupervisionTree {
     root_supervisor: RootSupervisor,
     node_registry: Arc<RwLock<HashMap<NodeId, SupervisorNode>>>,
@@ -198,7 +205,7 @@ The framework supports multiple supervision strategies:
 
 The failure detection system uses advanced algorithms to quickly identify and respond to system failures while minimizing false positives.
 
-```pseudocode
+```rust
 STRUCT FailureDetector {
     heartbeat_interval: Duration,
     failure_threshold: u32,
@@ -293,7 +300,7 @@ The circuit breaker prevents cascading failures by:
 
 ### Error Type Taxonomy
 
-```pseudocode
+```rust
 // Comprehensive error classification system
 ENUM ErrorCategory {
     Transient {           // Temporary failures
@@ -345,7 +352,7 @@ IMPL ErrorBoundary {
 
 ### Recovery Coordination
 
-```pseudocode
+```rust
 STRUCT RecoveryCoordinator {
     active_recoveries: Arc<RwLock<HashMap<RecoveryId, RecoverySession>>>,
     recovery_graph: DependencyGraph,
@@ -403,7 +410,7 @@ IMPL RecoveryCoordinator {
 
 ### State Reconstruction
 
-```pseudocode
+```rust
 STRUCT StateReconstructor {
     state_sources: Vec<Box<dyn StateSource>>,
     consistency_checker: ConsistencyChecker
@@ -438,7 +445,7 @@ IMPL StateReconstructor {
 
 ### Bulkhead Pattern
 
-```pseudocode
+```rust
 STRUCT BulkheadManager {
     bulkheads: HashMap<ServiceGroup, Bulkhead>,
     resource_pools: HashMap<ServiceGroup, ResourcePool>
@@ -477,7 +484,7 @@ IMPL Bulkhead {
 
 ### Intelligent Retry Mechanisms
 
-```pseudocode
+```rust
 STRUCT RetryPolicy {
     base_delay: Duration,
     max_delay: Duration,
@@ -533,7 +540,7 @@ IMPL RetryPolicy {
 
 ### Timeout Hierarchy Management
 
-```pseudocode
+```rust
 STRUCT TimeoutHierarchy {
     global_timeout: Duration,
     service_timeouts: HashMap<ServiceId, Duration>,
@@ -564,7 +571,7 @@ IMPL TimeoutHierarchy {
 
 ### Health Check Framework
 
-```pseudocode
+```rust
 STRUCT HealthCheckFramework {
     health_checks: HashMap<ComponentId, Box<dyn HealthCheck>>,
     aggregation_strategy: HealthAggregationStrategy,
@@ -602,7 +609,7 @@ IMPL HealthCheck FOR DeepHealthCheck {
 
 ### Graceful Degradation
 
-```pseudocode
+```rust
 STRUCT GracefulDegradationManager {
     feature_flags: Arc<RwLock<FeatureFlags>>,
     degradation_policies: HashMap<ServiceId, DegradationPolicy>,
@@ -635,7 +642,7 @@ IMPL GracefulDegradationManager {
 
 ### Backpressure and Flow Control
 
-```pseudocode
+```rust
 STRUCT BackpressureController {
     input_queue: Arc<Mutex<BoundedQueue<Task>>>,
     pressure_gauge: Arc<AtomicU64>,
@@ -675,7 +682,7 @@ IMPL BackpressureController {
 
 ### Creating a Supervision Tree
 
-```pseudocode
+```rust
 // Example: Setting up a multi-agent supervision tree
 FUNCTION setup_agent_supervision() -> SupervisionTree {
     tree = SupervisionTree::new()
@@ -707,7 +714,7 @@ FUNCTION setup_agent_supervision() -> SupervisionTree {
 
 ### Implementing Custom Supervisors
 
-```pseudocode
+```rust
 STRUCT CustomAgentSupervisor {
     agent_type: String,
     max_concurrent_tasks: usize,
@@ -738,7 +745,7 @@ IMPL Supervisor FOR CustomAgentSupervisor {
 
 ### Basic Supervision Setup
 
-```pseudocode
+```rust
 // Initialize supervision system
 supervision_tree = SupervisionTree::new()
 failure_detector = FailureDetector::new(
@@ -753,7 +760,7 @@ failure_detector.start_monitoring(supervision_tree.all_nodes()).await?
 
 ### Handling Agent Failures
 
-```pseudocode
+```rust
 // Configure restart policies for different agent types
 policies = HashMap::new()
 policies.insert(NodeType::Researcher, RestartPolicy::exponential_backoff())
@@ -765,7 +772,7 @@ supervision_tree.set_restart_policies(policies)
 
 ### Circuit Breaker Usage
 
-```pseudocode
+```rust
 // Wrap external service calls in circuit breaker
 circuit_breaker = CircuitBreaker::new(
     failure_threshold: 5,
@@ -787,7 +794,7 @@ MATCH result {
 }
 ```
 
-## Cross-References
+## Technical Cross-References
 
 ### Dependencies
 
@@ -927,13 +934,14 @@ MATCH result {
 
 ## Integration with Component Architecture
 
-The Supervision Tree Architecture provides essential fault tolerance for the foundational components defined in [Component Architecture](component-architecture.md). This integration ensures robust system operation through structured error handling and recovery.
+The Supervision Tree Architecture provides essential fault tolerance for the foundational components defined in [Component Architecture](component-architecture.md).
+This integration ensures robust system operation through structured error handling and recovery.
 
 ### SystemCore Integration
 
 The [SystemCore](component-architecture.md#41-component-architecture) serves as the central integration point for supervision:
 
-```pseudocode
+```rust
 // Integration points with component-architecture.md
 SystemCore::setup_supervision() -> {
     // Wire supervision tree with event bus for failure notifications
@@ -969,7 +977,7 @@ The supervision tree manages lifecycle for [ResourceManager](component-architect
 
 Integration with [ConfigurationManager](component-architecture.md#44-configuration-management) enables dynamic supervision tuning:
 
-```pseudocode
+```rust
 // Supervision configuration watching
 ConfigurationManager::watch_config<SupervisionConfig>(|new_config| {
     supervision_tree.update_policies(new_config.policies)
@@ -1006,7 +1014,9 @@ ConfigurationManager::watch_config<SupervisionConfig>(|new_config| {
 
 [← Component Architecture](component-architecture.md) | [↑ Core Architecture](README.md) | [System Integration →](system-integration.md)
 
-**See Also**: [SystemCore Integration](component-architecture.md#41-component-architecture) | [Event-Driven Architecture](component-architecture.md#42-event-driven-architecture) | [Resource Management](component-architecture.md#43-resource-management)
+**See Also**: [SystemCore Integration](component-architecture.md#41-component-architecture) |
+[Event-Driven Architecture](component-architecture.md#42-event-driven-architecture) |
+[Resource Management](component-architecture.md#43-resource-management)
 
 ---
 

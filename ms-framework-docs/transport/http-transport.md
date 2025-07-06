@@ -4,7 +4,7 @@ type: note
 permalink: ms-framework/transport/http-transport
 ---
 
-# HTTP Transport Specifications
+## HTTP Transport Specifications
 
 ## Agent Framework Implementation Module
 
@@ -38,7 +38,8 @@ permalink: ms-framework/transport/http-transport
 
 Reference: `/Users/mac-main/Mister-Smith/MisterSmith/validation-swarm/batch5-specialized-domains/agent25-transport-layer-validation.md`
 
-This document defines HTTP-based transport patterns for agent communication using the Claude-Flow Rust Stack. This module focuses on RESTful APIs, WebSocket communication, and complete HTTP protocol specifications.
+This document defines HTTP-based transport patterns for agent communication using the Claude-Flow Rust Stack.
+This module focuses on RESTful APIs, WebSocket communication, and complete HTTP protocol specifications.
 
 **Technology Reference** (from tech-framework.md):
 
@@ -56,7 +57,7 @@ This document defines HTTP-based transport patterns for agent communication usin
 
 ### 1.1 RESTful Endpoints
 
-```pseudocode
+```rust
 API_STRUCTURE:
     GET  /agents              # List agents
     POST /agents              # Register agent
@@ -70,7 +71,7 @@ API_STRUCTURE:
 
 ### 1.2 WebSocket Communication
 
-```pseudocode
+```rust
 WEBSOCKET_PROTOCOL:
     CONNECTION:
         Client connects to /ws

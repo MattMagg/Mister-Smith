@@ -6,7 +6,7 @@ status: active
 priority: high
 ---
 
-# NATS Transport Specifications
+## NATS Transport Specifications
 
 > **Source**: Extracted from `transport-layer-specifications.md` (Sections 2, 12)
 > **Canonical Reference**: See `/Users/mac-main/Mister-Smith/Mister-Smith/tech-framework.md` for authoritative technology stack specifications
@@ -56,7 +56,7 @@ This document contains the complete NATS messaging specifications for the Mister
 
 ### 2.1 Basic NATS Subjects
 
-```pseudocode
+```rust
 SUBJECT_HIERARCHY:
     agents.{agent_id}.commands    # Direct agent commands
     agents.{agent_id}.status      # Agent status updates
@@ -99,7 +99,7 @@ TOPIC_CONVENTIONS:
 
 ### 2.1.1 Claude CLI Hook Message Formats
 
-```pseudocode
+```rust
 HOOK_EVENT_MESSAGE_FORMAT:
     {
         "hook_type": "startup" | "pre_task" | "post_task" | "on_error" | "on_file_change",
@@ -141,7 +141,7 @@ TASK_OUTPUT_MESSAGE_FORMAT:
 
 ### 2.2 NATS Performance Characteristics
 
-```pseudocode
+```rust
 PERFORMANCE_BENCHMARKS:
     CORE_NATS:
         throughput: 3+ million msgs/sec
@@ -157,7 +157,7 @@ PERFORMANCE_BENCHMARKS:
 
 ### 2.3 JetStream Persistence
 
-```pseudocode
+```rust
 STREAM_CONFIGURATION:
     CREATE STREAM "agent-events"
         subjects: ["agents.*.events"]
@@ -181,7 +181,7 @@ STREAM_CONFIGURATION:
 
 ### 2.4 Basic Message Flow
 
-```pseudocode
+```rust
 AGENT_COMMUNICATION_FLOW:
     1. SENDER creates MESSAGE
     2. MESSAGE includes:

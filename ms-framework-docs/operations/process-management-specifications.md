@@ -37,7 +37,9 @@
 
 ### Overview
 
-This document provides comprehensive process management specifications for the Mister Smith AI Agent Framework. It defines complete systemd integration, process supervision patterns, lifecycle management strategies, resource management policies, and health monitoring systems that ensure robust production deployment and operation.
+This document provides comprehensive process management specifications for the Mister Smith AI Agent Framework. It defines complete systemd integration,
+process supervision patterns, lifecycle management strategies, resource management policies, and health monitoring systems that ensure robust
+production deployment and operation.
 
 ---
 
@@ -53,7 +55,7 @@ This document provides comprehensive process management specifications for the M
 
 ### 1.2 Process Management Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                   PROCESS MANAGEMENT LAYERS                │
 ├─────────────────────────────────────────────────────────────┤
@@ -3452,4 +3454,7 @@ impl ServiceSelector {
 
 ---
 
-This comprehensive process management specification provides production-ready patterns and implementations for systemd integration, process supervision, lifecycle management, resource management, and health monitoring, ensuring robust operation of the Mister Smith AI Agent Framework across all deployment tiers. The enhanced service discovery patterns provide multiple options for service registration and discovery, supporting various deployment scenarios from simple NATS-based communication to advanced service mesh integrations.
+This comprehensive process management specification provides production-ready patterns and implementations for systemd integration, process supervision,
+lifecycle management, resource management, and health monitoring, ensuring robust operation of the Mister Smith AI Agent Framework across all deployment tiers.
+The enhanced service discovery patterns provide multiple options for service registration and discovery, supporting various deployment scenarios from
+simple NATS-based communication to advanced service mesh integrations.

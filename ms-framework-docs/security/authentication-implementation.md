@@ -11,7 +11,7 @@ tags:
 - '#agent-focused'
 ---
 
-# Authentication Implementation - Certificate + JWT
+## Authentication Implementation - Certificate + JWT
 
 **⚠️ IMPLEMENTATION STATUS: 96% READY**  
 **Validation Score: 18.5/20 points (92.5%)**  
@@ -53,13 +53,16 @@ tags:
 
 ## Framework Authority
 
-This document implements specifications from the canonical security-framework.md located at /Users/mac-main/Mister-Smith/Mister-Smith/ms-framework-docs/security/security-framework.md
+This document implements specifications from the canonical security-framework.md located at
+/Users/mac-main/Mister-Smith/Mister-Smith/ms-framework-docs/security/security-framework.md
 
 Extracted content: Certificate Management Implementation (Section 1) + JWT Authentication Implementation (Section 2)
 
 ## Purpose
 
-Complete implementation patterns for certificate management and JWT authentication in the Mister Smith Framework. This document provides production-ready code for certificate lifecycle management, JWT token operations, and authentication middleware.
+Complete implementation patterns for certificate management and JWT authentication in the Mister Smith Framework.
+This document provides production-ready code for certificate lifecycle management, JWT token operations,
+and authentication middleware.
 
 **CRITICAL REQUIREMENT**: This implementation enforces TLS 1.3 minimum across the entire framework. All components must use TLS 1.3 or higher:
 
@@ -360,7 +363,8 @@ impl CertificateManager {
                 &rustls::kx_group::SECP384R1,
                 &rustls::kx_group::SECP256R1,
             ])
-            .with_protocol_versions(&[&rustls::version::TLS13]) // ✅ STANDARDIZED: TLS 1.3 minimum enforced framework-wide
+            .with_protocol_versions(&[&rustls::version::TLS13])
+            // ✅ STANDARDIZED: TLS 1.3 minimum enforced framework-wide
             .with_context(|| "Failed to configure TLS parameters")?
             .with_client_cert_verifier(client_cert_verifier)
             .with_single_cert(certs, key)
@@ -393,7 +397,8 @@ impl CertificateManager {
                 &rustls::kx_group::SECP384R1,
                 &rustls::kx_group::SECP256R1,
             ])
-            .with_protocol_versions(&[&rustls::version::TLS13]) // ✅ STANDARDIZED: TLS 1.3 minimum enforced framework-wide
+            .with_protocol_versions(&[&rustls::version::TLS13])
+            // ✅ STANDARDIZED: TLS 1.3 minimum enforced framework-wide
             .with_context(|| "Failed to configure TLS parameters")?
             .with_root_certificates(root_store)
             .with_single_cert(certs, key)
@@ -799,7 +804,8 @@ mod tests {
 **STRENGTHS IDENTIFIED**:
 ✅ **Dual Authentication Model**: Certificate-based mTLS + JWT hybrid approach  
 ✅ **Complete JWT Service**: ES384 algorithm with separate key pairs for access/refresh/API tokens  
-✅ **Role-Based Claims**: Comprehensive AgentClaims structure with roles, permissions, delegation chains  
+✅ **Role-Based Claims**: Comprehensive AgentClaims structure with roles, permissions,
+delegation chains  
 ✅ **Token Lifecycle Management**: Generation, verification, refresh, and revocation patterns  
 ✅ **Security-First Design**: ES384 asymmetric encryption for all JWT operations
 ✅ **Token Segmentation**: Separate key pairs for access (15min), refresh (7 days), API (90 days)
@@ -978,7 +984,8 @@ mod tests {
 
 ### Validation References
 
-**Full Validation Report**: [Agent 14 Authentication Implementation Validation](/Users/mac-main/Mister-Smith/MisterSmith/validation-swarm/batch3-security-compliance/agent14-authentication-implementation-validation.md)
+**Full Validation Report**:
+[Agent 14 Authentication Implementation Validation](/Users/mac-main/Mister-Smith/MisterSmith/validation-swarm/batch3-security-compliance/agent14-authentication-implementation-validation.md)
 
 **Validation Methodology**: Evidence-based analysis with SuperClaude enhanced validation using --ultrathink --evidence --validate --strict flags
 

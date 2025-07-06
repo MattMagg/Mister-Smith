@@ -6,7 +6,7 @@ tags:
 - '#data-management #connection-pooling #transaction-management #distributed-coordination'
 ---
 
-# Connection Pool & Transaction Management
+## Connection Pool & Transaction Management
 
 ## Advanced Connection Architecture Guide
 
@@ -22,7 +22,6 @@ tags:
 > | **TOTAL SCORE** | **15/15** | **✅ DEPLOYMENT APPROVED** |
 >
 > *Validated: 2025-07-05 | Document Lines: 1,892 | Implementation Status: 100%*
-
 > **Navigation**: Part of the modularized data persistence framework
 >
 > - **Core Trilogy**: [[storage-patterns]] ⟷ **connection-management** ⟷ [[persistence-operations]]
@@ -31,13 +30,17 @@ tags:
 
 ## Executive Summary
 
-This document defines advanced connection pooling strategies and transaction management patterns for the Mister Smith AI Agent Framework. It covers multi-pool architectures, distributed transaction coordination using SAGA patterns, connection health monitoring, and failover strategies. The focus is on achieving high availability, optimal resource utilization, and maintaining consistency across PostgreSQL and JetStream KV stores.
+This document defines advanced connection pooling strategies and transaction management patterns
+for the Mister Smith AI Agent Framework. It covers multi-pool architectures,
+distributed transaction coordination using SAGA patterns, connection health monitoring,
+and failover strategies. The focus is on achieving high availability, optimal resource utilization,
+and maintaining consistency across PostgreSQL and JetStream KV stores.
 
 ## 5. Advanced Connection Pool & Transaction Management
 
 ### 5.1 Enterprise Connection Pool Architecture
 
-```pseudocode
+```rust
 INTERFACE ConnectionPoolCoordinator {
     create_postgres_pool(config: PostgresPoolConfig) -> PostgresPool
     create_jetstream_pool(config: JetStreamPoolConfig) -> JetStreamPool
@@ -93,7 +96,7 @@ CLASS EnterpriseConnectionManager {
 
 ### 5.2 Connection Pool Sizing Strategies
 
-```pseudocode
+```rust
 CLASS ConnectionPoolSizer {
     FUNCTION calculate_optimal_pool_size(
         agent_count: Integer,
@@ -166,7 +169,7 @@ CLASS ConnectionPoolSizer {
 
 ### 5.3 Advanced Transaction Isolation and Boundaries
 
-```pseudocode
+```rust
 CLASS AdvancedTransactionManager {
     ENUM TransactionIsolationLevel {
         READ_UNCOMMITTED,   -- Lowest isolation, fastest performance
@@ -311,7 +314,7 @@ CLASS AdvancedTransactionManager {
 
 ### 5.4 Distributed Transaction Coordination
 
-```pseudocode
+```rust
 CLASS DistributedTransactionCoordinator {
     PRIVATE postgres_pool: PostgresPool
     PRIVATE jetstream_kv: JetStreamKV
@@ -450,7 +453,7 @@ CLASS DistributedTransactionCoordinator {
 
 ### 5.5 Connection Pool Health Monitoring
 
-```pseudocode
+```rust
 CLASS ConnectionPoolHealthMonitor {
     PRIVATE postgres_pools: Map<String, PostgresPool>
     PRIVATE jetstream_pools: Map<String, JetStreamKVPool>
@@ -610,7 +613,7 @@ CLASS ConnectionPoolHealthMonitor {
 
 ### 5.6 Connection String Templates and Configuration Management
 
-```pseudocode
+```rust
 CLASS DataLayerConfigurationManager {
     FUNCTION build_postgres_connection_string(env: Environment) -> String {
         config = load_postgres_config(env)

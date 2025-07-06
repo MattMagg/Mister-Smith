@@ -9,7 +9,7 @@ tags:
 - '#agent-focused'
 ---
 
-# Security Framework - Foundational Patterns
+## Security Framework - Foundational Patterns
 
 ## Framework Authority
 
@@ -41,7 +41,8 @@ As stated in the canonical framework: "Agents: use this framework as the canonic
 
 ## Purpose
 
-Foundational security patterns for agent implementation focusing on basic authentication, authorization, TLS setup, and secrets management. This document provides pseudocode patterns and configurations for learning and implementation by agents.
+Foundational security patterns for agent implementation focusing on basic authentication, authorization, TLS setup,
+and secrets management. This document provides pseudocode patterns and configurations for learning and implementation by agents.
 
 ## Core Security Components
 
@@ -49,7 +50,7 @@ Foundational security patterns for agent implementation focusing on basic authen
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Basic JWT Authentication Flow
 function authenticate_request(request):
     token = extract_bearer_token(request.headers)
@@ -118,7 +119,7 @@ pub enum AgentType {
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Role-Based Access Control Pattern
 function check_permission(user_id, resource, action):
     user_roles = get_user_roles(user_id)
@@ -206,7 +207,7 @@ function evaluate_hybrid_authorization(principal, resource, action, context):
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // TLS Server Setup
 function create_tls_server(cert_path, key_path):
     tls_config = {
@@ -246,7 +247,7 @@ tls:
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Environment-Based Secrets
 function load_secrets():
     secrets = {
@@ -290,7 +291,7 @@ secrets:
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Security Headers Middleware
 function security_headers_middleware(request, response, next):
     response.headers.add("X-Content-Type-Options", "nosniff")
@@ -315,7 +316,7 @@ function rate_limit_middleware(request, response, next):
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Security Event Logging
 function log_security_event(event_type, details):
     event = {
@@ -400,7 +401,7 @@ function process_security_audit_event(event_data):
 
 **Pseudocode Pattern - mTLS Configuration:**
 
-```pseudocode
+```rust
 // Initialize secure NATS connection with mTLS
 function init_secure_nats(tenant_id):
     // Load certificates from secure storage
@@ -512,7 +513,7 @@ jetstream_limits:
 
 **Key Rotation Pattern:**
 
-```pseudocode
+```rust
 // Zero-downtime key rotation state machine
 key_rotation_states = [
     "KEY_A_ACTIVE",
@@ -642,7 +643,7 @@ security:
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Hook execution with privilege isolation
 function execute_hook_safely(hook_script, payload):
     // Ensure hook runs under non-root user
@@ -729,7 +730,7 @@ hook_security:
 
 **Pseudocode Pattern:**
 
-```pseudocode
+```rust
 // Validate hook scripts before execution
 function validate_hook_script(script_path):
     // Check file permissions
@@ -780,7 +781,7 @@ function secure_hook_directory(hook_dir):
 - Test security configurations in isolated environments
 - Follow the principle of least privilege for all access control
 
-# CONCRETE IMPLEMENTATIONS
+## CONCRETE IMPLEMENTATIONS
 
 This section provides production-ready implementations that leave zero security implementation decisions for consumers. All security parameters, algorithms, and procedures are specified concretely.
 
@@ -3399,7 +3400,7 @@ hook_security:
 
 **Enhancement Priority: High (Agent 13 Score: 3/5)**
 
-```pseudocode
+```rust
 // Structured threat analysis approach
 function perform_threat_modeling():
     // STRIDE analysis
@@ -3441,7 +3442,7 @@ function perform_threat_modeling():
 
 **Enhancement Priority: High (Agent 13 Recommendation)**
 
-```pseudocode
+```rust
 // Comprehensive security testing approach
 function security_testing_suite():
     // Authentication testing

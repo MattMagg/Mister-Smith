@@ -4,7 +4,7 @@ type: note
 permalink: revision-swarm/operations/observability-monitoring-framework-revised
 ---
 
-# Observability & Monitoring Framework - Revised
+## Observability & Monitoring Framework - Revised
 
 ## Multi-Agent Systems Monitoring Patterns
 
@@ -42,7 +42,7 @@ permalink: revision-swarm/operations/observability-monitoring-framework-revised
 
 #### 1.1 Core Observability Components Pattern
 
-```pseudocode
+```rust
 PATTERN ObservabilityArchitecture:
     COMPONENTS:
         instrumentation_layer
@@ -55,7 +55,7 @@ PATTERN ObservabilityArchitecture:
 
 #### 1.2 Data Flow Pattern
 
-```pseudocode
+```rust
 PATTERN ObservabilityPipeline:
     STAGES:
         agent_instrumentation
@@ -71,7 +71,7 @@ PATTERN ObservabilityPipeline:
 
 #### 2.1 Agent Instrumentation Pattern
 
-```pseudocode
+```rust
 PATTERN AgentInstrumentation:
     initialize_telemetry_context()
     configure_data_exporters()
@@ -523,7 +523,7 @@ PATTERN DistributedTracingImplementation:
 
 #### 3.1 Trace Structure Pattern
 
-```pseudocode
+```rust
 PATTERN TraceStructure:
     COMPONENTS:
         trace_identifier
@@ -537,7 +537,7 @@ PATTERN TraceStructure:
 
 #### 3.2 Sampling Strategy Pattern
 
-```pseudocode
+```rust
 PATTERN AdaptiveSampling:
     DECISION_FACTORS:
         operation_criticality
@@ -555,7 +555,7 @@ PATTERN AdaptiveSampling:
 
 #### 3.3 Cross-Agent Tracing Pattern
 
-```pseudocode
+```rust
 PATTERN CrossAgentTracing:
     create_client_span(source_agent)
     inject_context_headers(message)
@@ -567,7 +567,7 @@ PATTERN CrossAgentTracing:
 
 #### 3.4 Trace Layers Pattern
 
-```pseudocode
+```rust
 PATTERN TraceLayers:
     CHILD_PROCESS_TRACING:
         spawn_agent_with_piped_output()
@@ -585,7 +585,7 @@ PATTERN TraceLayers:
 
 #### 3.5 Claude-CLI Parallel Agent Tracing Pattern
 
-```pseudocode
+```rust
 PATTERN ClaudeCLIParallelTracing:
     PARALLEL_AGENT_INSTRUMENTATION:
         # Handle multiple internal agents sharing one PID
@@ -618,7 +618,7 @@ PATTERN ClaudeCLIParallelTracing:
 
 #### 3.6 Claude-CLI Hook System Tracing Pattern
 
-```pseudocode
+```rust
 PATTERN HookSystemTracing:
     HOOK_EXECUTION_SPANS:
         # Create spans for each hook execution
@@ -665,7 +665,7 @@ PATTERN HookSystemTracing:
 
 #### 3.5 OTLP Integration Pattern
 
-```pseudocode
+```rust
 PATTERN OTLPConfiguration:
     EXPORTER_SETUP:
         protocol: binary_protobuf | grpc | http_json
@@ -688,7 +688,7 @@ PATTERN OTLPConfiguration:
 
 #### 4.1 Metric Types Pattern
 
-```pseudocode
+```rust
 PATTERN MetricTypes:
     CATEGORIES:
         counters: cumulative_values
@@ -699,7 +699,7 @@ PATTERN MetricTypes:
 
 #### 4.2 Agent-Specific Metrics Pattern
 
-```pseudocode
+```rust
 PATTERN AgentMetrics:
     COMMON_METRICS:
         operation_count
@@ -716,7 +716,7 @@ PATTERN AgentMetrics:
 
 #### 4.3 System-Wide Metrics Pattern
 
-```pseudocode
+```rust
 PATTERN SystemMetrics:
     CATEGORIES:
         swarm_coordination_metrics
@@ -728,7 +728,7 @@ PATTERN SystemMetrics:
 
 #### 4.4 Messaging Backplane Metrics Pattern
 
-```pseudocode
+```rust
 PATTERN BackplaneMetrics:
     CONSUMER_HEALTH:
         consumer_lag_ms
@@ -757,7 +757,7 @@ PATTERN BackplaneMetrics:
 
 #### 4.5 Critical Threshold Monitoring Pattern
 
-```pseudocode
+```rust
 PATTERN CriticalThresholds:
     MESSAGING_THRESHOLDS:
         jetstream_fsync_lag: 50M_msgs_per_day
@@ -903,7 +903,7 @@ PATTERN LogAggregationPipeline:
 
 #### 5.1 Structured Logging Pattern
 
-```pseudocode
+```rust
 PATTERN StructuredLogging:
     LOG_ENTRY_STRUCTURE:
         timestamp
@@ -917,7 +917,7 @@ PATTERN StructuredLogging:
 
 #### 5.2 Log Level Classification Pattern
 
-```pseudocode
+```rust
 PATTERN LogLevels:
     DEBUG: detailed_diagnostic_info
     INFO: general_operational_events
@@ -928,7 +928,7 @@ PATTERN LogLevels:
 
 #### 5.3 Log Aggregation Pattern
 
-```pseudocode
+```rust
 PATTERN LogAggregation:
     PIPELINE_STAGES:
         collection_from_sources
@@ -941,7 +941,7 @@ PATTERN LogAggregation:
 
 #### 5.4 Multiline Log Handling Pattern
 
-```pseudocode
+```rust
 PATTERN MultilineLogHandling:
     DETECTION_STRATEGIES:
         prefix_pattern_matching
@@ -965,7 +965,7 @@ PATTERN MultilineLogHandling:
 
 #### 6.1 Agent State Tracking Pattern
 
-```pseudocode
+```rust
 PATTERN AgentStateObservability:
     STATES:
         initializing
@@ -984,7 +984,7 @@ PATTERN AgentStateObservability:
 
 #### 6.2 Swarm Coordination Observability Pattern
 
-```pseudocode
+```rust
 PATTERN SwarmObservability:
     track_agent_assignments()
     monitor_task_distribution()
@@ -995,7 +995,7 @@ PATTERN SwarmObservability:
 
 #### 6.3 Communication Pattern Analysis
 
-```pseudocode
+```rust
 PATTERN CommunicationAnalysis:
     build_communication_graph()
     track_message_flow()
@@ -1008,7 +1008,7 @@ PATTERN CommunicationAnalysis:
 
 #### 7.1 Alert Rule Pattern
 
-```pseudocode
+```rust
 PATTERN AlertRules:
     RULE_COMPONENTS:
         condition_expression
@@ -1020,7 +1020,7 @@ PATTERN AlertRules:
 
 #### 7.2 Anomaly Detection Pattern
 
-```pseudocode
+```rust
 PATTERN AnomalyDetection:
     DETECTION_METHODS:
         statistical_analysis
@@ -1038,7 +1038,7 @@ PATTERN AnomalyDetection:
 
 #### 7.3 Prometheus Alert Pattern
 
-```pseudocode
+```rust
 PATTERN PrometheusAlerts:
     ALERT_DEFINITION:
         name: descriptive_alert_name
@@ -1071,7 +1071,7 @@ PATTERN PrometheusAlerts:
 
 #### 8.1 Dashboard Organization Pattern
 
-```pseudocode
+```rust
 PATTERN DashboardStructure:
     DASHBOARD_TYPES:
         system_overview
@@ -1090,7 +1090,7 @@ PATTERN DashboardStructure:
 
 #### 8.2 Real-Time Monitoring Pattern
 
-```pseudocode
+```rust
 PATTERN RealTimeMonitoring:
     COMPONENTS:
         live_trace_visualization
@@ -1104,7 +1104,7 @@ PATTERN RealTimeMonitoring:
 
 #### 9.1 Retention Policy Pattern
 
-```pseudocode
+```rust
 PATTERN DataRetention:
     RETENTION_TIERS:
         hot_storage: recent_full_fidelity
@@ -1120,7 +1120,7 @@ PATTERN DataRetention:
 
 #### 9.2 Data Lifecycle Pattern
 
-```pseudocode
+```rust
 PATTERN DataLifecycle:
     ingest_and_validate()
     process_and_enrich()
@@ -1253,7 +1253,7 @@ PATTERN PerformanceProfilingIntegration:
 
 #### 10.1 Overhead Management Pattern
 
-```pseudocode
+```rust
 PATTERN OverheadOptimization:
     STRATEGIES:
         adaptive_sampling
@@ -1265,7 +1265,7 @@ PATTERN OverheadOptimization:
 
 #### 10.2 Scalability Pattern
 
-```pseudocode
+```rust
 PATTERN ObservabilityScaling:
     HORIZONTAL_SCALING:
         distribute_collection_load()
@@ -1282,7 +1282,7 @@ PATTERN ObservabilityScaling:
 
 #### 11.1 External System Integration Pattern
 
-```pseudocode
+```rust
 PATTERN ExternalIntegration:
     INTEGRATION_POINTS:
         incident_management_systems
@@ -1294,7 +1294,7 @@ PATTERN ExternalIntegration:
 
 #### 11.2 Data Export Pattern
 
-```pseudocode
+```rust
 PATTERN DataExport:
     configure_export_format()
     set_export_schedule()
@@ -1307,7 +1307,7 @@ PATTERN DataExport:
 
 #### 12.1 Observability Security Pattern
 
-```pseudocode
+```rust
 PATTERN ObservabilitySecurity:
     SECURITY_MEASURES:
         encrypt_data_transmission()
@@ -1320,7 +1320,7 @@ PATTERN ObservabilitySecurity:
 
 #### 12.2 Compliance Pattern
 
-```pseudocode
+```rust
 PATTERN ComplianceMonitoring:
     track_data_access()
     enforce_retention_policies()
@@ -1341,7 +1341,7 @@ PATTERN ComplianceMonitoring:
 
 #### 13.2 Protocol Performance Considerations
 
-```pseudocode
+```rust
 PATTERN ProtocolSelection:
     ENCODING_EFFICIENCY:
         binary_protobuf: 15_microsec_per_log
@@ -3420,4 +3420,7 @@ PATTERN DisasterRecovery:
 
 ---
 
-This comprehensive framework provides production-ready observability patterns for multi-agent systems, covering all aspects from instrumentation through visualization and alerting. The implementation patterns ensure efficient monitoring without significant performance overhead while providing deep insights into system behavior and performance. Security enhancements, compliance patterns, cost optimization, and disaster recovery procedures ensure enterprise-grade operational readiness.
+This comprehensive framework provides production-ready observability patterns for multi-agent systems, covering all aspects from instrumentation
+through visualization and alerting. The implementation patterns ensure efficient monitoring without significant performance overhead while providing
+deep insights into system behavior and performance. Security enhancements, compliance patterns, cost optimization, and disaster recovery procedures
+ensure enterprise-grade operational readiness.

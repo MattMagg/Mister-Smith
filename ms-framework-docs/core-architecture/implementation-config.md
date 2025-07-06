@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document contains the agent implementation configuration and module organization structure for the Mister Smith AI Agent Framework. It provides concrete configuration settings, orchestration patterns, and the complete module structure for implementing the framework.
+This document contains the agent implementation configuration and module organization structure
+for the Mister Smith AI Agent Framework. It provides concrete configuration settings,
+orchestration patterns, and the complete module structure for implementing the framework.
 
 ## Navigation
 
@@ -796,7 +798,7 @@ pub mod prelude {
 }
 ```
 
-```
+```text
 src/
 ├── lib.rs                    // Main crate exports and prelude
 ├── core/                     // Core system components

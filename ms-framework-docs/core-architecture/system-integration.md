@@ -6,25 +6,26 @@ tags:
 - '#integration #implementation #patterns #extensions #messaging #event-sourcing #saga'
 ---
 
-# System Integration Patterns & Implementation
+## System Integration Patterns & Implementation
 
 *Extracted from system-architecture.md - Sections 5-7*
 
-This document provides comprehensive integration patterns, implementation guidelines, and extension mechanisms for the Mister Smith AI Agent Framework. It covers advanced message routing, state persistence patterns, implementation best practices, and extension points for customization.
+This document provides comprehensive integration patterns, implementation guidelines, and extension mechanisms for the Mister Smith AI Agent Framework.
+It covers advanced message routing, state persistence patterns, implementation best practices, and extension points for customization.
 
 ## Table of Contents
 
-- 5. Integration Patterns
-  - 5.1 Enhanced Message Routing & Addressing
-  - 5.2 Health Check and Monitoring
-  - 5.3 Shared Tool Registry Pattern
-  - 5.4 State Persistence & Recovery
-  - 5.5 Async Message Flow Patterns
-- 6. Implementation Guidelines
-  - 6.1 Error Handling Strategy
-  - 6.2 Testing Framework
-  - 6.3 Critical Anti-Patterns to Avoid
-- 7. Extension Mechanisms
+- 1. Integration Patterns
+  - 1.1 Enhanced Message Routing & Addressing
+  - 1.2 Health Check and Monitoring
+  - 1.3 Shared Tool Registry Pattern
+  - 1.4 State Persistence & Recovery
+  - 1.5 Async Message Flow Patterns
+- 1. Implementation Guidelines
+  - 1.1 Error Handling Strategy
+  - 1.2 Testing Framework
+  - 1.3 Critical Anti-Patterns to Avoid
+- 1. Extension Mechanisms
   - 7.1 Middleware Pattern
   - 7.2 Event Emitter Pattern
   - 7.3 Custom Routing Strategies
@@ -47,11 +48,12 @@ This document provides comprehensive integration patterns, implementation guidel
 
 ### 5.1 Enhanced Message Routing & Addressing
 
-> **Note**: This message routing system integrates with the [Implementation Configuration](implementation-config.md#module-organization-structure) to provide a complete messaging framework. See [Transport Core](../transport/transport-core.md) for protocol-specific implementations.
+> **Note**: This message routing system integrates with the [Implementation Configuration](implementation-config.md#module-organization-structure) to provide a complete messaging framework.
+> See [Transport Core](../transport/transport-core.md) for protocol-specific implementations.
 
 #### 5.1.1 Hierarchical Message Addressing
 
-```pseudocode
+```rust
 // AsyncAPI-inspired addressing scheme with NATS subject patterns
 ENUM MessageAddress {
     // Agent lifecycle: agents.{supervisor_id}.{operation}.{agent_type}.{agent_id}
@@ -110,7 +112,7 @@ IMPL MessageAddress {
 
 #### 5.1.2 Message Schema Validation
 
-```pseudocode
+```rust
 // AsyncAPI-inspired message schema with data flow integrity validation (Agent 12)
 STRUCT MessageSchema {
     message_type: String,
@@ -256,7 +258,7 @@ IMPL MessageValidator {
 
 #### 5.1.3 Enhanced Message Bridge
 
-```pseudocode
+```rust
 STRUCT MessageBridge {
     routing_table: Arc<RwLock<HashMap<String, Vec<ComponentId>>>>,
     message_validator: MessageValidator,
@@ -445,7 +447,7 @@ IMPL MessageBridge {
 
 > **Configuration Reference**: Tool bus configuration is defined in [Implementation Configuration](implementation-config.md#implementation-completeness-checklist) under the "Tool System" section.
 
-```pseudocode
+```rust
 STRUCT ToolBus {
     tools: Arc<RwLock<HashMap<ToolId, Box<dyn Tool>>>>,
     permissions: HashMap<AgentId, Vec<ToolId>>
@@ -476,7 +478,7 @@ IMPL ToolBus {
 
 ### 5.4 Role-Based Agent Spawning
 
-```pseudocode
+```rust
 ENUM AgentRole {
     ProductManager { sop: StandardProcedure },
     Architect { design_patterns: Vec<Pattern> },
@@ -510,11 +512,12 @@ STRUCT RoleSpawner {
 
 ### 5.2 Transport Layer Security Integration
 
-> **mTLS Implementation Status**: Validated architecture with 87/100 score. Implementation follows TLS 1.3 standards with comprehensive certificate lifecycle management. See mTLS validation findings from Agent 17 for detailed security assessment.
+> **mTLS Implementation Status**: Validated architecture with 87/100 score. Implementation follows TLS 1.3 standards with comprehensive certificate lifecycle management.
+> See mTLS validation findings from Agent 17 for detailed security assessment.
 
 #### 5.2.1 Transport Security Configuration
 
-```pseudocode
+```rust
 STRUCT TransportSecurityManager {
     tls_config: TLSConfiguration,
     certificate_manager: CertificateManager,
@@ -730,7 +733,7 @@ IMPL CrossProtocolSecurityCoordinator {
 
 #### 5.2.3 Security Policy Enforcement
 
-```pseudocode
+```rust
 STRUCT SecurityPolicyEnforcer {
     tls_policy: TLSPolicy,
     certificate_policy: CertificatePolicy,
@@ -779,7 +782,7 @@ IMPL SecurityPolicyEnforcer {
 
 ### 5.3 Health Check and Monitoring
 
-```pseudocode
+```rust
 STRUCT HealthCheckManager {
     health_checks: Arc<RwLock<HashMap<ComponentId, Box<dyn HealthCheck>>>>,
     check_interval: Duration,
@@ -825,13 +828,13 @@ IMPL HealthCheckManager {
 
 ### 5.4 State Persistence & Recovery
 
-> **Implementation Guide**: Event sourcing patterns connect with the module organization defined in [Implementation Configuration](implementation-config.md#module-organization-structure). See the `events/` module structure for concrete implementations.
-
+> **Implementation Guide**: Event sourcing patterns connect with the module organization defined in [Implementation Configuration](implementation-config.md#module-organization-structure).
+> See the `events/` module structure for concrete implementations.
 > **Data Flow Integrity**: State persistence incorporates comprehensive data flow validation (Agent 12: 95/100) ensuring consistency across JetStream KV and PostgreSQL dual-store architecture.
 
 #### 5.4.1 Event Sourcing for State Management
 
-```pseudocode
+```rust
 // Event sourcing pattern with data flow integrity validation (Agent 12)
 STRUCT EventStore {
     storage: Arc<dyn EventStorage>,
@@ -1008,7 +1011,7 @@ IMPL AgentStateManager {
 
 #### 5.4.2 Distributed State Coordination
 
-```pseudocode
+```rust
 // CQRS pattern for read/write separation
 STRUCT CommandHandler {
     event_store: EventStore,
@@ -1159,7 +1162,7 @@ IMPL SagaOrchestrator {
 
 #### 5.5.1 Stream-Based Message Processing
 
-```pseudocode
+```rust
 // Tokio streams for message processing with backpressure
 STRUCT MessageStream {
     inner: Pin<Box<dyn Stream<Item = Result<Message, MessageError>>>>,
@@ -1241,7 +1244,7 @@ IMPL MessageProcessor {
 
 #### 5.5.2 Future Composition for Message Flows
 
-```pseudocode
+```rust
 // Complex message flows with proper error handling
 STRUCT MessageFlow {
     flow_id: String,
@@ -1372,11 +1375,12 @@ IMPL MessageFlowExecutor {
 
 ## 6. Implementation Guidelines
 
-> **Cross-Reference**: These implementation guidelines work in conjunction with the [Implementation Configuration](implementation-config.md) document. Refer to the configuration settings and module organization for concrete implementation details.
+> **Cross-Reference**: These implementation guidelines work in conjunction with the [Implementation Configuration](implementation-config.md) document.
+> Refer to the configuration settings and module organization for concrete implementation details.
 
 ### 6.1 Error Handling Strategy
 
-```pseudocode
+```rust
 ENUM SystemError {
     Runtime(RuntimeError),
     Supervision(SupervisionError),
@@ -1413,7 +1417,7 @@ IMPL SystemError {
 
 ### 6.2 Testing Framework
 
-```pseudocode
+```rust
 STRUCT SystemTestHarness {
     mock_runtime: MockRuntime,
     test_supervision_tree: TestSupervisionTree,
@@ -1446,7 +1450,7 @@ IMPL SystemTestHarness {
 
 #### 6.3.1 Uncontrolled Agent Spawning
 
-```pseudocode
+```rust
 // ❌ BAD: Unlimited spawning without resource bounds
 ASYNC FUNCTION handle_task_badly(task: Task) {
     FOR subtask IN task.decompose() {
@@ -1471,7 +1475,7 @@ STRUCT SpawnController {
 
 #### 6.3.2 Context Overflow
 
-```pseudocode
+```rust
 // ❌ BAD: Accumulating unlimited context memory
 STRUCT NaiveAgent {
     context: Vec<Message>, // Grows forever, causing memory issues
@@ -1494,7 +1498,7 @@ STRUCT SmartAgent {
 
 #### 6.3.3 Synchronous Tool Blocking
 
-```pseudocode
+```rust
 // ❌ BAD: Blocking tool calls that freeze the runtime
 IMPL Tool FOR WebSearch {
     ASYNC FUNCTION execute(&self, query: Value) -> Result<Value> {
@@ -1518,7 +1522,7 @@ IMPL Tool FOR AsyncWebSearch {
 
 #### 6.3.4 Monolithic Supervisor
 
-```pseudocode
+```rust
 // ❌ BAD: Single supervisor managing all agents directly
 // This creates a bottleneck and single point of failure
 
@@ -1528,7 +1532,7 @@ IMPL Tool FOR AsyncWebSearch {
 
 #### 6.3.5 Static Role Assignment
 
-```pseudocode
+```rust
 // ❌ BAD: Fixed teams for all projects regardless of needs
 // Wastes resources and limits flexibility
 
@@ -1538,11 +1542,12 @@ IMPL Tool FOR AsyncWebSearch {
 
 ## 7. Extension Mechanisms
 
-> **Implementation Context**: Extension mechanisms are implemented within the module structure defined in [Implementation Configuration](implementation-config.md#module-organization-structure). See the `async_patterns/middleware.rs` module for concrete implementations.
+> **Implementation Context**: Extension mechanisms are implemented within the module structure defined in [Implementation Configuration](implementation-config.md#module-organization-structure).
+> See the `async_patterns/middleware.rs` module for concrete implementations.
 
 ### 7.1 Middleware Pattern
 
-```pseudocode
+```rust
 TRAIT AgentMiddleware: Send + Sync {
     ASYNC FUNCTION before_process(&self, msg: &Message) -> Result<()>
     ASYNC FUNCTION after_process(&self, msg: &Message, result: &Value) -> Result<()>
@@ -1578,7 +1583,7 @@ STRUCT AuthMiddleware { auth_service: AuthService }
 
 ### 7.2 Event Emitter Pattern
 
-```pseudocode
+```rust
 ENUM SystemEvent {
     AgentSpawned(AgentId),
     TaskCompleted(TaskId, Value),
@@ -1615,7 +1620,7 @@ STRUCT EventBus {
 
 ### 7.3 Custom Routing Strategies
 
-```pseudocode
+```rust
 // Extension hook for custom routing logic
 TRAIT RoutingStrategy {
     FUNCTION select_recipient(&self, msg: &Message, agents: &[AgentId]) -> AgentId
@@ -1881,7 +1886,8 @@ impl CertificateMonitor {
 
 ### 8.1 Architectural Integration Gap
 
-Based on architectural consistency validation (ref: `/validation-bridge/team-alpha-validation/agent04-architectural-consistency-validation.md`), the Neural Training Framework requires enhanced integration with the core architecture:
+Based on architectural consistency validation (ref: `/validation-bridge/team-alpha-validation/agent04-architectural-consistency-validation.md`),
+the Neural Training Framework requires enhanced integration with the core architecture:
 
 #### Current State
 
