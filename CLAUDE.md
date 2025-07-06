@@ -1,151 +1,306 @@
-# CLAUDE.md - SuperClaude Configuration
+# MisterSmith Project Instructions
 
-You are SuperClaude, an enhanced version of Claude optimized for maximum efficiency and capability.
-You should use the following configuration to guide your behavior.
+## PROJECT CONTEXT
 
-## Legend
-@include commands/shared/universal-constants.yml#Universal_Legend
+MisterSmith is a multi-agent orchestration framework for distributed AI systems. **CRITICAL**: Currently in DOCUMENTATION PHASE ONLY. No implementation exists. The framework specifications are being developed in `ms-framework-docs/`.
 
-## Core Configuration
-@include shared/superclaude-core.yml#Core_Philosophy
+Your role: Work within the documentation framework to refine, validate, and prepare specifications for eventual implementation.
 
-## Thinking Modes
-@include commands/shared/flag-inheritance.yml#Universal Flags (All Commands)
+## CURRENT PROJECT STATE
 
-## Introspection Mode
-@include commands/shared/introspection-patterns.yml#Introspection_Mode
-@include shared/superclaude-rules.yml#Introspection_Standards
+### What Exists
 
-## Advanced Token Economy
-@include shared/superclaude-core.yml#Advanced_Token_Economy
+- 📁 `ms-framework-docs/` - Technical framework documentation (150+ pages)
+- 📁 `internal-operations/` - Working prompts and planning documents
+- ✅ Comprehensive architectural specifications
+- ✅ Detailed component designs
 
-## UltraCompressed Mode Integration
-@include shared/superclaude-core.yml#UltraCompressed_Mode
+### What DOES NOT Exist
 
-## Code Economy
-@include shared/superclaude-core.yml#Code_Economy
+- ❌ No Rust implementation
+- ❌ No working agents
+- ❌ No actual code beyond documentation
+- ❌ No Cargo.toml or src/ directory
 
-## Cost & Performance Optimization
-@include shared/superclaude-core.yml#Cost_Performance_Optimization
+## CRITICAL CONSTRAINTS FOR AGENTS
 
-## Intelligent Auto-Activation
-@include shared/superclaude-core.yml#Intelligent_Auto_Activation
+### Documentation Phase Rules
 
-## Task Management
-@include shared/superclaude-core.yml#Task_Management
-@include commands/shared/task-management-patterns.yml#Task_Management_Hierarchy
+**FORBIDDEN**: Creating implementation code before documentation is complete and validated
+**FORBIDDEN**: Adding Cargo.toml, src/, or other implementation scaffolding
+**FORBIDDEN**: Claiming any component "works" or is "ready"
+**REQUIRED**: Focus on documentation quality, consistency, and completeness
 
-## Performance Standards
-@include shared/superclaude-core.yml#Performance_Standards
-@include commands/shared/compression-performance-patterns.yml#Performance_Baselines
+### Reality Check Questions
 
-## Output Organization
-@include shared/superclaude-core.yml#Output_Organization
+Before ANY action:
+1. Am I working on documentation or trying to implement?
+2. Does this change improve specification clarity?
+3. Is this adding unnecessary complexity to the docs?
+4. Am I maintaining consistency across all framework docs?
 
+## DEVELOPMENT PHASES
 
-## Session Management
-@include shared/superclaude-core.yml#Session_Management
-@include commands/shared/system-config.yml#Session_Settings
+### CURRENT PHASE: Documentation & Specification
 
-## Rules & Standards
+- Review and refine existing specifications
+- Ensure consistency across all documentation
+- Identify gaps or contradictions
+- Validate technical feasibility
+- NO IMPLEMENTATION CODE
 
-### Evidence-Based Standards
-@include shared/superclaude-core.yml#Evidence_Based_Standards
+### FUTURE PHASE 1: Foundation Setup (NOT YET)
+When documentation is complete:
+- Create minimal Cargo.toml
+- Single "hello world" agent
+- Basic tokio runtime proof
+- NO complex features
 
-### Standards
-@include shared/superclaude-core.yml#Standards
+### FUTURE PHASE 2: Single Agent (NOT YET)
+After foundation verified:
+- Implement ONE agent type
+- Basic message handling
+- Simple lifecycle management
+- NO distributed features
 
-### Severity System
-@include commands/shared/quality-patterns.yml#Severity_Levels
-@include commands/shared/quality-patterns.yml#Validation_Sequence
+## DOCUMENTATION GUIDELINES
 
-### Smart Defaults & Handling
-@include shared/superclaude-rules.yml#Smart_Defaults
+### When Working in ms-framework-docs/
+```bash
+# Before making changes:
+grep -r "YourTopic" ms-framework-docs/  # Check existing mentions
+find ms-framework-docs -name "*.md" | xargs grep -l "component"  # Find related docs
 
-### Ambiguity Resolution
-@include shared/superclaude-rules.yml#Ambiguity_Resolution
+# After making changes:
+# Verify consistency
+grep -A5 -B5 "modified_term" ms-framework-docs/**/*.md
+```
 
-### Development Practices
-@include shared/superclaude-rules.yml#Development_Practices
+### Documentation Standards
+- **Technical Accuracy**: Specifications must be implementable
+- **Consistency**: Terms, patterns, and concepts uniform across docs
+- **Completeness**: Minimize TODO/TBD sections (currently only 1 in code examples)
+- **Reality**: Don't describe features as implemented
 
-### Code Generation
-@include shared/superclaude-rules.yml#Code_Generation
+### Cross-Reference Management
+When updating documentation:
+1. Check all files that reference the modified component
+2. Update related specifications
+3. Ensure examples remain consistent
+4. Validate integration points
 
-### Session Awareness
-@include shared/superclaude-rules.yml#Session_Awareness
+## VERIFICATION FOR DOCUMENTATION PHASE
 
-### Action & Command Efficiency
-@include shared/superclaude-rules.yml#Action_Command_Efficiency
+### Document Quality Checks
+```bash
+# Check for incomplete sections
+grep -r "TODO\|TBD\|FIXME" ms-framework-docs/
 
-### Project Quality
-@include shared/superclaude-rules.yml#Project_Quality
+# Find inconsistent terminology
+# (manually review for now, no working code to test against)
 
-### Security Standards
-@include shared/superclaude-rules.yml#Security_Standards
-@include commands/shared/security-patterns.yml#OWASP_Top_10
-@include commands/shared/security-patterns.yml#Validation_Levels
+# Verify no implementation claims
+grep -r "works\|implemented\|ready\|production" ms-framework-docs/
+```
 
-### Efficiency Management
-@include shared/superclaude-rules.yml#Efficiency_Management
+### Consistency Verification
+- Agent types mentioned consistently across docs
+- Message schemas align between different files
+- Architecture decisions propagated to all relevant docs
+- No contradictions between specifications
 
-### Operations Standards
-@include shared/superclaude-rules.yml#Operations_Standards
+## PROJECT-SPECIFIC GOTCHAS
 
-## Model Context Protocol (MCP) Integration
+### Documentation Complexity Trap
+The specs describe a complex distributed system. Remember:
+- Docs can be ambitious, implementation will be incremental
+- Don't add complexity to make docs "complete"
+- Focus on clarity over comprehensiveness
 
-### MCP Architecture
-@include commands/shared/flag-inheritance.yml#Universal Flags (All Commands)
-@include commands/shared/execution-patterns.yml#Servers
+### Premature Implementation Trap
+- NO creating stub code "to test the design"
+- NO scaffolding projects "for later"
+- NO proof-of-concept implementations
+- Stay in documentation until explicitly directed otherwise
 
-### Server Capabilities Extended
-@include shared/superclaude-mcp.yml#Server_Capabilities_Extended
+### Framework Documentation Navigation
 
-### Token Economics
-@include shared/superclaude-mcp.yml#Token_Economics
+```
+ms-framework-docs/
+├── core-architecture/     # System design, patterns
+├── agent-domains/        # Agent type specifications  
+├── data-management/      # Storage, messaging specs
+├── transport/           # Communication protocols
+├── security/            # Auth, authorization specs
+├── operations/          # Deployment, monitoring
+└── testing/             # Test specifications
+```
 
-### Workflows
-@include shared/superclaude-mcp.yml#Workflows
+## WHEN MODIFICATIONS ARE NEEDED
 
-### Quality Control
-@include shared/superclaude-mcp.yml#Quality_Control
+### Valid Documentation Changes
+- Fixing inconsistencies between files
+- Clarifying ambiguous specifications
+- Adding missing integration details
+- Removing over-engineered complexity
+- Updating based on feasibility analysis
 
-### Command Integration
-@include shared/superclaude-mcp.yml#Command_Integration
+### Invalid Changes
+- Adding implementation code
+- Creating build files
+- "Simplifying" by removing necessary complexity
+- Adding features not requested
+- Changing fundamental architecture without discussion
 
-### Error Recovery
-@include shared/superclaude-mcp.yml#Error_Recovery
+## COLLABORATION WITH HUMAN
 
-### Best Practices
-@include shared/superclaude-mcp.yml#Best_Practices
+### When to Ask for Clarification
+- Specifications seem contradictory
+- Major architectural decision needed
+- Unsure if change aligns with project vision
+- Found significant feasibility issue
 
-### Session Management
-@include shared/superclaude-mcp.yml#Session_Management
+### Progress Reporting
+When completing documentation tasks:
+```markdown
+## Documentation Update Summary
+- **Files Modified**: [list files]
+- **Changes Made**: [specific changes]
+- **Consistency Verified**: [what was checked]
+- **Open Questions**: [any concerns]
+```
 
-## Cognitive Archetypes (Personas)
+## PARALLEL AGENT OPERATIONS
 
-### Persona Architecture
-@include commands/shared/flag-inheritance.yml#Universal Flags (All Commands)
+### Multi-Agent Documentation Work
 
-### All Personas
-@include shared/superclaude-personas.yml#All_Personas
+The MisterSmith framework itself is designed for multi-agent orchestration. Similarly, documentation work benefits from parallel agent operations:
 
-### Collaboration Patterns
-@include shared/superclaude-personas.yml#Collaboration_Patterns
+**Encouraged Parallel Patterns**:
 
-### Intelligent Activation Patterns
-@include shared/superclaude-personas.yml#Intelligent_Activation_Patterns
+- Multiple agents analyzing different documentation sections simultaneously
+- Parallel consistency checking across document sets
+- Concurrent validation of specifications against different criteria
+- Distributed cross-reference verification
 
-### Command Specialization
-@include shared/superclaude-personas.yml#Command_Specialization
+**Coordination Requirements**:
 
-### Integration Examples
-@include shared/superclaude-personas.yml#Integration_Examples
+```bash
+# When working in parallel, verify no conflicts:
+git status  # Check for concurrent modifications
+git pull   # Sync before major changes
 
-### Advanced Features
-@include shared/superclaude-personas.yml#Advanced_Features
+# Claim your work area to prevent conflicts:
+echo "Agent X working on: core-architecture/*.md" >> .agent-work-log
+```
 
-### MCP + Persona Integration
-@include shared/superclaude-personas.yml#MCP_Persona_Integration
+**Parallel Verification Example**:
 
----
-*SuperClaude v2.0.1 | Development framework | Evidence-based methodology | Advanced Claude Code configuration*
+```bash
+# Agent 1: Check message schema consistency
+find ms-framework-docs -name "*message*.md" -exec grep -l "MessageType" {} \;
+
+# Agent 2: Verify agent lifecycle references
+grep -r "lifecycle" ms-framework-docs/agent-domains/
+
+# Agent 3: Validate security specifications
+grep -r "authentication\|authorization" ms-framework-docs/security/
+```
+
+**Best Practices for Parallel Work**:
+
+1. Communicate work scope clearly in commits
+2. Focus on non-overlapping documentation areas
+3. Use verification commands to ensure consistency
+4. Coordinate on high-impact files (see ms-framework-docs/CLAUDE.md)
+
+## FOLDER-SPECIFIC INSTRUCTIONS
+
+Note: When entering `ms-framework-docs/` or other directories, additional CLAUDE.md files may load with folder-specific guidance. These complement but never override these project-level instructions.
+
+## SUCCESS METRICS FOR DOCUMENTATION PHASE
+
+### Documentation is "Ready" When
+
+- All specifications complete and consistent
+- Minimal TODO/TBD sections (currently only 1 `todo!()` in code example)
+- Cross-references verified
+- Technical feasibility validated
+- Human approves moving to implementation
+
+### NOT Success Metrics
+
+- Lines of documentation written
+- Number of specification files
+- Complexity of described system
+- "Comprehensive" coverage
+
+## AUTOMATED TOOLING SUPPORT
+
+### Documentation Verification Scripts
+
+Create these scripts to automate verification tasks:
+
+**consistency-check.sh**:
+
+```bash
+#!/bin/bash
+# Automated consistency checker for ms-framework-docs
+
+echo "=== Checking for TODOs ==="
+TODO_COUNT=$(grep -r "TODO\|TBD\|FIXME" ms-framework-docs/ | wc -l)
+echo "Found $TODO_COUNT TODO/TBD items"
+
+echo -e "\n=== Checking cross-references ==="
+# Find broken internal links
+find ms-framework-docs -name "*.md" -exec grep -l "\[.*\](" {} \; | while read file; do
+    grep -o '\[.*\](.*\.md[^)]*)' "$file" | while read link; do
+        target=$(echo "$link" | sed 's/.*](//' | sed 's/).*//')
+        if [[ ! -f "ms-framework-docs/$target" ]]; then
+            echo "Broken link in $file: $target"
+        fi
+    done
+done
+
+echo -e "\n=== Version consistency ==="
+grep -r "tokio.*=.*\"1\." ms-framework-docs/ | grep -v "1\.38" | head -5
+grep -r "async-nats.*=.*\"0\." ms-framework-docs/ | grep -v "0\.34" | head -5
+```
+
+**parallel-work-tracker.sh**:
+
+```bash
+#!/bin/bash
+# Track parallel agent work to prevent conflicts
+
+WORK_LOG=".agent-work-log"
+
+# Show current agent assignments
+echo "=== Current Agent Work Assignments ==="
+if [[ -f "$WORK_LOG" ]]; then
+    cat "$WORK_LOG"
+else
+    echo "No agents currently working"
+fi
+
+# Check for potential conflicts
+echo -e "\n=== Recent Git Activity ==="
+git log --oneline -10 --pretty=format:"%h %s [%an]"
+
+echo -e "\n\n=== Modified Files ==="
+git status --porcelain
+```
+
+### Integration with CI/CD
+
+When implementation phase begins, these checks can integrate with:
+
+- Pre-commit hooks for documentation consistency
+- GitHub Actions for automated verification
+- Merge request validation pipelines
+
+## REMEMBER
+
+You are building the FOUNDATION for MisterSmith through careful documentation. The elaborate distributed system in the specs is the DESTINATION. Your current job is to ensure the documentation is clear, consistent, and implementable - not to implement it.
+
+The best documentation enables future implementation to proceed smoothly, one verified step at a time. Focus on clarity and consistency, not complexity or completeness.
