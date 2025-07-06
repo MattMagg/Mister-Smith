@@ -3,6 +3,7 @@
 ## 1. Evolution Philosophy
 
 ### Core Principles
+
 - **Evidence-Driven Evolution**: Changes only after verified implementation experience
 - **Constraint Relaxation**: Restrictions ease as maturity increases
 - **Reality Precedence**: Working code drives instruction updates
@@ -11,12 +12,15 @@
 ## 2. Lifecycle Stages
 
 ### Stage 1: Foundation (Weeks 0-4)
+
 **Characteristics**:
+
 - Maximum constraints in place
 - No implementation exists
 - Specification-heavy environment
 
 **Instruction State**:
+
 ```yaml
 Constraints: MAXIMUM
 Allowed Features: MINIMAL
@@ -25,23 +29,28 @@ Verification: MANDATORY
 ```
 
 **Key Metrics**:
+
 - First working component: 0 → 1
 - Verified functionality: None → Basic
 - Anti-patterns prevented: Track all attempts
 
 ### Stage 2: Early Implementation (Weeks 4-12)
+
 **Characteristics**:
+
 - Basic components working
 - Learning which patterns succeed
 - Reality diverging from specification
 
 **Instruction Updates**:
+
 - Document working patterns
 - Identify impossible specifications
 - Refine phase transitions
 - Add discovered gotchas
 
 **Evolution Triggers**:
+
 ```markdown
 IF: Basic agent spawn/execute works consistently
 THEN: Relax "NO supervision" constraint to "SIMPLE supervision"
@@ -54,24 +63,30 @@ THEN: Update documentation reality section
 ```
 
 ### Stage 3: Stable Core (Weeks 12-20)
+
 **Characteristics**:
+
 - Core patterns established
 - Some multi-agent coordination working
 - Performance patterns emerging
 
 **Instruction Evolution**:
+
 - Promote proven patterns
 - Deprecate failed approaches
 - Add performance guidelines
 - Expand allowed complexity
 
 ### Stage 4: Maturing System (Weeks 20+)
+
 **Characteristics**:
+
 - Multiple components integrated
 - Distributed features viable
 - Production considerations relevant
 
 **Final Evolution**:
+
 - Shift from prevention to guidance
 - Focus on optimization over correctness
 - Allow advanced patterns with proof
@@ -81,6 +96,7 @@ THEN: Update documentation reality section
 ### 3.1 Regular Review Cycles
 
 **Weekly Review** (During active development):
+
 ```bash
 # Questions to ask:
 1. What anti-patterns did we encounter?
@@ -95,6 +111,7 @@ THEN: Update documentation reality section
 ```
 
 **Monthly Architecture Review**:
+
 ```bash
 # Analyze:
 - Specification vs Reality gap
@@ -126,21 +143,25 @@ graph TD
 ### 3.3 Change Categories
 
 **Type A: Constraint Relaxation**
+
 - Requires: 3+ successful implementations
 - Process: Document evidence → Update constraint → Monitor impact
 - Example: "NO distributed" → "Local first, then distributed"
 
 **Type B: Anti-Pattern Addition**
+
 - Requires: 2+ failure instances
 - Process: Document failure → Add pattern → Provide alternative
 - Example: New complexity trap discovered
 
 **Type C: Phase Adjustment**
+
 - Requires: Consistent phase completion data
 - Process: Analyze velocity → Adjust gates → Update transitions
 - Example: Merge phases that always complete together
 
 **Type D: Verification Enhancement**
+
 - Requires: Verification insufficiency proven
 - Process: Identify gap → Add requirement → Test effectiveness
 - Example: Add performance verification
@@ -148,6 +169,7 @@ graph TD
 ## 4. Evolution Patterns
 
 ### 4.1 Constraint Lifecycle
+
 ```
 STRICT PROHIBITION → CONDITIONAL ALLOWANCE → GUIDED USAGE → BEST PRACTICE
          ↓                    ↓                      ↓                ↓
@@ -155,6 +177,7 @@ STRICT PROHIBITION → CONDITIONAL ALLOWANCE → GUIDED USAGE → BEST PRACTICE
 ```
 
 ### 4.2 Evidence Accumulation
+
 ```yaml
 Evidence Types:
   - Working Examples: Code that runs successfully
@@ -169,6 +192,7 @@ Evidence Threshold:
 ```
 
 ### 4.3 Deprecation Path
+
 ```
 Active Constraint → Warning Status → Deprecated → Removed
        ↓                 ↓               ↓           ↓
@@ -181,6 +205,7 @@ Active Constraint → Warning Status → Deprecated → Removed
 ### 5.1 Evolution Health Metrics
 
 **Constraint Effectiveness Rate**:
+
 ```
 CER = (Constraints Preventing Issues) / (Total Constraints) × 100
 Target: > 80%
@@ -188,6 +213,7 @@ Action if < 60%: Review and prune
 ```
 
 **Phase Progression Velocity**:
+
 ```
 PPV = (Phases Completed) / (Weeks Elapsed)
 Healthy: 0.5-1.0 phases/week early, 0.25-0.5 later
@@ -196,6 +222,7 @@ Too Slow: May indicate over-constraint
 ```
 
 **Reality Alignment Score**:
+
 ```
 RAS = (Implemented Features) / (Documented Features) × 100
 Target: Increasing over time
@@ -205,11 +232,13 @@ Warning: If decreases, spec may be diverging
 ### 5.2 Maintenance Burden Metrics
 
 **Update Frequency**:
+
 - Healthy: 2-3 updates/week during active development
 - Warning: >5 updates/week (too volatile)
 - Warning: <1 update/month (too rigid)
 
 **Section Stability**:
+
 - Core sections: Should stabilize after week 4
 - Phase sections: Evolve with implementation
 - Gotchas: Continuous additions expected
@@ -217,6 +246,7 @@ Warning: If decreases, spec may be diverging
 ## 6. Tooling & Automation
 
 ### 6.1 Evolution Tracking
+
 ```toml
 # .claude-evolution.toml
 [phase-1]
@@ -235,6 +265,7 @@ discovered = [
 ```
 
 ### 6.2 Automated Checks
+
 ```bash
 #!/bin/bash
 # claude-instruction-lint.sh
@@ -252,6 +283,7 @@ check_phase_gates CLAUDE.md
 ## 7. Communication Strategy
 
 ### 7.1 Change Announcements
+
 ```markdown
 ## CLAUDE.md Update: [Date]
 
@@ -269,6 +301,7 @@ check_phase_gates CLAUDE.md
 ```
 
 ### 7.2 Feedback Collection
+
 - Git commit messages when updating CLAUDE.md
 - Issue tracking for proposed changes
 - Developer surveys on constraint effectiveness
@@ -276,6 +309,7 @@ check_phase_gates CLAUDE.md
 ## 8. Long-Term Vision
 
 ### 8.1 Instruction Maturity Path
+
 ```
 Months 0-3:  Protective constraints, maximum guardrails
 Months 3-6:  Evidence-based relaxation, pattern emergence
@@ -284,12 +318,14 @@ Months 12+:  Minimal constraints, maximum patterns
 ```
 
 ### 8.2 End State Characteristics
+
 - Constraints exist only where repeatedly proven necessary
 - Patterns documented with extensive working examples
 - Phase gates based on actual complexity jumps
 - Verification focused on regression prevention
 
 ### 8.3 Success Indicators
+
 - New developers build working components without fighting instructions
 - Instruction updates become rare (system stabilized)
 - Anti-patterns successfully prevented in practice
@@ -300,16 +336,19 @@ Months 12+:  Minimal constraints, maximum patterns
 ### 9.1 Evolution Risks
 
 **Risk: Premature Relaxation**
+
 - Mitigation: Require extensive evidence
 - Indicator: Regression in working functionality
 - Response: Revert and increase evidence threshold
 
 **Risk: Instruction Bloat**
+
 - Mitigation: Regular pruning reviews
 - Indicator: >10 pages of instructions
 - Response: Consolidate and simplify
 
 **Risk: Drift from Global Instructions**
+
 - Mitigation: Regular compatibility checks
 - Indicator: Conflicts in verification approach
 - Response: Realign with global principles
@@ -317,11 +356,13 @@ Months 12+:  Minimal constraints, maximum patterns
 ### 9.2 Maintenance Risks
 
 **Risk: Update Fatigue**
+
 - Mitigation: Batch related changes
 - Indicator: Developer complaints
 - Response: Stabilize for 1-2 weeks
 
 **Risk: Stale Instructions**
+
 - Mitigation: Automated freshness checks
 - Indicator: No updates despite active development
 - Response: Scheduled review sessions
@@ -329,24 +370,28 @@ Months 12+:  Minimal constraints, maximum patterns
 ## 10. Implementation Checklist
 
 ### Initial Setup
+
 - [ ] Create .claude-evolution.toml
 - [ ] Set up instruction linting scripts
 - [ ] Establish feedback channels
 - [ ] Document baseline metrics
 
 ### Weekly Tasks
+
 - [ ] Review encountered anti-patterns
 - [ ] Update verification requirements
 - [ ] Check phase progression health
 - [ ] Collect developer feedback
 
 ### Monthly Tasks
+
 - [ ] Calculate evolution metrics
 - [ ] Prune ineffective constraints
 - [ ] Update documentation reality
 - [ ] Plan next month's focus
 
 ### Quarterly Tasks
+
 - [ ] Major instruction revision
 - [ ] Stakeholder feedback session
 - [ ] Long-term vision alignment
@@ -355,6 +400,7 @@ Months 12+:  Minimal constraints, maximum patterns
 ## Summary
 
 The MisterSmith CLAUDE.md evolution strategy ensures instructions:
+
 1. Start maximally constrained for safety
 2. Evolve based on verified implementation
 3. Relax constraints with evidence

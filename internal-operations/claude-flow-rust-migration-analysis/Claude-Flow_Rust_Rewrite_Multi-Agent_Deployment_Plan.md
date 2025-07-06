@@ -40,6 +40,7 @@ This deployment plan orchestrates a sophisticated 25-agent operation to investig
 ### Coordinator Launch Command
 
 **Primary Orchestrator Command:**
+
 ```bash
 npx claude-flow swarm "You are the Claude-Code-Flow Rust Rewrite Orchestrator. Read and execute the deployment plan at @'/Users/mac-main/Mister-Smith/Mister-Smith/internal-operations/claude-flow-rust-migration-analysis/Claude-Flow_Rust_Rewrite_Multi-Agent_Deployment_Plan.md'. Follow the plan explicitly, coordinate all three phases with isolation protocols, launch the specified agent groups (max 25 agents, 10 per group), and deliver the final standards document combining system investigation and foundational Rust architecture." \
   --strategy analysis \
@@ -54,6 +55,7 @@ npx claude-flow swarm "You are the Claude-Code-Flow Rust Rewrite Orchestrator. R
 ### Phase 1: Parallel Investigation & Context Gathering
 
 **Group A: Isolated Claude-Flow Investigation (10 agents) - NO basic-memory access:**
+
 ```bash
 batchtool run --parallel --tag "isolated-investigation" \
   "npx claude-flow sparc run analyzer 'Code Analysis Specialist 1: Investigate claude-code-flow-clone/ repository structure, identify architectural faults in agent pool implementation, document specific issues with file paths and line numbers. NO external context allowed.' --non-interactive --output json" \
@@ -69,6 +71,7 @@ batchtool run --parallel --tag "isolated-investigation" \
 ```
 
 **Group B: Context-Aware Design Specialists (10 agents) - MUST use basic-memory:**
+
 ```bash
 batchtool run --parallel --tag "context-aware-design" \
   "npx claude-flow sparc run architect 'Rust Architecture Design Specialist 1: Query basic-memory for agent-documentation-framework architecture patterns, design minimal-viable Rust orchestration framework addressing claude-flow faults, propose execution model decisions.' --non-interactive --output json" \
@@ -86,6 +89,7 @@ batchtool run --parallel --tag "context-aware-design" \
 ### Phase 2: Comparative Design & Analysis
 
 **Group C: Integration & Synthesis (5 agents):**
+
 ```bash
 npx claude-flow swarm "Phase 2 Comparative Analysis Team: Facilitate comparison between isolated claude-flow findings and context-aware Rust design proposals. Build consensus on optimal approach through collaborative peer-to-peer analysis. Perform three-way comparison: claude-flow → Mister Smith vision → optimal Rust framework. Generate gap analysis and architectural recommendations." \
   --strategy analysis \
@@ -100,6 +104,7 @@ npx claude-flow swarm "Phase 2 Comparative Analysis Team: Facilitate comparison 
 ### Phase 3: Synthesis & Standards Creation
 
 **Final Standards Document Creation:**
+
 ```bash
 npx claude-flow swarm "Phase 3 Standards Document Team: Lead synthesis of isolated investigation findings with context-aware design proposals. Create comprehensive standards document combining system investigation audit and foundational Rust architecture. Compile evidence, generate migration strategy, and deliver final standards document for claude-flow to Rust rewrite with actionable implementation roadmap." \
   --strategy analysis \
@@ -114,6 +119,7 @@ npx claude-flow swarm "Phase 3 Standards Document Team: Lead synthesis of isolat
 ### Context Gathering Commands for Group B Agents
 
 **Required basic-memory queries for context-aware agents:**
+
 ```bash
 # Architecture agents should execute:
 basic-memory query "agent-documentation-framework architecture patterns"
@@ -175,17 +181,20 @@ basic-memory query "optimization patterns performance"
 ### Coordination Architecture
 
 **Phase 1: Distributed Investigation (Parallel)**
+
 - Groups A and B execute simultaneously with different access protocols
 - Group A: Independent repository analysis without external context
 - Group B: Context-aware design with basic-memory integration
 - No cross-group communication during investigation phase
 
 **Phase 2: Mesh Collaboration (Comparative)**  
+
 - Group C facilitates comparison between A and B findings
 - Peer-to-peer consensus building on optimal approach
 - Three-way comparison synthesis and gap analysis
 
 **Phase 3: Centralized Documentation (Synthesis)**
+
 - Group C leads final standards document creation
 - Evidence compilation and architecture proposal integration
 - Migration strategy development and implementation roadmap
@@ -193,18 +202,21 @@ basic-memory query "optimization patterns performance"
 ### Isolation Protocol Implementation
 
 **Group A Restrictions:**
+
 - NO access to basic-memory system
 - NO access to agent-documentation-framework directory
 - NO external context beyond claude-code-flow-clone repository
 - Focus on evidence-based fault identification only
 
 **Group B Requirements:**
+
 - MUST use basic-memory for Mister Smith context
 - MUST query agent-documentation-framework patterns
 - MUST incorporate existing architectural knowledge
 - Focus on Rust design informed by target vision
 
 **Group C Integration:**
+
 - Access to both Group A and Group B findings
 - Synthesis of isolated investigation + context-aware design
 - Three-way comparison facilitation and consensus building
@@ -214,9 +226,11 @@ basic-memory query "optimization patterns performance"
 ## ORCHESTRATOR INSTRUCTIONS
 
 ### Primary Mission
+
 You are the **Claude-Code-Flow Rust Rewrite Orchestrator**. Your role is to coordinate a comprehensive three-way comparison operation to investigate claude-code-flow, understand the Mister Smith vision, and design an optimal Rust framework that combines the best of both while avoiding identified faults.
 
 ### Critical Isolation Protocols
+
 - **Group A agents**: MUST NOT access basic-memory or agent-documentation-framework (isolated investigation)
 - **Group B agents**: MUST use basic-memory to understand Mister Smith vision (context-aware design)
 - **Group C agents**: Synthesize findings from both groups (integration specialists)
@@ -224,21 +238,26 @@ You are the **Claude-Code-Flow Rust Rewrite Orchestrator**. Your role is to coor
 ### Execution Sequence
 
 #### Step 1: Mission Initialization
+
 - Review this complete deployment plan document
 - Understand the scope: Claude-code-flow repository investigation + Rust architecture design
 - Create folder structure in `/Users/mac-main/Mister-Smith/Mister-Smith/internal-operations/claude-flow-rust-migration-analysis/`
 - Confirm three-way comparison objective: claude-flow → Mister Smith → optimal Rust synthesis
 
 #### Step 2: Launch Phase 1 - Parallel Investigation & Context Gathering
+
 Execute both Group A (isolated) and Group B (context-aware) commands simultaneously using the embedded batchtool commands above.
 
 #### Step 3: Launch Phase 2 - Comparative Design & Analysis
+
 Execute Group C mesh collaboration using the embedded swarm command above.
 
 #### Step 4: Launch Phase 3 - Synthesis & Standards Creation
+
 Execute final standards document creation using the embedded centralized swarm command above.
 
 #### Step 5: Final Standards Document Assembly
+
 - Synthesize all findings into comprehensive standards document
 - Include concrete evidence from claude-flow investigation
 - Include Rust architecture proposals addressing identified faults
@@ -247,6 +266,7 @@ Execute final standards document creation using the embedded centralized swarm c
 - Generate final standards document (Markdown/PDF)
 
 ### Success Criteria
+
 - Concrete evidence for each identified claude-flow fault (file paths, line numbers)
 - Minimal-viable Rust architecture addressing all identified issues
 - Clear execution model decision with trade-off analysis
@@ -255,6 +275,7 @@ Execute final standards document creation using the embedded centralized swarm c
 - Evidence-driven standards document ready for implementation
 
 ### Quality Assurance
+
 - Monitor isolation protocols (Group A no external context, Group B must use basic-memory)
 - Validate evidence quality (file paths, concrete examples)
 - Ensure three-way comparison completeness
@@ -335,35 +356,43 @@ Generate a structured JSON report with:
 ```
 
 ## Quality Standards
+
 - All findings must include specific file references
 - Evidence must be concrete (no speculation)
 - Focus on maintainability and clarity issues
 - Document what NOT to replicate in Rust
 
 ## Success Criteria
+
 - Comprehensive repository investigation
 - Concrete evidence for all identified faults
 - Clear anti-pattern documentation
 - Actionable avoidance recommendations
+
 ```
 
 ### Group B: Context-Aware Design Agent Template
 
 ```
+
 # Rust Architecture Design: Context-Aware Agent
 
 ## UltraThink Mode Activation
+
 Engage **"ultrathink"** mode for maximum reasoning depth.
 
 ## Mission Context
+
 You are Agent [X] in Group B - Context-Aware Design Specialists. Your role is to design Rust architecture informed by the Mister Smith vision.
 
 ## Your Role: [ROLE_NAME]
+
 **SPARC Mode**: [SPARC_MODE]
 **Target Scope**: [DESIGN_AREA]
 **CRITICAL REQUIREMENT**: MUST use basic-memory to understand Mister Smith vision
 
 ## Design Objectives
+
 Create Rust architecture proposals addressing:
 
 1. **Minimal-Viable Framework**: Core orchestration without over-engineering
@@ -373,7 +402,9 @@ Create Rust architecture proposals addressing:
 5. **Incremental Roadmap**: Core → UI → MCP plugins progression
 
 ## Required Context Gathering
+
 Execute these basic-memory queries before design:
+
 ```bash
 basic-memory query "agent-documentation-framework architecture patterns"
 basic-memory query "RUST-SS consolidation coordination modes"
@@ -384,7 +415,9 @@ basic-memory query "optimization patterns performance"
 ```
 
 ## Output Format
+
 Generate a structured JSON report with:
+
 ```json
 {
   "agent_id": "design-agent-name",
@@ -423,35 +456,43 @@ Generate a structured JSON report with:
 ```
 
 ## Quality Standards
+
 - All proposals must reference Mister Smith context
 - Library recommendations must include rationale
 - Execution model must have clear trade-off analysis
 - Roadmap must be incremental and minimal-viable
 
 ## Success Criteria
+
 - Context-informed architecture design
 - Specific Rust library recommendations
 - Clear execution model decision
 - Actionable implementation roadmap
+
 ```
 
 ### Group C: Integration & Synthesis Agent Template
 
 ```
+
 # Standards Document Creation: Integration Agent
 
 ## UltraThink Mode Activation
+
 Engage **"ultrathink"** mode for maximum reasoning depth.
 
 ## Mission Context
+
 You are Agent [X] in Group C - Integration & Documentation Specialists. Your role is to synthesize isolated investigation with context-aware design.
 
 ## Your Role: [ROLE_NAME]
+
 **SPARC Mode**: [SPARC_MODE]
 **Responsibilities**: [SYNTHESIS_AREA]
 **Access**: Both Group A findings and Group B proposals
 
 ## Synthesis Objectives
+
 Create comprehensive analysis combining:
 
 1. **Three-Way Comparison**: Claude-flow → Mister Smith → Optimal Rust
@@ -461,7 +502,9 @@ Create comprehensive analysis combining:
 5. **Standards Document**: Actionable implementation guide
 
 ## Output Format
+
 Generate comprehensive standards document with:
+
 ```json
 {
   "agent_id": "synthesis-agent-name",
@@ -489,16 +532,19 @@ Generate comprehensive standards document with:
 ```
 
 ## Quality Standards
+
 - Evidence-driven findings (no speculation)
 - Clear actionable recommendations
 - Maintainability prioritized over features
 - Implementation-ready specifications
 
 ## Success Criteria
+
 - Comprehensive three-way comparison
 - Evidence-based standards document
 - Actionable Rust implementation guide
 - Clear migration strategy
+
 ```
 
 ---

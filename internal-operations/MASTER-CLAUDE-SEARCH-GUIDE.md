@@ -3,6 +3,7 @@
 ## 🎯 Quick Start Search Strategy
 
 ### 1. Identify Your Need
+
 ```
 Need Architecture? → /ms-framework-docs/core-architecture/
 Need Analysis? → /internal-operations/
@@ -13,6 +14,7 @@ Need Operations? → /ms-framework-docs/operations/
 ```
 
 ### 2. Use the Right Keywords
+
 ```
 Implementation → "implement", "build", "create", "develop"
 Analysis → "analyze", "report", "examine", "review"
@@ -22,6 +24,7 @@ Communication → "protocol", "message", "transport", "API"
 ```
 
 ### 3. Apply Search Patterns
+
 ```
 Specific Agent: Agent_\d+
 Specific Phase: Phase_\d+
@@ -33,17 +36,21 @@ JSON Data: \.json$
 ## 📊 Complete Directory Map with Keywords
 
 ### `/internal-operations/`
+
 **Purpose**: Analysis results, strategies, deployment plans
 **Keywords**: analysis, reports, consolidation, deployment, RUST-SS, phase, strategy, multi-agent
-**Key Subdirs**: 
+**Key Subdirs**:
+
 - `analysis-reports/` - Agent outputs and phase reports
 - `consolidation-reports/` - Strategy documents
 - `deployment-plans/` - Multi-agent coordination
 
 ### `/ms-framework-docs/`
+
 **Purpose**: Framework implementation documentation
 **Keywords**: architecture, implementation, specifications, patterns
 **Key Subdirs**:
+
 - `core-architecture/` - System design
 - `data-management/` - Data persistence and orchestration
 - `security/` - Security framework
@@ -53,6 +60,7 @@ JSON Data: \.json$
 ## 🔍 Universal Search Techniques
 
 ### Basic Search Hierarchy
+
 1. Start with CLAUDE.md in target directory
 2. Use keywords from search optimization section
 3. Apply regex patterns for precise matching
@@ -61,6 +69,7 @@ JSON Data: \.json$
 ### Advanced Search Patterns
 
 #### By Task Type
+
 ```regex
 # Implementation tasks
 /implement.*|build.*|create.*|develop.*/i
@@ -76,6 +85,7 @@ JSON Data: \.json$
 ```
 
 #### By File Type
+
 ```regex
 # Documentation
 /\.md$/
@@ -91,6 +101,7 @@ JSON Data: \.json$
 ```
 
 #### By Component
+
 ```regex
 # Architecture
 /.*architecture.*/i
@@ -108,23 +119,27 @@ JSON Data: \.json$
 ## 💡 Search Best Practices
 
 ### 1. Start Broad, Narrow Down
+
 - Begin with directory CLAUDE.md
 - Use general keywords
 - Apply specific patterns
 - Follow cross-references
 
 ### 2. Use Multiple Approaches
+
 - Keyword search
 - Regex patterns
 - Directory navigation
 - Concept maps
 
 ### 3. Leverage Synonyms
+
 - Try alternative terms
 - Use both technical and common words
 - Consider abbreviations
 
 ### 4. Follow the Trail
+
 - Check cross-references
 - Look for related concepts
 - Use concept maps
@@ -132,6 +147,7 @@ JSON Data: \.json$
 ## 🚀 Quick Reference Card
 
 ### Common Searches
+
 | Need | Location | Keywords |
 |------|----------|----------|
 | System architecture | `/ms-framework-docs/core-architecture/` | architecture, design, pattern |
@@ -142,6 +158,7 @@ JSON Data: \.json$
 | Deployment | `/internal-operations/deployment-plans/` | deploy, multi-agent |
 
 ### Regex Cheat Sheet
+
 ```regex
 Agent_?\d+              # Agent outputs
 Phase_\d+               # Phase reports
@@ -154,6 +171,7 @@ FINAL.*REPORT           # Final reports
 ```
 
 ### Concept Location Matrix
+
 ```
 ┌─────────────────────┬──────────────────────────────┐
 │ Concept             │ Primary Location             │
@@ -171,6 +189,7 @@ FINAL.*REPORT           # Final reports
 ## 🎯 Search Optimization Summary
 
 All CLAUDE.md files now include:
+
 1. **Keywords & Synonyms** - Primary and alternative search terms
 2. **Regex Patterns** - Quick find patterns for common searches
 3. **Concept Locations** - Where to find specific concepts

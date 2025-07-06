@@ -42,24 +42,28 @@ This design creates a comprehensive instruction system for the MisterSmith proje
 ## Key Design Decisions
 
 ### 1. Foundation-First Philosophy
+
 - Maximum constraints initially
 - Evidence-based relaxation
 - Reality over specification
 - Incremental progression
 
 ### 2. Phase-Locked Development
+
 - 4 phases: Foundation → Single Agent → Local Communication → Basic Orchestration
 - Strict verification gates between phases
 - No phase skipping allowed
 - Feature budget per phase
 
 ### 3. Anti-Pattern Prevention
+
 - Explicit forbidden behaviors
 - Reality check questions
 - Complexity traps documented
 - Simple alternatives provided
 
 ### 4. Verification-First
+
 - Every claim needs executable proof
 - Commands over concepts
 - Working code over documentation
@@ -68,6 +72,7 @@ This design creates a comprehensive instruction system for the MisterSmith proje
 ## Implementation Approach
 
 The design treats CLAUDE.md as a living system that:
+
 1. **Starts restrictive** to prevent common failures
 2. **Evolves with evidence** from actual implementation
 3. **Guides incrementally** through proven phases
@@ -76,6 +81,7 @@ The design treats CLAUDE.md as a living system that:
 ## Success Metrics
 
 The instruction system succeeds when:
+
 - Developers build working single agents before attempting distribution
 - Anti-patterns are caught before implementation
 - Phase progression happens smoothly with clear gates

@@ -1,4 +1,5 @@
 # Claude Code CLI Integration Plan
+
 ## Detailed Implementation Strategy for Mister Smith Framework
 
 ### Overview
@@ -49,6 +50,7 @@ User Request → Framework → Claude CLI Controller → Claude CLI Instance
 **Purpose**: Manage Claude CLI instance lifecycle and resource allocation
 
 **Implementation**:
+
 ```rust
 pub struct ClaudeCliController {
     config: ClaudeCliConfig,
@@ -92,6 +94,7 @@ impl ClaudeCliController {
 **Purpose**: Bridge Claude Code hooks to NATS messaging system
 
 **Implementation**:
+
 ```rust
 pub struct HookBridge {
     nats_client: async_nats::Client,
@@ -129,6 +132,7 @@ impl HookBridge {
 **Purpose**: Parse Claude CLI task output and route to NATS subjects
 
 **Implementation**:
+
 ```rust
 pub struct TaskOutputParser {
     agent_id_extractor: Regex,
@@ -168,6 +172,7 @@ impl TaskOutputParser {
 #### A. Agent Orchestration (`data-management/agent-orchestration.md`)
 
 **Additions Required**:
+
 ```rust
 // Add to existing AgentOrchestrator
 impl AgentOrchestrator {
@@ -199,6 +204,7 @@ impl AgentOrchestrator {
 #### B. Transport Layer (`transport-layer-specifications.md`)
 
 **Hook Integration Subjects** (already defined, just document usage):
+
 ```
 control.startup               # Claude CLI initialization
 agent.{id}.pre               # Pre-task hook processing
@@ -209,6 +215,7 @@ ctx.{gid}.file_change        # File change notifications
 ```
 
 **New Message Formats**:
+
 ```rust
 #[derive(Serialize, Deserialize)]
 pub struct HookEvent {
@@ -236,6 +243,7 @@ pub struct TaskOutputEvent {
 ### 1. Claude CLI Configuration
 
 **File**: `config/claude-cli.toml`
+
 ```toml
 [claude_cli]
 max_concurrent_agents = 25
@@ -263,6 +271,7 @@ mcp_config_path = ".claude/mcp.json"
 ### 2. Hook Configuration
 
 **File**: `.claude/hooks.json`
+
 ```json
 {
   "PreToolUse": [
@@ -328,6 +337,7 @@ mcp_config_path = ".claude/mcp.json"
 ### 3. Hook Bridge Scripts
 
 **File**: `scripts/nats-hook-bridge`
+
 ```bash
 #!/bin/bash
 # NATS Hook Bridge Script for Claude Code CLI Integration
@@ -375,71 +385,85 @@ exit 0
 ## Implementation Roadmap
 
 ### Phase 1: Core CLI Integration (Weeks 1-2)
+
 **Priority**: Critical
 **Dependencies**: None
 
 **Deliverables**:
+
 1. Claude CLI Controller implementation
 2. Basic hook bridge for NATS integration
 3. Task output parsing and routing
 4. Configuration management
 
 **Framework Files to Create/Modify**:
+
 - Create: `core-architecture/claude-cli-integration.md`
 - Modify: `core-architecture/system-architecture.md`
 - Modify: `transport-layer-specifications.md`
 - Create: `config/claude-cli.toml`
 
 ### Phase 2: Hook System Integration (Weeks 3-4)
+
 **Priority**: High
 **Dependencies**: Phase 1
 
 **Deliverables**:
+
 1. Complete hook bridge implementation
 2. JSON message format standardization
 3. Hook configuration management
 4. Error handling and timeout management
 
 **Framework Files to Modify**:
+
 - Enhance: `transport-layer-specifications.md`
 - Modify: `observability-monitoring-framework.md`
 - Create: `scripts/nats-hook-bridge`
 
 ### Phase 3: Parallel Execution Enhancement (Weeks 5-6)
+
 **Priority**: High
 **Dependencies**: Phase 1, 2
 
 **Deliverables**:
+
 1. Multi-agent coordination patterns
 2. Resource pool management
 3. Load balancing and work distribution
 4. Performance optimization
 
 **Framework Files to Modify**:
+
 - Enhance: `data-management/agent-orchestration.md`
 - Modify: `deployment-architecture-specifications.md`
 - Enhance: `observability-monitoring-framework.md`
 
 ### Phase 4: MCP Integration (Weeks 7-8)
+
 **Priority**: Medium
 **Dependencies**: Phase 1
 
 **Deliverables**:
+
 1. MCP server integration
 2. Tool registry enhancement
 3. Slash command workflow integration
 4. Permission system integration
 
 **Framework Files to Create/Modify**:
+
 - Create: `integration/mcp-integration-specifications.md`
 - Enhance: `data-management/tool-registry.md`
 - Modify: `security-framework.md`
 
 ### Phase 5: Advanced Features (Weeks 9-10)
+
 **Priority**: Low
 **Dependencies**: All previous phases
 
 **Deliverables**:
+
 1. Advanced coordination patterns
 2. Performance optimization
 3. Enterprise features
@@ -450,18 +474,21 @@ exit 0
 ## Success Metrics
 
 ### 1. Performance Metrics
+
 - **Agent Spawn Time**: < 5 seconds per agent
 - **Concurrent Agents**: 25-30 agents sustained
 - **Memory Usage**: < 6GB total for all agents
 - **Hook Latency**: < 100ms for hook processing
 
 ### 2. Reliability Metrics
+
 - **Agent Uptime**: > 99% availability
 - **Hook Success Rate**: > 99.5% successful hook executions
 - **Error Recovery**: < 30 seconds for agent restart
 - **Message Delivery**: > 99.9% NATS message delivery
 
 ### 3. Integration Metrics
+
 - **API Compatibility**: 100% Claude Code CLI feature coverage
 - **Framework Compatibility**: No breaking changes to existing components
 - **Configuration Simplicity**: Single configuration file for all settings

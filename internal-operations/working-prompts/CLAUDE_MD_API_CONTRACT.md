@@ -538,6 +538,7 @@ async function addFeatureWithValidation(feature: Feature): Promise<AddFeatureRes
 ```
 
 This API contract ensures that MisterSmith instructions:
+
 1. Always respect global verification requirements
 2. Enforce phase-based development rigorously  
 3. Prevent anti-patterns through active detection

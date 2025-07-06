@@ -7,27 +7,32 @@ Modern multi-agent frameworks assign specialized roles to agents to break down c
 ### Core Agent Roles
 
 **Planner**
+
 - Breaks high-level goals into concrete subtasks
 - Interprets user requests and formulates plans/task lists
 - Provides strategic direction and task decomposition
 
 **Executor**
+
 - Carries out atomic actions or subtasks
 - Calls APIs, writes code, retrieves data as directed by plans
 - Implements specific operational capabilities
 
 **Critic (Evaluator)**
+
 - Validates outcomes and critiques results
 - Reviews Executor outputs against goals and quality criteria
 - Catches errors and identifies suboptimal solutions
 
 **Router (Dispatcher)**
+
 - Assigns tasks to appropriate agents
 - Acts as load balancer/coordinator knowing each agent's specialization
 - Routes subtasks from Planner or incoming events to correct specialists
 - May be combined with Planner in some designs
 
 **Memory (Knowledge Base)**
+
 - Stores and retrieves shared knowledge
 - Maintains facts, past states, and intermediate results
 - Accessible by all agents for queries and updates
@@ -42,9 +47,11 @@ Modern multi-agent frameworks assign specialized roles to agents to break down c
 **Cornell Research**: Task-specialized agents turn big problems into manageable subtasks, improving overall performance
 
 ### Implementation Pattern
+
 Planner → Code-Executor → Test-Executor → Critic → Router (ensures correct specialist handling)
 
 ### Real-World Example: R&D Workflow
+
 - **Researcher agent (Planner)**: Formulates questions and search strategies
 - **Searcher agents (Executors)**: Query different data sources in parallel
 - **Verifier agent (Critic)**: Cross-checks and consolidates findings
@@ -59,17 +66,20 @@ To collaborate, agents need to exchange messages (plans, task results, feedback,
 ### Direct RPC (Point-to-Point Calls)
 
 **Characteristics**
+
 - One agent sends message/invokes method on another agent directly
 - Request-reply (RPC) style via HTTP, gRPC, or function calls
 - Straightforward and low-latency between two agents
 - No intermediary required
 
 **Advantages**
+
 - Conceptually simple (like function call)
 - Faster point-to-point delivery than middleman approaches
 - Beneficial for real-time needs requiring immediate responses
 
 **Disadvantages**
+
 - Tightly couples agents (each must know others' addresses)
 - Adding new agents requires code changes
 - Scalability limitation in mesh networks (N² connections)
@@ -78,6 +88,7 @@ To collaborate, agents need to exchange messages (plans, task results, feedback,
 - Single point of failure if target agent is down
 
 **Rust Implementation Example**
+
 ```rust
 // Agent A makes direct HTTP RPC call to Agent B
 let response = reqwest::blocking::get("http://agent-b.local/do_task?param=123")
@@ -91,12 +102,14 @@ println!("Agent A got response: {}", response);
 ### Publish/Subscribe Message Bus
 
 **Characteristics**
+
 - Decouples senders and receivers via message broker
 - Agents publish to named topics/subjects, others subscribe to topics of interest
 - Asynchronous and many-to-many communication
 - Brokers: NATS, RabbitMQ, Kafka
 
 **Advantages**
+
 - Flexibility and scalability through loose coupling
 - Work distribution by topic (Router publishes "task.planning", Planners subscribe)
 - Message buffering allows different agent speeds
@@ -105,11 +118,13 @@ println!("Agent A got response: {}", response);
 - Durability options for message replay
 
 **Disadvantages**
+
 - Added latency (extra hop through broker)
 - Complexity of operating message broker
 - Potential routing overhead
 
 **NATS Rust Implementation Example**
+
 ```rust
 use nats::Connection;
 
@@ -133,18 +148,21 @@ if let Some(msg) = sub.next() {
 ### Shared Memory / Blackboard
 
 **Characteristics**
+
 - Common shared store that all agents can read from and write to
 - Agents post information, partial results, or requests to shared space
 - Other agents monitor blackboard for relevant data
 - Centralized coordination hub and single source of truth
 
 **Advantages**
+
 - Maximum decoupling (agents communicate through environment)
 - Inherent history logging
 - Useful for incremental problem-solving
 - Persistent state across agent failures
 
 **Disadvantages**
+
 - Can become bottleneck (centralized reads/writes)
 - Single point of failure if not replicated
 - Higher latency than direct messaging
@@ -152,6 +170,7 @@ if let Some(msg) = sub.next() {
 - Global shared memory concerns (locking, versioning)
 
 **Implementation Options**
+
 - Shared Redis cache
 - Distributed filesystem
 - SQL/NoSQL database
@@ -164,17 +183,20 @@ if let Some(msg) = sub.next() {
 ### Centralized Coordination
 
 **Characteristics**
+
 - Single central controller/orchestrator makes all major decisions
 - Hub-and-spoke model with global state view
 - Master agent assigns tasks to worker agents
 
 **Advantages**
+
 - Global optimization with full information
 - Straightforward coordination
 - Lower decision latency initially
 - Simple implementation
 
 **Disadvantages**
+
 - Single point of failure
 - Throughput bottleneck as system scales
 - Poor fault isolation
@@ -185,17 +207,20 @@ if let Some(msg) = sub.next() {
 ### Decentralized Peer Mesh
 
 **Characteristics**
+
 - No single leader, agents are equal peers
 - Distributed decision-making via consensus/negotiation
 - Peer-to-peer communication network
 
 **Advantages**
+
 - Robustness and fault tolerance
 - Natural scalability (distributed workload)
 - Dynamic adaptation capabilities
 - Emergent behavior potential
 
 **Disadvantages**
+
 - Most complex to design and implement
 - Sophisticated coordination protocols required
 - Unpredictable latency for global convergence
@@ -207,11 +232,13 @@ if let Some(msg) = sub.next() {
 ### Hierarchical (Tree) Coordination
 
 **Characteristics**
+
 - Tree/pyramid structure of authority
 - Top-level oversees goals, delegates to mid-level managers
 - Each node acts as orchestrator below, worker above
 
 **Advantages**
+
 - Balanced approach between centralized and decentralized
 - Fault isolation within branches
 - Moderate implementation complexity
@@ -219,6 +246,7 @@ if let Some(msg) = sub.next() {
 - Localized decision-making
 
 **Disadvantages**
+
 - Still vulnerable at root level
 - Communication may require multiple hops
 - More complex than centralized approach
@@ -230,12 +258,14 @@ if let Some(msg) = sub.next() {
 Real-world systems often combine communication patterns:
 
 **Common Hybrid Patterns**
+
 - Central orchestrator + pub/sub bus
 - Direct RPC for tools + bus for coordination
 - Blackboard for state + direct notifications for triggers
 - Hierarchical with pub/sub at each layer
 
 **Design Considerations**
+
 - Match fabric to requirements (latency vs. reliability vs. scalability)
 - Use direct calls for ultra-low-latency interactions
 - Use pub/sub for loose coupling and scalability
@@ -244,17 +274,20 @@ Real-world systems often combine communication patterns:
 ## Conclusion
 
 **Key Principles**
+
 - Assign clear roles to agents (planner, executor, critic, router, memory)
 - Link agents with appropriate communication fabric
 - Match coordination strategy to system requirements
 
 **Recommended Approach for Rust-based Systems**
+
 - Pub/sub bus (NATS) as backbone for cloud-native messaging
 - Hierarchical coordination for scaling
 - Shared memory for cumulative knowledge
 - Direct calls only for performance-critical interactions
 
 **Benefits**
+
 - Graceful handling of agent failures
 - Easy addition of new agents
 - Focused agent logic without hard-coded endpoints
