@@ -48,6 +48,7 @@ Create a comprehensive deployment plan for a claude-flow SPARC multi-agent swarm
 ### 1. Task Complexity Analysis
 
 **Evaluate and Document:**
+
 - Scope and complexity of the Claude-Code-Flow repository analysis
 - Volume and structure assessment of the codebase (20+ directories, 2500+ line files)
 - Potential challenges in fault identification and evidence gathering
@@ -59,6 +60,7 @@ Create a comprehensive deployment plan for a claude-flow SPARC multi-agent swarm
 ### 2. Agent Allocation Strategy
 
 **Determine and Justify:**
+
 - Optimal agent count (analyze 6-10 agent range for this specific task)
 - Agent specialization requirements:
   - **Code Analysis Specialists** (repository investigation, fault detection)
@@ -74,6 +76,7 @@ Create a comprehensive deployment plan for a claude-flow SPARC multi-agent swarm
 ### 3. Coordination Mode Selection
 
 **Analyze and Select:**
+
 - **Part A Investigation**: Distributed mode for parallel repository analysis
 - **Part B Design**: Mesh mode for collaborative architecture design
 - **Overall Coordination**: Hierarchical mode with investigation → design → validation phases
@@ -88,18 +91,21 @@ Create a comprehensive deployment plan for a claude-flow SPARC multi-agent swarm
 **Create Detailed Plans For:**
 
 **Phase 1: Repository Investigation (Distributed)**
+
 - Parallel analysis of different repository sections
 - Fault identification with evidence collection
 - Architecture documentation and pain point mapping
 - Integration analysis and anti-pattern detection
 
 **Phase 2: Architecture Design (Mesh)**
+
 - Collaborative Rust framework design
 - Execution model consensus building
 - Library selection and evaluation
 - Roadmap and exclusion planning
 
 **Phase 3: Standards Document Creation (Centralized)**
+
 - Evidence compilation and organization
 - Architecture proposal documentation
 - Quality validation and review
@@ -112,12 +118,14 @@ Create a comprehensive deployment plan for a claude-flow SPARC multi-agent swarm
 **Establish Clear Metrics:**
 
 **Part A Success Criteria:**
+
 - Concrete evidence for each identified fault (file paths, line numbers, commands)
 - Comprehensive architecture documentation with diagrams
 - Clear integration recommendations with justification
 - Anti-pattern catalog with maintainability impact assessment
 
 **Part B Success Criteria:**
+
 - Minimal-viable Rust architecture addressing all identified faults
 - Clear execution model decision with trade-off analysis
 - Specific Rust library recommendations with rationale
@@ -125,6 +133,7 @@ Create a comprehensive deployment plan for a claude-flow SPARC multi-agent swarm
 - Explicit exclusion list with postponement justification
 
 **Overall Quality Metrics:**
+
 - Evidence-driven findings (no speculation)
 - Clear, actionable recommendations
 - Maintainability and clarity prioritized over features
@@ -166,6 +175,7 @@ Your planning analysis must produce:
 ### Analysis Framework
 
 **For Each Decision Point, Provide:**
+
 - **Rationale:** Why this approach is optimal for this specific task
 - **Alternatives Considered:** Other options evaluated
 - **Risk Assessment:** Potential issues and mitigation strategies
@@ -181,6 +191,7 @@ Your planning analysis must produce:
 - **Phase 3 (Documentation)**: **Centralized** - Single coordinator for document assembly
 
 **Selection Criteria:**
+
 - Task complexity and interdependencies
 - Need for independent vs. collaborative work
 - Quality assurance requirements
@@ -189,16 +200,19 @@ Your planning analysis must produce:
 ## QUALITY ASSURANCE REQUIREMENTS
 
 ### Investigation Validation
+
 - Cross-validation of fault identification
 - Evidence verification (file paths, commands, issues)
 - Architecture analysis consistency
 
 ### Design Consensus Building
+
 - Multi-agent architecture review
 - Execution model trade-off analysis
 - Library selection validation
 
 ### Standards Document Quality
+
 - Evidence-driven findings verification
 - Architectural proposal completeness
 - Clarity and maintainability assessment

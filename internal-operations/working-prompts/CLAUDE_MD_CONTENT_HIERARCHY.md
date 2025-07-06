@@ -47,6 +47,7 @@ MisterSmith is a multi-agent orchestration framework for distributed AI systems.
 ```
 
 **Key Elements**:
+
 - Project identity in one sentence
 - Current state (DOCUMENTATION ONLY)
 - Developer role (INCREMENTAL BUILDER)
@@ -73,6 +74,7 @@ Before ANY implementation:
 ```
 
 **Key Elements**:
+
 - Explicit FORBIDDEN behaviors
 - Corresponding REQUIRED alternatives
 - Reality check questions (numbered)
@@ -98,9 +100,11 @@ async fn main() {
 ```
 
 ### PHASE 1: Single Agent
+
 - ONE agent type (start with Worker)
 - NO supervision trees
 - VERIFICATION: `cargo run` spawns and completes
+
 ```
 
 **Key Elements**:
@@ -131,6 +135,7 @@ let session = ClaudeCliController::new()
     .with_resource_pool(8)
     .initialize().await?;
 ```
+
 ```
 
 **Key Elements**:
@@ -158,6 +163,7 @@ ps aux | grep mistersmith  # Process actually running
 "The supervision tree should handle failures"  # Without crash test
 "Agents communicate via NATS"  # Without message logs
 ```
+
 ```
 
 **Key Elements**:
@@ -188,6 +194,7 @@ When implementing:
 **Verified**: `cargo run --example restart_worker`
 **Next Step**: Add second worker type
 ```
+
 ```
 
 **Key Elements**:
@@ -213,6 +220,7 @@ The specifications describe a distributed system. You're building LOCAL first.
 ```
 
 **Key Elements**:
+
 - Trap name clearly stated
 - Specific recognition patterns
 - Concrete avoidance steps
@@ -243,6 +251,7 @@ cargo test --lib module_name
 # 3. Run minimal example
 cargo run --example minimal_agent
 ```
+
 ```
 
 **Key Elements**:
@@ -265,6 +274,7 @@ Every complex distributed AI system started with `println!("Hello");`. Build tha
 ```
 
 **Key Elements**:
+
 - Destination vs starting point
 - Concrete first step
 - Memorable closing line
@@ -272,6 +282,7 @@ Every complex distributed AI system started with `println!("Hello");`. Build tha
 ## Content Patterns and Templates
 
 ### Pattern 1: Forbidden/Required Pairs
+
 ```
 **FORBIDDEN**: [Complex behavior]
 **REQUIRED**: [Simple alternative]
@@ -279,6 +290,7 @@ Every complex distributed AI system started with `println!("Hello");`. Build tha
 ```
 
 ### Pattern 2: Correct/Incorrect Examples
+
 ```rust
 // CORRECT: [Description]
 [minimal code]
@@ -288,6 +300,7 @@ Every complex distributed AI system started with `println!("Hello");`. Build tha
 ```
 
 ### Pattern 3: Phase Definition
+
 ```
 ### PHASE N: [Name]
 - [Allowed feature 1]
@@ -297,6 +310,7 @@ Every complex distributed AI system started with `println!("Hello");`. Build tha
 ```
 
 ### Pattern 4: Reality Check Questions
+
 ```
 Before [ACTION]:
 1. [Concrete question]?
@@ -305,6 +319,7 @@ Before [ACTION]:
 ```
 
 ### Pattern 5: Command Sequences
+
 ```bash
 # 1. [Purpose]
 [command]  # [Expected outcome]
@@ -316,27 +331,32 @@ Before [ACTION]:
 ## Information Architecture Principles
 
 ### 1. Progressive Disclosure
+
 - Most restrictive rules first
 - Simplest examples first
 - Add complexity only after basics
 
 ### 2. Cognitive Load Management
+
 - Maximum 3-4 items per section
 - Clear visual hierarchy
 - Consistent formatting patterns
 
 ### 3. Scannability
+
 - Bold keywords (FORBIDDEN, REQUIRED)
 - Numbered lists for sequences
 - Code blocks for examples
 - Clear section headers
 
 ### 4. Action-Oriented
+
 - Every section enables action
 - Commands ready to execute
 - Clear next steps
 
 ### 5. Error Prevention
+
 - Forbidden patterns prominent
 - Common traps highlighted
 - Success criteria explicit
@@ -379,12 +399,14 @@ graph TD
 ## Content Metrics
 
 ### Effectiveness Indicators
+
 - Lines of code shown < Lines of explanation
 - Executable commands > Theoretical concepts
 - Concrete examples > Abstract principles
 - FORBIDDEN items ≈ REQUIRED items
 
 ### Warning Signs
+
 - Section > 1 page without code example
 - > 5 bullet points in any list
 - Abstract concepts without concrete examples
@@ -393,17 +415,20 @@ graph TD
 ## Style Guide
 
 ### Language Patterns
+
 - Active voice: "Build X" not "X should be built"
 - Concrete: "Run `cargo test`" not "Execute tests"
 - Direct: "FORBIDDEN" not "It is recommended to avoid"
 
 ### Formatting Standards
+
 - **Bold** for keywords only
 - `Code` for all commands/code
 - ```blocks``` for multi-line examples
 - CAPS for critical keywords only
 
 ### Prohibited Language
+
 - "Should", "Could", "Might"
 - "Best practice" without example
 - "Production-ready" claims

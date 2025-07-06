@@ -7,12 +7,14 @@ This document outlines the domain-driven design for MisterSmith-specific system 
 ## 1. Architecture Overview
 
 ### 1.1 Design Principles
+
 - **Inheritance Model**: Project instructions extend (never override) global instructions
 - **Verification-First**: Every instruction must be verifiable through execution
 - **Incremental Enforcement**: Instructions evolve with project maturity
 - **Anti-Complexity**: Actively prevent over-engineering at instruction level
 
 ### 1.2 Instruction System Architecture
+
 ```
 ┌─────────────────────────────────────┐
 │   Global System Instructions        │
@@ -35,52 +37,65 @@ This document outlines the domain-driven design for MisterSmith-specific system 
 ### 2.1 Bounded Contexts
 
 #### Context 1: Project Reality Management
+
 **Purpose**: Maintain accurate project state awareness
 **Core Entities**:
+
 - ProjectPhase (Foundation → Single Agent → Multi-Agent → Distributed)
 - ImplementationStatus (Specification vs Reality)
 - VerificationEvidence (Working Code vs Documentation)
 
 **Invariants**:
+
 - No phase advancement without verified functionality
 - Documentation reflects actual implementation, not aspirations
 
 #### Context 2: Anti-Pattern Prevention
+
 **Purpose**: Actively prevent common LLM/AI project failures
 **Core Entities**:
+
 - ForbiddenPattern (Premature Distribution, Complex Abstractions)
 - RealityCheck (Questions before implementation)
 - ComplexityTrap (Distributed systems, AI orchestration, Performance)
 
 **Invariants**:
+
 - Every implementation must pass simplicity test first
 - No distributed features before local execution works
 
 #### Context 3: Incremental Development Control
+
 **Purpose**: Enforce strict phase-based development
 **Core Entities**:
+
 - DevelopmentPhase (0: Hello World → 3: Basic Supervision)
 - PhaseGate (Verification requirements per phase)
 - SuccessMetric (Executable proof, not theoretical compliance)
 
 **Invariants**:
+
 - Phase N+1 forbidden until Phase N verification complete
 - Each phase has explicit, executable success criteria
 
 #### Context 4: LLM Integration Guidance
+
 **Purpose**: Prevent AI system over-engineering
 **Core Entities**:
+
 - IntegrationLevel (Subprocess → Session → Orchestration)
 - VerificationMethod (Command output, Process state, Message logs)
 - ComplexityBudget (Start simple, expand only with proof)
 
 **Invariants**:
+
 - No session management before subprocess execution works
 - No multi-agent coordination before single agent reliable
 
 ### 2.2 Aggregate Design
 
 #### Instruction Aggregate Root
+
 ```
 Instruction {
     id: SectionIdentifier
@@ -93,6 +108,7 @@ Instruction {
 ```
 
 #### Verification Aggregate
+
 ```
 VerificationRequirement {
     phase: DevelopmentPhase
@@ -103,6 +119,7 @@ VerificationRequirement {
 ```
 
 ### 2.3 Domain Events
+
 - PhaseCompletionVerified
 - AntiPatternDetected
 - ComplexityThresholdExceeded
@@ -111,6 +128,7 @@ VerificationRequirement {
 ## 3. Content Architecture
 
 ### 3.1 Section Hierarchy
+
 ```
 1. PROJECT CONTEXT
    └─ System Reality Statement
@@ -159,12 +177,14 @@ VerificationRequirement {
 ### 3.2 Content Patterns
 
 #### Pattern 1: Forbidden/Required Pairs
+
 ```
 FORBIDDEN: Complex behavior before simple works
 REQUIRED: Simple working example with verification
 ```
 
 #### Pattern 2: Code Reality Examples
+
 ```
 // CORRECT: Start simple
 [minimal working code]
@@ -174,6 +194,7 @@ REQUIRED: Simple working example with verification
 ```
 
 #### Pattern 3: Verification Commands
+
 ```bash
 # MUST provide:
 [specific executable commands]
@@ -186,6 +207,7 @@ REQUIRED: Simple working example with verification
 ## 4. API Design
 
 ### 4.1 Instruction Interface Contract
+
 ```yaml
 GlobalInstructions:
   provides:
@@ -208,6 +230,7 @@ ProjectInstructions:
 ```
 
 ### 4.2 Phase Transition API
+
 ```rust
 trait DevelopmentPhase {
     fn current_phase() -> Phase;
@@ -218,6 +241,7 @@ trait DevelopmentPhase {
 ```
 
 ### 4.3 Verification API
+
 ```rust
 trait ProjectVerification {
     fn verify_component(component: &Component) -> VerificationResult;
@@ -229,19 +253,23 @@ trait ProjectVerification {
 ## 5. Evolution Strategy
 
 ### 5.1 Instruction Lifecycle
+
 1. **Initial State**: Maximum constraints, minimal scope
 2. **Verified Growth**: Constraints relax as verification accumulates
 3. **Maturity Indicators**: Working code density > documentation density
 4. **Maintenance Mode**: Focus shifts to regression prevention
 
 ### 5.2 Update Triggers
+
 - Phase completion verified → Update allowed phases
 - Anti-pattern detected → Add specific prevention
 - New complexity trap discovered → Document gotcha
 - Verification method proven → Add to requirements
 
 ### 5.3 Deprecation Path
+
 Instructions become deprecated when:
+
 - Implementation proves them unnecessary
 - Better verification method discovered
 - Complexity never materialized
@@ -250,12 +278,14 @@ Instructions become deprecated when:
 ## 6. Measurement & Monitoring
 
 ### 6.1 Instruction Effectiveness Metrics
+
 - Anti-pattern prevention rate
 - Phase advancement velocity
 - Verification command usage
 - Reality check trigger frequency
 
 ### 6.2 Health Indicators
+
 - ✅ High ratio of executed commands to theoretical discussion
 - ✅ Incremental progress with working examples
 - ❌ Attempting phase N+2 features in phase N
@@ -264,6 +294,7 @@ Instructions become deprecated when:
 ## 7. Implementation Plan
 
 ### 7.1 Content Creation Order
+
 1. Write PROJECT CONTEXT with current reality
 2. Define CRITICAL CONSTRAINTS based on anti-patterns
 3. Create INCREMENTAL PHASES with concrete examples
@@ -271,6 +302,7 @@ Instructions become deprecated when:
 5. Document GOTCHAS from actual experience
 
 ### 7.2 Validation Checklist
+
 - [ ] Every constraint has executable verification
 - [ ] No instruction enables theoretical solutions
 - [ ] Examples show minimal working code first
@@ -278,7 +310,9 @@ Instructions become deprecated when:
 - [ ] Anti-patterns explicitly forbidden with rationale
 
 ### 7.3 Integration Testing
+
 Test the instructions by:
+
 1. Attempting to skip phases → Should fail
 2. Claiming success without verification → Should fail
 3. Building minimal working component → Should succeed
@@ -287,6 +321,7 @@ Test the instructions by:
 ## 8. Risk Mitigation
 
 ### 8.1 Instruction Risks
+
 - **Risk**: Instructions become too restrictive
   - **Mitigation**: Phases allow gradual relaxation
   
@@ -297,7 +332,9 @@ Test the instructions by:
   - **Mitigation**: Regular simplification reviews
 
 ### 8.2 Anti-Pattern Insurance
+
 Each major anti-pattern has:
+
 - Explicit prohibition
 - Reality check questions
 - Verification requirement
@@ -306,6 +343,7 @@ Each major anti-pattern has:
 ## 9. Summary
 
 The MisterSmith CLAUDE.md design creates a verification-first instruction system that:
+
 - Extends global anti-fabrication philosophy
 - Enforces incremental development through phases
 - Prevents LLM/AI system over-engineering

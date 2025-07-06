@@ -1,6 +1,7 @@
 # SuperClaude Commands Reference v2.0.1
 
 ## Table of Contents
+
 - [Quick Start](#quick-start)
 - [Universal Flags (Available on ALL Commands)](#universal-flags-available-on-all-commands)
 - [Personas as Flags](#personas-as-flags)
@@ -14,6 +15,7 @@
 **Basic Usage**: `/command [flags] [arguments]`
 
 **Example Commands**:
+
 ```bash
 /review --files src/ --quality --evidence    # Comprehensive code review with evidence
 /analyze --code --persona-architect          # Code analysis with architect mindset
@@ -28,6 +30,7 @@
 ## Universal Flags (Available on ALL Commands)
 
 ### 🧠 Thinking Depth Control
+
 | Flag | Description | Token Usage |
 |------|-------------|-------------|
 | `--think` | Multi-file analysis with expanded context | ~4K tokens |
@@ -35,11 +38,13 @@
 | `--ultrathink` | Critical system analysis with maximum depth | ~32K tokens |
 
 ### 📦 Token Optimization
+
 | Flag | Alias | Description |
 |------|-------|-------------|
 | `--uc` | `--ultracompressed` | Activate UltraCompressed mode (huge token reduction) |
 
 ### 🔧 MCP Server Control
+
 | Flag | Description |
 |------|-------------|
 | `--c7` | Enable Context7 documentation lookup |
@@ -54,11 +59,13 @@
 | `--no-pup` | Disable Puppeteer specifically |
 
 ### 🔍 Analysis & Introspection
+
 | Flag | Description |
 |------|-------------|
 | `--introspect` | Enable self-aware analysis with cognitive transparency |
 
 ### 📋 Planning & Execution
+
 | Flag | Description |
 |------|-------------|
 | `--plan` | Show detailed execution plan before running |
@@ -68,6 +75,7 @@
 | `--force` | Override safety checks (use with caution) |
 
 ### ✅ Quality & Validation
+
 | Flag | Description |
 |------|-------------|
 | `--validate` | Enhanced pre-execution safety checks |
@@ -100,9 +108,11 @@ All personas are now integrated as flags, available on every command:
 ### 🛠️ Development Commands (3)
 
 #### `/build` - Universal Project Builder
+
 Build projects, features, and components using modern stack templates.
 
 **Command-Specific Flags:**
+
 - `--init` - Initialize new project with stack setup
 - `--feature` - Implement feature using existing patterns
 - `--tdd` - Test-driven development workflow
@@ -113,6 +123,7 @@ Build projects, features, and components using modern stack templates.
 - `--cli` - Commander.js CLI with testing
 
 **Examples:**
+
 ```bash
 /build --init --react --magic --tdd         # New React app with AI components
 /build --feature "auth system" --tdd        # Feature with tests
@@ -120,9 +131,11 @@ Build projects, features, and components using modern stack templates.
 ```
 
 #### `/dev-setup` - Development Environment
+
 Configure professional development environments with CI/CD and monitoring.
 
 **Command-Specific Flags:**
+
 - `--install` - Install and configure dependencies
 - `--ci` - CI/CD pipeline configuration
 - `--monitor` - Monitoring and observability setup
@@ -132,15 +145,18 @@ Configure professional development environments with CI/CD and monitoring.
 - `--standards` - Code quality standards
 
 **Examples:**
+
 ```bash
 /dev-setup --install --ci --monitor         # Complete environment
 /dev-setup --team --standards --docs        # Team setup
 ```
 
 #### `/test` - Comprehensive Testing Framework
+
 Create, run, and maintain testing strategies across the stack.
 
 **Command-Specific Flags:**
+
 - `--e2e` - End-to-end testing
 - `--integration` - Integration testing
 - `--unit` - Unit testing
@@ -151,6 +167,7 @@ Create, run, and maintain testing strategies across the stack.
 - `--parallel` - Parallel test execution
 
 **Examples:**
+
 ```bash
 /test --coverage --e2e --pup               # Full test suite
 /test --mutation --strict                  # Test quality validation
@@ -159,9 +176,11 @@ Create, run, and maintain testing strategies across the stack.
 ### 🔍 Analysis & Improvement Commands (5)
 
 #### `/review` - AI-Powered Code Review
+
 Comprehensive code review and quality analysis with evidence-based recommendations.
 
 **Command-Specific Flags:**
+
 - `--files` - Review specific files or directories
 - `--commit` - Review changes in specified commit (HEAD, hash, range)
 - `--pr` - Review pull request changes (git diff main..branch)
@@ -171,6 +190,7 @@ Comprehensive code review and quality analysis with evidence-based recommendatio
 - `--summary` - Generate executive summary of review findings
 
 **Examples:**
+
 ```bash
 /review --files src/auth.ts --persona-security    # Security-focused file review
 /review --commit HEAD --quality --evidence        # Quality review with sources
@@ -179,9 +199,11 @@ Comprehensive code review and quality analysis with evidence-based recommendatio
 ```
 
 #### `/analyze` - Multi-Dimensional Analysis
+
 Comprehensive analysis of code, architecture, performance, and security.
 
 **Command-Specific Flags:**
+
 - `--code` - Code quality analysis
 - `--architecture` - System design assessment
 - `--profile` - Performance profiling
@@ -191,15 +213,18 @@ Comprehensive analysis of code, architecture, performance, and security.
 - `--forensic` - Detailed investigation
 
 **Examples:**
+
 ```bash
 /analyze --code --architecture --seq       # Full analysis
 /analyze --profile --deep --persona-performance  # Performance deep-dive
 ```
 
 #### `/troubleshoot` - Professional Debugging
+
 Systematic debugging and issue resolution.
 
 **Command-Specific Flags:**
+
 - `--investigate` - Systematic issue analysis
 - `--five-whys` - Root cause analysis
 - `--prod` - Production debugging
@@ -209,15 +234,18 @@ Systematic debugging and issue resolution.
 - `--rollback` - Safe rollback
 
 **Examples:**
+
 ```bash
 /troubleshoot --prod --five-whys --seq    # Production RCA
 /troubleshoot --perf --fix --pup          # Performance fix
 ```
 
 #### `/improve` - Enhancement & Optimization
+
 Evidence-based improvements with measurable outcomes.
 
 **Command-Specific Flags:**
+
 - `--quality` - Code structure improvements
 - `--performance` - Performance optimization
 - `--accessibility` - Accessibility improvements
@@ -227,15 +255,18 @@ Evidence-based improvements with measurable outcomes.
 - `--modernize` - Technology updates
 
 **Examples:**
+
 ```bash
 /improve --quality --iterate --threshold 95%    # Quality improvement
 /improve --performance --cache --pup            # Performance boost
 ```
 
 #### `/explain` - Technical Documentation
+
 Generate comprehensive explanations and documentation.
 
 **Command-Specific Flags:**
+
 - `--depth` - Complexity level (ELI5|beginner|intermediate|expert)
 - `--visual` - Include diagrams
 - `--examples` - Code examples
@@ -245,6 +276,7 @@ Generate comprehensive explanations and documentation.
 - `--reference` - Reference docs
 
 **Examples:**
+
 ```bash
 /explain --depth expert --visual --seq     # Expert documentation
 /explain --api --examples --c7             # API docs with examples
@@ -253,9 +285,11 @@ Generate comprehensive explanations and documentation.
 ### ⚙️ Operations Commands (6)
 
 #### `/deploy` - Application Deployment
+
 Safe deployment with rollback capabilities.
 
 **Command-Specific Flags:**
+
 - `--env` - Target environment (dev|staging|prod)
 - `--canary` - Canary deployment
 - `--blue-green` - Blue-green deployment
@@ -265,15 +299,18 @@ Safe deployment with rollback capabilities.
 - `--monitor` - Post-deployment monitoring
 
 **Examples:**
+
 ```bash
 /deploy --env prod --canary --monitor      # Canary production deploy
 /deploy --rollback --env prod              # Emergency rollback
 ```
 
 #### `/migrate` - Database & Code Migration
+
 Safe migrations with rollback capabilities.
 
 **Command-Specific Flags:**
+
 - `--database` - Database migrations
 - `--code` - Code migrations
 - `--config` - Configuration migrations
@@ -283,15 +320,18 @@ Safe migrations with rollback capabilities.
 - `--validate` - Data integrity checks
 
 **Examples:**
+
 ```bash
 /migrate --database --backup --validate    # Safe DB migration
 /migrate --code --dry-run                  # Preview code changes
 ```
 
 #### `/scan` - Security & Validation
+
 Comprehensive security auditing and compliance.
 
 **Command-Specific Flags:**
+
 - `--owasp` - OWASP Top 10 compliance
 - `--secrets` - Secret detection
 - `--compliance` - Regulatory compliance
@@ -299,15 +339,18 @@ Comprehensive security auditing and compliance.
 - `--automated` - Continuous monitoring
 
 **Examples:**
+
 ```bash
 /scan --security --owasp --deps           # Security audit
 /scan --compliance --gdpr --strict        # Compliance check
 ```
 
 #### `/estimate` - Project Estimation
+
 Professional estimation with risk assessment.
 
 **Command-Specific Flags:**
+
 - `--detailed` - Comprehensive breakdown
 - `--rough` - Quick estimation
 - `--worst-case` - Pessimistic estimate
@@ -318,15 +361,18 @@ Professional estimation with risk assessment.
 - `--risk` - Risk assessment
 
 **Examples:**
+
 ```bash
 /estimate --detailed --complexity --risk   # Full estimation
 /estimate --agile --story-points          # Agile planning
 ```
 
 #### `/cleanup` - Project Maintenance
+
 Professional cleanup with safety validations.
 
 **Command-Specific Flags:**
+
 - `--code` - Remove dead code
 - `--files` - Clean build artifacts
 - `--deps` - Remove unused dependencies
@@ -336,15 +382,18 @@ Professional cleanup with safety validations.
 - `--conservative` - Safe cleanup
 
 **Examples:**
+
 ```bash
 /cleanup --all --dry-run                  # Preview cleanup
 /cleanup --code --deps --validate         # Code cleanup
 ```
 
 #### `/git` - Git Workflow Management
+
 Professional Git operations with safety features.
 
 **Command-Specific Flags:**
+
 - `--status` - Repository status
 - `--commit` - Professional commit
 - `--branch` - Branch management
@@ -355,6 +404,7 @@ Professional Git operations with safety features.
 - `--pre-commit` - Setup and run pre-commit hooks
 
 **Examples:**
+
 ```bash
 /git --checkpoint "before refactor"       # Safety checkpoint
 /git --commit --validate --test          # Safe commit
@@ -365,9 +415,11 @@ Professional Git operations with safety features.
 ### 🎨 Design & Architecture Commands (1)
 
 #### `/design` - System Architecture
+
 Professional system design with specifications.
 
 **Command-Specific Flags:**
+
 - `--api` - REST/GraphQL design
 - `--ddd` - Domain-driven design
 - `--microservices` - Microservices architecture
@@ -378,6 +430,7 @@ Professional system design with specifications.
 - `--integration` - Integration patterns
 
 **Examples:**
+
 ```bash
 /design --api --ddd --openapi --seq      # API with DDD
 /design --microservices --event-driven   # Microservices design
@@ -386,9 +439,11 @@ Professional system design with specifications.
 ### 🔄 Workflow Commands (4)
 
 #### `/spawn` - Specialized Agents
+
 Spawn focused agents for parallel tasks.
 
 **Command-Specific Flags:**
+
 - `--task` - Define specific task
 - `--parallel` - Concurrent execution
 - `--specialized` - Domain expertise
@@ -397,15 +452,18 @@ Spawn focused agents for parallel tasks.
 - `--merge` - Merge outputs
 
 **Examples:**
+
 ```bash
 /spawn --task "frontend tests" --parallel  # Parallel testing
 /spawn --collaborative --sync              # Team simulation
 ```
 
 #### `/document` - Documentation Creation
+
 Professional documentation in multiple formats.
 
 **Command-Specific Flags:**
+
 - `--user` - User guides
 - `--technical` - Developer docs
 - `--markdown` - Markdown format
@@ -414,15 +472,18 @@ Professional documentation in multiple formats.
 - `--maintain` - Maintenance plan
 
 **Examples:**
+
 ```bash
 /document --api --interactive --examples   # API documentation
 /document --user --visual --multilingual   # User guides
 ```
 
 #### `/load` - Project Context Loading
+
 Load and analyze project context.
 
 **Command-Specific Flags:**
+
 - `--depth` - Analysis depth (shallow|normal|deep)
 - `--context` - Context preservation
 - `--patterns` - Pattern recognition
@@ -432,15 +493,18 @@ Load and analyze project context.
 - `--standards` - Coding standards
 
 **Examples:**
+
 ```bash
 /load --depth deep --patterns --seq       # Deep analysis
 /load --structure --health --standards   # Project assessment
 ```
 
 #### `/task` - Task Management
+
 Complex feature management across sessions with automatic breakdown and recovery.
 
 **Command-Specific Operations:**
+
 - `/task:create [description]` - Create new task with automatic breakdown
 - `/task:status [task-id]` - Check task status and progress
 - `/task:resume [task-id]` - Resume work after break
@@ -448,12 +512,14 @@ Complex feature management across sessions with automatic breakdown and recovery
 - `/task:complete [task-id]` - Mark task as done with summary
 
 **Key Features:**
+
 - **Smart Breakdown**: Automatic complexity analysis and subtask creation
 - **Context Preservation**: Save working state across sessions
 - **Progress Tracking**: Automatic updates and blocker detection
 - **Session Recovery**: Resume from checkpoints with full context
 
 **Examples:**
+
 ```bash
 /task:create "Implement OAuth 2.0 authentication system"  # Create complex feature
 /task:status oauth-task-id                               # Check progress
@@ -469,6 +535,7 @@ Complex feature management across sessions with automatic breakdown and recovery
 ### 🚀 Professional Workflows
 
 **Full-Stack Development**
+
 ```bash
 /design --api --ddd --persona-architect
 /build --fullstack --tdd --magic
@@ -477,6 +544,7 @@ Complex feature management across sessions with automatic breakdown and recovery
 ```
 
 **Security-First Development**
+
 ```bash
 /scan --security --owasp --deps --persona-security
 /analyze --security --forensic --seq
@@ -485,6 +553,7 @@ Complex feature management across sessions with automatic breakdown and recovery
 ```
 
 **Performance Optimization**
+
 ```bash
 /analyze --profile --deep --persona-performance
 /troubleshoot --perf --investigate --pup
@@ -493,6 +562,7 @@ Complex feature management across sessions with automatic breakdown and recovery
 ```
 
 **Quality Assurance**
+
 ```bash
 /review --quality --evidence --persona-qa
 /improve --quality --refactor --strict

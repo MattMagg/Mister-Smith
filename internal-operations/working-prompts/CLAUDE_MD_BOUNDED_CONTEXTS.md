@@ -1,6 +1,7 @@
 # MisterSmith CLAUDE.md Bounded Context Map
 
 ## Context Interaction Diagram
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Global Instructions Context                  │
@@ -29,6 +30,7 @@
 **Purpose**: Maintain accurate awareness of actual vs specified state
 
 **Core Domain Language**:
+
 ```typescript
 type ProjectReality = {
   currentState: {
@@ -52,12 +54,14 @@ type SpecificationRealityGap = {
 ```
 
 **Ubiquitous Language**:
+
 - "Reality State": What actually exists and works
 - "Specification Debt": Documented but not implemented
 - "Verification Evidence": Executable proof of functionality
 - "Implementation Status": Concrete working state
 
 **Context Boundaries**:
+
 - OWNS: Current state tracking, reality checks
 - USES: Phase definitions from Incremental Dev Context
 - PROVIDES: Reality state to all other contexts
@@ -67,6 +71,7 @@ type SpecificationRealityGap = {
 **Purpose**: Actively prevent known failure modes in LLM/AI projects
 
 **Core Domain Language**:
+
 ```typescript
 type AntiPattern = {
   id: string
@@ -90,12 +95,14 @@ type PreventionStrategy = {
 ```
 
 **Ubiquitous Language**:
+
 - "Complexity Trap": Premature optimization/abstraction
 - "Fabrication Pattern": Claims without verification
 - "Distribution Trap": Building distributed before local works
 - "AI Orchestration Trap": Complex AI before simple subprocess
 
 **Context Boundaries**:
+
 - OWNS: Anti-pattern definitions, detection rules
 - CONSUMES: Reality state for detection
 - ENFORCES: Constraints on all implementation
@@ -105,6 +112,7 @@ type PreventionStrategy = {
 **Purpose**: Enforce phase-based development with verification gates
 
 **Core Domain Language**:
+
 ```typescript
 type DevelopmentPhase = {
   id: number
@@ -132,12 +140,14 @@ type PhaseTransition = {
 ```
 
 **Ubiquitous Language**:
+
 - "Phase Gate": Verification requirement between phases
 - "Feature Budget": What's allowed in current phase
 - "Transition Criteria": Concrete evidence for advancement
 - "Phase Lock": Cannot skip phases
 
 **Context Boundaries**:
+
 - OWNS: Phase definitions, transition rules
 - ENFORCES: Feature limitations per phase
 - REQUIRES: Reality state for phase verification
@@ -147,6 +157,7 @@ type PhaseTransition = {
 **Purpose**: Guide incremental AI/LLM integration without over-engineering
 
 **Core Domain Language**:
+
 ```typescript
 type IntegrationLevel = {
   level: 'SUBPROCESS' | 'SESSION' | 'MANAGED' | 'ORCHESTRATED'
@@ -166,12 +177,14 @@ type LLMIntegrationPattern = {
 ```
 
 **Ubiquitous Language**:
+
 - "Integration Level": Complexity of LLM interaction
 - "Subprocess Pattern": Simple command execution
 - "Session Management": Stateful LLM interaction
 - "Orchestration Pattern": Multi-agent coordination
 
 **Context Boundaries**:
+
 - OWNS: LLM integration patterns, complexity rules
 - CONFORMS TO: Phase restrictions from Incremental Context
 - USES: Anti-patterns for guidance
@@ -179,7 +192,9 @@ type LLMIntegrationPattern = {
 ## Inter-Context Communication
 
 ### 1. Shared Kernel: Reality State
+
 All contexts share understanding of:
+
 ```typescript
 interface RealityState {
   getCurrentPhase(): DevelopmentPhase
@@ -189,6 +204,7 @@ interface RealityState {
 ```
 
 ### 2. Context Events
+
 ```typescript
 // Project Reality → Other Contexts
 event RealityUpdated {
@@ -225,6 +241,7 @@ event ComplexityThresholdExceeded {
 ### 3. Translation Maps
 
 **Global Instructions → Project Contexts**:
+
 ```yaml
 GlobalTerm: "Foundation-First Development"
 ProjectTranslation: "Phase-Locked Incremental Development"
@@ -237,6 +254,7 @@ ProjectTranslation: "MisterSmith-Specific Traps"
 ```
 
 **Between Project Contexts**:
+
 ```yaml
 RealityTerm: "No Implementation"
 DevelopmentTerm: "Phase 0 - Foundation Required"
@@ -246,18 +264,21 @@ LLMTerm: "Pre-Integration Phase"
 
 ## Context Evolution Rules
 
-### 1. Context Boundaries Can Shift When:
+### 1. Context Boundaries Can Shift When
+
 - New anti-patterns discovered → Anti-Pattern Context expands
 - Phase proven unnecessary → Development Control simplifies
 - Integration pattern validated → LLM Guidance promotes pattern
 - Reality consistently matches spec → Reality Management scope reduces
 
-### 2. Context Merging Conditions:
+### 2. Context Merging Conditions
+
 - Two contexts share >80% of operations → Consider merging
 - Contexts never communicate → Question separation value
 - Single team owns both → Natural merge candidate
 
-### 3. Context Splitting Triggers:
+### 3. Context Splitting Triggers
+
 - Single context has >10 aggregates → Consider splitting
 - Multiple teams need different parts → Split along team lines
 - Different change velocities → Separate stable from volatile

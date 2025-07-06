@@ -14,11 +14,9 @@ Modern multi-agent frameworks often assign specialized roles to agents to break 
 
 • **Memory (Knowledge Base)**: Stores and retrieves shared knowledge. Not always personified as an “agent,” but many systems include a persistent memory module (or agent) that all other agents can query or update with facts, past states, or intermediate results.
 
-This role specialization has proven efective. Microsoft’s AutoGen framework, for instance, explicitly separates a Planner, multiple Executors, and a Critic in a loop to avoid reasoning bottlenecks.3Anthropic’s open Model-Context-Protocol (MCP) standard similarly defnes planner, executor, critic,memory, and router roles for AI agent collaboration. By having distinct agents “own” planning vs.4doing vs. checking, complex tasks can be decomposed and iteratively refned more reliably. Cornell5researchers note that such task-specialized agents can turn big problems into manageable subtasks,5improving overall performance. In practice, this might look like a Planner agent delegating coding tasks to a Code-Executor agent, which after completion triggers a Test-Executor agent; a Critic agent then verifes outputs, and so on, with a Router ensuring each step goes to the correct specialist. 
+This role specialization has proven efective. Microsoft’s AutoGen framework, for instance, explicitly separates a Planner, multiple Executors, and a Critic in a loop to avoid reasoning bottlenecks.3Anthropic’s open Model-Context-Protocol (MCP) standard similarly defnes planner, executor, critic,memory, and router roles for AI agent collaboration. By having distinct agents “own” planning vs.4doing vs. checking, complex tasks can be decomposed and iteratively refned more reliably. Cornell5researchers note that such task-specialized agents can turn big problems into manageable subtasks,5improving overall performance. In practice, this might look like a Planner agent delegating coding tasks to a Code-Executor agent, which after completion triggers a Test-Executor agent; a Critic agent then verifes outputs, and so on, with a Router ensuring each step goes to the correct specialist.
 
 Real-world example: In an R&D workfow, one could deploy a Researcher agent (Planner) to formulate questions and search strategies, several Searcher agents (Executors) to query diferent data sources in parallel, and a Verifer agent (Critic) to cross-check and consolidate fndings. The system’s Router would distribute each query to an appropriate Searcher and send the collated results back to the Researcher. This approach mirrors how humans divide roles in a team, and it has been reported to yield higher quality results compared to a single monolithic agent.6
-
-
 
 ## Communication Fabrics Linking Agents
 
@@ -36,7 +34,7 @@ In Rust, a simple direct call could be as straightforward as using an HTTP clien
 
 // Agent A makes a direct HTTP RPC call to Agent B
 
-let response = reqwest::blocking::get("http://agent-b.local/do_task?param=123")
+let response = reqwest::blocking::get("<http://agent-b.local/do_task?param=123>")
 
 .expect("Failed to call Agent B")
 
@@ -100,15 +98,15 @@ Advantages: This provides maximum decoupling: agents can come and go, or crash, 
 
 <!-- 4 -->
 
-Trade-ofs: The blackboard can become a bottleneck. Since it’s centralized, all reads/writes go through it (much like a central coordinator). This can be a scalability limit and a single point of failure if not replicated.Latency can be higher than direct messaging because agents are efectively polling the store or reacting to changes, which might not be instant. Also, implementing synchronization and consistency on a blackboard can be complex – e.g., ensuring two agents don’t both grab the same task from the board, or handling conficts when agents post contradictory data. It’s essentially a global shared memory, so typical distributed systems concerns apply (locking, versioning, etc., if multiple agents write concurrently). 
+Trade-ofs: The blackboard can become a bottleneck. Since it’s centralized, all reads/writes go through it (much like a central coordinator). This can be a scalability limit and a single point of failure if not replicated.Latency can be higher than direct messaging because agents are efectively polling the store or reacting to changes, which might not be instant. Also, implementing synchronization and consistency on a blackboard can be complex – e.g., ensuring two agents don’t both grab the same task from the board, or handling conficts when agents post contradictory data. It’s essentially a global shared memory, so typical distributed systems concerns apply (locking, versioning, etc., if multiple agents write concurrently).
 
 In practice, a shared Redis cache, a distributed flesystem, or an SQL/NoSQL database can serve as a blackboard. For example, agents might all read/write to a specifc database table or a key-value store: a Planner agent writes a list of tasks to the board, and multiple Executor agents poll the board to claim tasks (marking them as in-progress in the store). Upon completion, results are written back. A Monitor or Critic agent might watch the same store for new results to validate. Many workfow systems use this model under the hood, essentially storing the “work queue” in a central durable place.
 
 ## Hybrid Models
 
-Real-world systems often combine these communication patterns to get the best of each. Hybrid communication might mean using a direct call for certain interactions and a bus or shared store for others. For instance, an agent could use direct RPC to invoke a compute-intensive tool (to get an immediate result), then publish the result on the bus for other agents to observe. Or a system might use a blackboard for long-lived state (knowledge base, task queue) but also have agents send direct notifcations to each other for time-sensitive triggers. 
+Real-world systems often combine these communication patterns to get the best of each. Hybrid communication might mean using a direct call for certain interactions and a bus or shared store for others. For instance, an agent could use direct RPC to invoke a compute-intensive tool (to get an immediate result), then publish the result on the bus for other agents to observe. Or a system might use a blackboard for long-lived state (knowledge base, task queue) but also have agents send direct notifcations to each other for time-sensitive triggers.
 
-One common hybrid is a central orchestrator with a pub/sub bus: the orchestrator sends commands via the bus, and workers publish their responses to another topic. This yields a centralized decision-maker (simple logic) but decentralized communication (scalable and fault-tolerant). In fact, the event-driven orchestrator-worker pattern transforms a direct master-worker into a bus-mediated approach for better 1112scalability. Another hybrid approach is hierarchical with pub/sub at each layer: higher-level agents coordinate subagents via topics, and each sub-group of agents might have its own local blackboard or direct RPC calls internally. 
+One common hybrid is a central orchestrator with a pub/sub bus: the orchestrator sends commands via the bus, and workers publish their responses to another topic. This yields a centralized decision-maker (simple logic) but decentralized communication (scalable and fault-tolerant). In fact, the event-driven orchestrator-worker pattern transforms a direct master-worker into a bus-mediated approach for better 1112scalability. Another hybrid approach is hierarchical with pub/sub at each layer: higher-level agents coordinate subagents via topics, and each sub-group of agents might have its own local blackboard or direct RPC calls internally.
 
 Hybrid designs are often necessary “with mixed requirements” – e.g. you need the reliability and decoupling of a bus, but also the low latency of direct calls for specifc high-frequency interactions. Choosing the13mix requires analyzing the task: if every agent needs to share a large context, a central store might be inevitable; if agents mostly work independently but must occasionally synchronize, a pub/sub event (“sync now”) plus local processing may sufce.
 
@@ -126,7 +124,7 @@ Drawbacks: This is brittle at scale. The central node is a single point of failu
 
 • Decentralized Peer Mesh: No single leader – every agent is more or less equal, communicating peer-to-peer in a network graph. Decision-making is distributed: each agent makes local decisions based on its view, sometimes via consensus or negotiation protocols with peers. This is akin1819to a team with no manager, or a swarm with emergent coordination. For messaging, this often implies a fully-connected mesh of direct RPC links or a peer-to-peer pub/sub (gossip). The big advantage here is robustness and fault tolerance – there’s no central point to bring down. The20system can continue even if several agents fail, as long as the remaining ones can reroute around them. It’s also naturally scalable in the sense that workload and decision-making load is spread across all agents. If designed well, peer systems can adapt dynamically; they exhibit emergent behavior (e.g., focking, consensus) that is hard-coded in a centralized system.21
 
-Drawbacks: Pure peer meshes are the most complex to design and implement. Without a global controller,ensuring coherent behavior is tricky – you often need sophisticated coordination protocols (voting algorithms, distributed consensus like Raft/Paxos, contract nets for task allocation, etc.). Latency can be22unpredictable: while any two agents could communicate directly in one hop, achieving agreement or broadcasting something to all may require multi-hop message propagation or iterative consensus,increasing latency for global convergence. For instance, a gossip-based peer network reduces central congestion but can increase overall latency for information to reach all nodes. Also, without careful9design, peers can get into conficts or deadlocks if they make inconsistent decisions. Debugging such systems is hard because the logic is emergent from many local interactions. 
+Drawbacks: Pure peer meshes are the most complex to design and implement. Without a global controller,ensuring coherent behavior is tricky – you often need sophisticated coordination protocols (voting algorithms, distributed consensus like Raft/Paxos, contract nets for task allocation, etc.). Latency can be22unpredictable: while any two agents could communicate directly in one hop, achieving agreement or broadcasting something to all may require multi-hop message propagation or iterative consensus,increasing latency for global convergence. For instance, a gossip-based peer network reduces central congestion but can increase overall latency for information to reach all nodes. Also, without careful9design, peers can get into conficts or deadlocks if they make inconsistent decisions. Debugging such systems is hard because the logic is emergent from many local interactions.
 
 <!-- 6 -->
 
@@ -160,47 +158,44 @@ In conclusion, by assigning clear roles to agents and linking them with an appro
 
 <!-- 8 -->
 
-Sources: The insights and patterns above are drawn from recent multi-agent research and industry implementations, including Anthropic’s multi-agent architecture, Microsoft’s AutoGen framework1728, the Model Context Protocol spec, and design guides on event-driven agent systems341253511 . These sources provide real-world evidence of how specialized agent roles and communication models (RPC, pub/sub, blackboards, hybrids) impact system performance and reliability. By referencing these proven approaches, we can confdently design agent orchestration that is both evidence-backed and tuned for autonomous operation. 
+Sources: The insights and patterns above are drawn from recent multi-agent research and industry implementations, including Anthropic’s multi-agent architecture, Microsoft’s AutoGen framework1728, the Model Context Protocol spec, and design guides on event-driven agent systems341253511 . These sources provide real-world evidence of how specialized agent roles and communication models (RPC, pub/sub, blackboards, hybrids) impact system performance and reliability. By referencing these proven approaches, we can confdently design agent orchestration that is both evidence-backed and tuned for autonomous operation.
 
 124 Understanding the AI Agents Through the Lens of MCP | by Eyüp Sercan Uygur | May, 2025 |
 
 Medium
 
-https://sercanuygur.medium.com/understanding-the-ai-agents-through-the-lens-of-mcp-e62cfdb80950
+<https://sercanuygur.medium.com/understanding-the-ai-agents-through-the-lens-of-mcp-e62cfdb80950>
 
 36 Agentic RAG systems for enterprise-scale information retrieval
 
-https://toloka.ai/blog/agentic-rag-systems-for-enterprise-scale-information-retrieval/
+<https://toloka.ai/blog/agentic-rag-systems-for-enterprise-scale-information-retrieval/>
 
-534 Large Language Models – Cornell Statistical Signal Processing Laboratory https://ssplab.ece.cornell.edu/research/large-language-models/
+534 Large Language Models – Cornell Statistical Signal Processing Laboratory <https://ssplab.ece.cornell.edu/research/large-language-models/>
 
 7810 Multi-Agent Communication Protocols in Generative AI and Agentic AI: MCP and A2A Protocols Architecture & Governance Magazine
 
-https://www.architectureandgovernance.com/uncategorized/multi-agent-communication-protocols-in-generative-ai-and-agentic-ai-mcp-and-a2a-protocols/
+<https://www.architectureandgovernance.com/uncategorized/multi-agent-communication-protocols-in-generative-ai-and-agentic-ai-mcp-and-a2a-protocols/>
 
-9131415161819212229 Centralized vs Distributed AI: Control Paradigms | Galileo https://galileo.ai/blog/multi-agent-coordination-strategies
+9131415161819212229 Centralized vs Distributed AI: Control Paradigms | Galileo <https://galileo.ai/blog/multi-agent-coordination-strategies>
 
 111231 A distributed state of mind: Event-driven multi-agent systems | InfoWorld
 
-https://www.infoworld.com/article/3808083/a-distributed-state-of-mind-event-driven-multi-agent-systems.html
+<https://www.infoworld.com/article/3808083/a-distributed-state-of-mind-event-driven-multi-agent-systems.html>
 
 1728 How we built our multi-agent research system \ Anthropic
 
-https://www.anthropic.com/engineering/built-multi-agent-research-system
+<https://www.anthropic.com/engineering/built-multi-agent-research-system>
 
 20 What is a Multiagent System? | IBM
 
-https://www.ibm.com/think/topics/multiagent-system
+<https://www.ibm.com/think/topics/multiagent-system>
 
 23242526273035 Four Design Patterns for Event-Driven, Multi-Agent Systems
 
-https://www.confuent.io/blog/event-driven-multi-agent-systems/
+<https://www.confuent.io/blog/event-driven-multi-agent-systems/>
 
 3233 Go or Rust? Just Listen to the Bots - Cybernetist
 
-https://cybernetist.com/2024/04/25/go-or-rust-just-listen-to-the-bots/
+<https://cybernetist.com/2024/04/25/go-or-rust-just-listen-to-the-bots/>
 
 <!-- 9 -->
-
-
-

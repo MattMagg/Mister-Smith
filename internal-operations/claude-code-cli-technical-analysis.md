@@ -1,4 +1,5 @@
 # Claude Code CLI Technical Analysis
+
 ## Comprehensive Research for Mister Smith Framework Integration
 
 ### Executive Summary
@@ -14,6 +15,7 @@ This document provides comprehensive technical analysis of Claude Code CLI capab
 ### 1. Core CLI Interface
 
 **Command Structure**:
+
 ```bash
 # Interactive mode (REPL)
 claude
@@ -39,6 +41,7 @@ claude --mcp-config .claude/mcp.json
 ```
 
 **Resource Characteristics**:
+
 - Memory usage: ~100-200MB per instance
 - CPU: Moderate during processing, low when idle
 - Network: HTTPS connections to Anthropic API
@@ -47,6 +50,7 @@ claude --mcp-config .claude/mcp.json
 ### 2. Parallel Execution Architecture
 
 **Task Tool Capabilities**:
+
 - Spawns concurrent sub-agents using built-in Task tool
 - Each task runs as lightweight Claude Code instance
 - Output format: `Task(Patch Agent <n>)` or `Task(Performing task X)`
@@ -54,6 +58,7 @@ claude --mcp-config .claude/mcp.json
 - Automatic parallel coordination
 
 **Parallel Execution Patterns**:
+
 ```bash
 # Example parallel task spawning
 "Explore the codebase using 4 tasks in parallel. Each agent should explore different directories."
@@ -66,6 +71,7 @@ claude --mcp-config .claude/mcp.json
 ```
 
 **Scalability Analysis for 25-30 Agents**:
+
 - Total memory: ~2.5-6GB
 - File handles: ~250-600 (within OS limits)
 - Network connections: 25-30 concurrent HTTPS
@@ -74,6 +80,7 @@ claude --mcp-config .claude/mcp.json
 ### 3. Hook System Architecture
 
 **Five Hook Types**:
+
 1. **startup**: Runs when Claude Code starts
 2. **pre_task**: Runs before task execution
 3. **post_task**: Runs after task completion  
@@ -81,6 +88,7 @@ claude --mcp-config .claude/mcp.json
 5. **on_file_change**: Runs when files are modified
 
 **Hook Configuration Structure**:
+
 ```json
 {
   "PreToolUse": [
@@ -99,6 +107,7 @@ claude --mcp-config .claude/mcp.json
 ```
 
 **Hook Input/Output**:
+
 - **Input**: JSON via stdin with session info and tool parameters
 - **Output**: Exit codes (0=success, 2=block) or structured JSON
 - **Decision Control**: Hooks can approve, block, or modify tool execution
@@ -107,15 +116,18 @@ claude --mcp-config .claude/mcp.json
 ### 4. MCP Integration Capabilities
 
 **Server Mode**:
+
 ```bash
 claude mcp serve  # Run Claude Code as MCP server
 ```
 
 **Tool Naming Convention**:
+
 - Pattern: `mcp__<server>__<tool>`
 - Examples: `mcp__memory__create_entities`, `mcp__filesystem__read_file`
 
 **Slash Commands**:
+
 - MCP prompts available as `/mcp__server__prompt`
 - Custom commands via `.claude/commands/*.md`
 
@@ -126,6 +138,7 @@ claude mcp serve  # Run Claude Code as MCP server
 ### 1. Current NATS Subject Taxonomy
 
 **Existing Subject Hierarchy**:
+
 ```
 agents.{agent_id}.commands     # Agent command dispatch
 agents.{agent_id}.status       # Agent status updates
@@ -136,6 +149,7 @@ cmd.{type}.{target}            # Command routing
 ```
 
 **Hook Integration Points (Already Defined)**:
+
 ```
 control.startup                # CLI initialization
 agent.{id}.pre                # Pre-task hook processing
@@ -150,6 +164,7 @@ ctx.{gid}.file_change         # File change notifications
 ### 2. Existing Components
 
 **Core Architecture**:
+
 - **NATS Messaging**: Distributed messaging backbone
 - **Tokio Runtime**: Async patterns and supervision trees
 - **Agent Orchestration**: Hub-and-spoke supervisor pattern
@@ -157,6 +172,7 @@ ctx.{gid}.file_change         # File change notifications
 - **Memory Management**: Postgres + JetStream KV store
 
 **Integration-Ready Components**:
+
 - Hook integration points already defined
 - Agent lifecycle management patterns established
 - Supervision tree patterns for fault tolerance
@@ -179,6 +195,7 @@ ctx.{gid}.file_change         # File change notifications
 ### 2. Hook System Integration
 
 **Direct Mapping**:
+
 ```rust
 // Claude Code Hook → NATS Subject
 startup     → control.startup
@@ -189,6 +206,7 @@ on_file_change → ctx.{gid}.file_change
 ```
 
 **Integration Pattern**:
+
 ```rust
 struct HookBridge {
     nats_client: async_nats::Client,
@@ -212,6 +230,7 @@ impl HookBridge {
 ### 3. Parallel Execution Integration
 
 **Task Output Parsing**:
+
 ```rust
 static TASK_OUTPUT_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"Task\((?:Patch Agent )?(\d+)\)").unwrap()
@@ -235,6 +254,7 @@ async fn route_task_output(
 ### 1. New Components (Additions, Not Modifications)
 
 **A. Claude CLI Spawn Controller**:
+
 ```rust
 struct ClaudeCliController {
     max_concurrent: usize,        // 25-30 agents
@@ -246,6 +266,7 @@ struct ClaudeCliController {
 ```
 
 **B. Hook Bridge Service**:
+
 ```rust
 struct HookBridge {
     hook_configs: Vec<HookConfig>,
@@ -256,6 +277,7 @@ struct HookBridge {
 ```
 
 **C. Task Output Parser**:
+
 ```rust
 struct TaskOutputParser {
     agent_id_extractor: Regex,
@@ -267,6 +289,7 @@ struct TaskOutputParser {
 ### 2. Configuration Enhancements
 
 **Claude CLI Configuration Schema**:
+
 ```toml
 [claude_cli]
 max_concurrent_agents = 25
@@ -288,12 +311,14 @@ hook_execution_timeout = 30
 ### 1. Technical Feasibility: ✅ HIGH
 
 **Strengths**:
+
 - Framework already designed for Claude Code CLI integration
 - Hook system maps directly to existing NATS subjects
 - Parallel execution aligns with Tokio supervision patterns
 - Resource requirements well within typical system capabilities
 
 **Minimal Risk Factors**:
+
 - API rate limiting (manageable with proper configuration)
 - Network connectivity requirements (standard for cloud services)
 - Memory management for 25-30 agents (well within modern system capabilities)
@@ -301,6 +326,7 @@ hook_execution_timeout = 30
 ### 2. Resource Feasibility: ✅ CONFIRMED
 
 **System Requirements**:
+
 - Memory: 8-16GB total (2.5-6GB for Claude CLI agents)
 - CPU: 4-8 cores recommended
 - Network: Stable internet for Anthropic API
@@ -309,6 +335,7 @@ hook_execution_timeout = 30
 ### 3. Integration Complexity: ✅ LOW-MEDIUM
 
 **Complexity Assessment**:
+
 - **Low**: Hook system integration (direct NATS mapping)
 - **Low**: Task output parsing (regex-based)
 - **Medium**: CLI session management (process lifecycle)

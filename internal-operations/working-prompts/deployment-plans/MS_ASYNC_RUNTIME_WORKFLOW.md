@@ -8,10 +8,11 @@ This workflow guides library context gathering and documentation revision for th
 
 ## 🎯 Target Libraries and Context7 References
 
-### Primary Libraries:
+### Primary Libraries
+
 1. **Tokio v1.45.0** - Core async runtime
    - Context7 ID: `/tokio-rs/tokio`
-   - Features: `["full"]` 
+   - Features: `["full"]`
    - Documentation Focus: Runtime configuration, task spawning, channels, synchronization
 
 2. **futures v0.3.31** - Async utilities and combinators
@@ -30,7 +31,8 @@ This workflow guides library context gathering and documentation revision for th
 
 ## 📁 Target Documentation Files
 
-### Core Architecture Files:
+### Core Architecture Files
+
 ```bash
 # Primary files for async runtime documentation
 ms-framework-docs/core-architecture/async-patterns.md
@@ -135,7 +137,8 @@ grep -r "panic.*catch\|catch_unwind" ../core-architecture/ || echo "Good: No pan
 
 ## ✅ Verification Checklist
 
-### Pre-Implementation Verification:
+### Pre-Implementation Verification
+
 ```bash
 # Run comprehensive async pattern check
 echo "=== Async Pattern Verification ==="
@@ -151,7 +154,8 @@ echo "=== Documentation Phase Check ==="
 grep -r "fn main\|impl.*for\|mod tests" ms-framework-docs/ | grep -v "pseudocode" | wc -l
 ```
 
-### Cross-Reference Validation:
+### Cross-Reference Validation
+
 ```bash
 # Files that must be checked together
 files_to_validate=(
@@ -172,7 +176,7 @@ done
 
 ## 🔧 Formatting Standards
 
-### Tokio-Specific Patterns to Apply:
+### Tokio-Specific Patterns to Apply
 
 1. **Runtime Configuration**:
    ```rust
@@ -203,7 +207,8 @@ done
 
 ## 🚀 Parallel Agent Coordination
 
-### Agent Assignment:
+### Agent Assignment
+
 ```bash
 # Agent 1: Core async patterns
 git checkout -b agent1-async-patterns
@@ -221,7 +226,8 @@ git checkout -b agent3-supervision-async
 git branch | grep "agent[0-9]" | wc -l  # Should show 3
 ```
 
-### Conflict Prevention:
+### Conflict Prevention
+
 ```bash
 # Before starting work
 for branch in agent1-async-patterns agent2-agent-lifecycle agent3-supervision-async; do
@@ -245,6 +251,7 @@ done
 ## 🔍 Common Issues and Resolutions
 
 ### Issue: Outdated async/await patterns
+
 ```bash
 # Find old patterns
 grep -r "futures01\|tokio::run\|tokio-core" ms-framework-docs/
@@ -255,6 +262,7 @@ grep -r "futures01\|tokio::run\|tokio-core" ms-framework-docs/
 ```
 
 ### Issue: Inconsistent channel types
+
 ```bash
 # Audit channel usage
 grep -r "channel" ms-framework-docs/ | grep -E "(mpsc|broadcast|oneshot|crossbeam)" | cut -d: -f2 | sort | uniq -c
