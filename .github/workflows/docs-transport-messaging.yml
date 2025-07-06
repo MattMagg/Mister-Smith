@@ -201,16 +201,19 @@ jobs:
           # Apply NATS improvements if available
           if [ -f nats_improvements.md ]; then
             echo "Applying NATS Transport improvements"
-            cp ms-framework-docs/transport/nats-transport.md ms-framework-docs/transport/nats-transport.md.bak
             cp nats_improvements.md ms-framework-docs/transport/nats-transport.md
+            rm nats_improvements.md
           fi
           
           # Apply Axum improvements if available
           if [ -f axum_improvements.md ]; then
             echo "Applying HTTP/Axum improvements"
-            cp ms-framework-docs/transport/http-transport.md ms-framework-docs/transport/http-transport.md.bak
             cp axum_improvements.md ms-framework-docs/transport/http-transport.md
+            rm axum_improvements.md
           fi
+          
+          # Clean up request files
+          rm -f nats_request.json axum_request.json
       
       - name: Check for changes
         id: check_changes

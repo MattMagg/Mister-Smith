@@ -154,9 +154,12 @@ jobs:
           # Apply improvements to the file
           if [ -s improvements.md ]; then
             # Apply the improvements to the actual file
-            cp ms-framework-docs/core-architecture/async-patterns.md ms-framework-docs/core-architecture/async-patterns.md.bak
-            echo "$response" | jq -r '.choices[0].message.content' > ms-framework-docs/core-architecture/async-patterns.md
+            cp improvements.md ms-framework-docs/core-architecture/async-patterns.md
+            rm improvements.md
           fi
+          
+          # Clean up request file
+          rm -f openai_request.json
       
       - name: Improve Supervision Trees Documentation (Claude)
         if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'supervision-trees'
@@ -258,9 +261,12 @@ jobs:
           
           if [ -s lifecycle_improvements.md ]; then
             # Apply the improvements to the actual file
-            cp ms-framework-docs/data-management/agent-lifecycle.md ms-framework-docs/data-management/agent-lifecycle.md.bak
-            echo "$response" | jq -r '.choices[0].message.content' > ms-framework-docs/data-management/agent-lifecycle.md
+            cp lifecycle_improvements.md ms-framework-docs/data-management/agent-lifecycle.md
+            rm lifecycle_improvements.md
           fi
+          
+          # Clean up request file
+          rm -f openai_lifecycle.json
       
       - name: Check for changes
         id: check_changes

@@ -208,15 +208,22 @@ jobs:
           
           # Apply authentication improvements
           if [ -f auth_improvements.md ]; then
-            echo "Authentication improvements available"
-            # In production, parse and apply to authentication-implementation.md
+            echo "Applying authentication improvements"
+            cp auth_improvements.md ms-framework-docs/security/authentication-implementation.md
+            rm auth_improvements.md
           fi
           
           # Apply encryption improvements
           if [ -f encryption_improvements.md ]; then
-            echo "Encryption improvements available"
-            # In production, parse and apply to encryption-patterns.md
+            echo "Applying encryption improvements"
+            if [ -f ms-framework-docs/security/encryption-patterns.md ]; then
+              cp encryption_improvements.md ms-framework-docs/security/encryption-patterns.md
+            fi
+            rm encryption_improvements.md
           fi
+          
+          # Clean up request files
+          rm -f auth_request.json encryption_request.json
       
       - name: Check for changes
         id: check_changes

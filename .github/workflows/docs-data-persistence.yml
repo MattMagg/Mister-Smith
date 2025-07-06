@@ -217,15 +217,22 @@ jobs:
           
           # Apply Redis improvements if available
           if [ -f redis_improvements.md ]; then
-            echo "Redis caching improvements available"
-            # In production, parse and apply to redis-caching.md
+            echo "Applying Redis caching improvements"
+            if [ -f ms-framework-docs/data-management/redis-caching.md ]; then
+              cp redis_improvements.md ms-framework-docs/data-management/redis-caching.md
+            fi
+            rm redis_improvements.md
           fi
           
           # Apply persistence operations improvements
           if [ -f persistence_ops_improvements.md ]; then
-            echo "Persistence operations improvements available"
-            # In production, parse and apply to persistence-operations.md
+            echo "Applying persistence operations improvements"
+            cp persistence_ops_improvements.md ms-framework-docs/data-management/persistence-operations.md
+            rm persistence_ops_improvements.md
           fi
+          
+          # Clean up request files
+          rm -f redis_request.json persistence_ops_request.json
       
       - name: Check for changes
         id: check_changes
