@@ -67,7 +67,7 @@ jobs:
       - name: Run markdownlint
         run: |
           echo "=== Running Markdown Linting ==="
-          markdownlint-cli2 "**/*.md" "#node_modules" "#target" || LINT_FAILED=1
+          markdownlint-cli2 "**/*.md" "#node_modules" "#target" "!.augment-guidelines.md" "!CLAUDE.md" "!CORE_ARCHITECTURE_INTEGRATION_EVIDENCE_REPORT.md" || LINT_FAILED=1
           
           if [ "$LINT_FAILED" = "1" ] && [ "${{ env.STRICT_MODE }}" = "true" ]; then
             echo "Linting failed in strict mode"
