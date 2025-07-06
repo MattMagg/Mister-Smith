@@ -61,7 +61,6 @@ jobs:
                 "content": "Improve ms-framework-docs/transport/nats-transport.md by:\n\n1. Use Context7 to get REAL async-nats v0.37.0 code:\n   - Search for 'jetstream publish subscribe'\n   - Search for 'nats kv get put'\n   - Search for 'object store'\n   - Search for 'service api'\n   - Get actual NATS client usage examples\n\n2. Take the REAL NATS code and adapt it:\n   - Convert actual JetStream setup code to pseudocode\n   - Use real consumer patterns from the library\n   - Base KV operations on actual async-nats examples\n   - Keep real error handling patterns\n\n3. Ensure consistency with:\n   - message-schemas.md (message formats)\n   - agent-communication.md (communication patterns)\n   - connection-management.md\n\n4. Use REAL reconnection code from async-nats\n5. Base performance tips on actual library docs\n\nIMPORTANT: Use Context7's actual async-nats code examples, then convert to pseudocode while preserving real NATS patterns."
               }
             ],
-            "temperature": 0.3,
             "max_completion_tokens": 4000
           }
           EOF
@@ -141,7 +140,6 @@ jobs:
                 "content": "Improve ms-framework-docs/transport/http-transport.md by:\n\n1. Use Context7 to get REAL Axum v0.8 code:\n   - Search for 'axum router'\n   - Search for 'axum middleware'\n   - Search for 'axum websocket'\n   - Search for 'axum state'\n   - Search for 'axum extractors'\n\n2. Take the REAL Axum code and adapt:\n   - Convert actual router setup to pseudocode\n   - Use real middleware chains from examples\n   - Base WebSocket on actual upgrade handlers\n   - Keep real extractor patterns\n   - Use actual error handling from Axum\n\n3. Ensure consistency with:\n   - security-framework.md (auth middleware)\n   - observability-monitoring-framework.md (metrics/tracing)\n\n4. Use REAL REST patterns from Axum examples\n\nIMPORTANT: Use Context7's actual Axum examples, convert to pseudocode preserving real HTTP patterns."
               }
             ],
-            "temperature": 0.3,
             "max_completion_tokens": 4000
           }
           EOF
@@ -222,11 +220,12 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          if git diff --quiet; then
+          if [ -z "$(git status --porcelain)" ]; then
             echo "No changes made"
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
-            echo "Changes detected"
+            echo "Changes detected:"
+            git status --short
             echo "has_changes=true" >> $GITHUB_OUTPUT
             git add -A
             git commit -m "docs: Improve transport & messaging documentation

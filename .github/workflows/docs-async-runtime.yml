@@ -138,8 +138,7 @@ jobs:
             IMPORTANT: Use Context7's actual futures-rs code examples as the base,
             then convert to documentation pseudocode while keeping real patterns."
               }
-            ],
-            "temperature": 0.3
+            ]
           }
           EOF
           
@@ -245,8 +244,7 @@ jobs:
             IMPORTANT: Use Context7's actual crossbeam examples and real FSM code,
             then convert to pseudocode preserving the actual patterns."
               }
-            ],
-            "temperature": 0.3
+            ]
           }
           EOF
           
@@ -267,11 +265,13 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          if git diff --quiet; then
+          # Use git status --porcelain to detect both new and modified files
+          if [ -z "$(git status --porcelain)" ]; then
             echo "No changes made"
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
-            echo "Changes detected"
+            echo "Changes detected:"
+            git status --short
             echo "has_changes=true" >> $GITHUB_OUTPUT
             git add -A
             git commit -m "docs: Improve async runtime documentation

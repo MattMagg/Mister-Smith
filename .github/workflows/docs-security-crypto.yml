@@ -60,7 +60,6 @@ jobs:
                 "content": "Improve ms-framework-docs/security/authentication-implementation.md by:\n\n1. Use Context7 to get REAL jwt-simple v0.12.10 code:\n   - Search for 'jwt encode decode'\n   - Search for 'jwt claims'\n   - Search for 'jwt rsa ecdsa'\n   - Get actual JWT implementation examples\n\n2. Take the REAL JWT code and adapt:\n   - Convert actual token generation to pseudocode\n   - Use real key management from examples\n   - Base refresh on actual JWT patterns\n   - Keep real validation logic\n\n3. Search web for actual JWT libraries and security guides\n\n4. Ensure consistency with:\n   - authorization-implementation.md\n   - security-framework.md\n   - All transport layers (HTTP headers, gRPC metadata)\n\n5. Use REAL security patterns from production code\n\nIMPORTANT: Use Context7's actual jwt-simple examples, convert to pseudocode preserving real security patterns."
               }
             ],
-            "temperature": 0.3,
             "max_completion_tokens": 4000
           }
           EOF
@@ -139,7 +138,6 @@ jobs:
                 "content": "Create/improve encryption documentation by:\n\n1. Use Context7 to get REAL ring v0.17.8 code:\n   - Search for 'ring aead'\n   - Search for 'ring pbkdf2'\n   - Search for 'ring rand'\n   - Get actual crypto examples\n\n2. If needed, create ms-framework-docs/security/encryption-patterns.md\n3. Take the REAL crypto code and adapt:\n   - Convert actual AES-GCM usage to pseudocode\n   - Use real KDF implementations\n   - Base key rotation on actual patterns\n   - Keep real random generation\n   - Use actual TLS configs\n\n4. Search web for actual key management systems\n\n5. Cross-reference with:\n   - All transport layers (TLS config)\n   - Database encryption\n   - Message encryption patterns\n\nIMPORTANT: Use Context7's actual ring examples, convert to safe pseudocode patterns."
               }
             ],
-            "temperature": 0.3,
             "max_completion_tokens": 4000
           }
           EOF
@@ -224,11 +222,12 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          if git diff --quiet; then
+          if [ -z "$(git status --porcelain)" ]; then
             echo "No changes made"
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
-            echo "Changes detected"
+            echo "Changes detected:"
+            git status --short
             echo "has_changes=true" >> $GITHUB_OUTPUT
             git add -A
             git commit -m "docs: Improve security & cryptography documentation

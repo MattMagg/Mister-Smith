@@ -108,7 +108,6 @@ jobs:
                 "content": "Create/improve Redis caching documentation by:\n\n1. Use Context7 to get REAL redis v0.27.5 code:\n   - Search for 'redis connection manager'\n   - Search for 'redis pubsub'\n   - Search for 'redis pipeline'\n   - Search for 'redis lua script'\n   - Get actual Redis client usage\n\n2. If file doesn't exist, create ms-framework-docs/data-management/redis-caching.md\n3. Take the REAL Redis code and adapt:\n   - Convert actual connection code to pseudocode\n   - Use real pub/sub patterns from examples\n   - Base locking on actual Redis implementations\n   - Keep real caching patterns\n   - Use actual Lua script examples\n\n4. Cross-reference with:\n   - agent-communication.md (pub/sub)\n   - storage-patterns.md\n   - connection-management.md\n\n5. Use REAL cache invalidation from Redis examples\n\nIMPORTANT: Use Context7's actual redis-rs examples, convert to pseudocode preserving real patterns."
               }
             ],
-            "temperature": 0.3,
             "max_completion_tokens": 4000
           }
           EOF
@@ -158,7 +157,6 @@ jobs:
                 "content": "Improve ms-framework-docs/data-management/persistence-operations.md by:\n\n1. Search for REAL database operations code:\n   - Use Context7 to find SQLx/Redis operational patterns\n   - Search web for actual Rust database pooling libraries\n   - Look for real production database code\n\n2. Adapt REAL operational code:\n   - Use actual connection pool configs\n   - Base routing on real read replica code\n   - Take batching from actual implementations\n   - Use real backup scripts as reference\n\n3. Include REAL operation workflows:\n   - Health checks from actual monitoring code\n   - Failover from real HA implementations\n   - Performance tuning from actual configs\n   - Index management from real DBAs\n\n4. Cross-reference with:\n   - postgresql-implementation.md\n   - storage-patterns.md\n   - observability-monitoring-framework.md\n\nIMPORTANT: Use real production patterns, convert to documentation preserving actual practices."
               }
             ],
-            "temperature": 0.3,
             "max_completion_tokens": 4000
           }
           EOF
@@ -233,11 +231,12 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          if git diff --quiet; then
+          if [ -z "$(git status --porcelain)" ]; then
             echo "No changes made"
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
-            echo "Changes detected"
+            echo "Changes detected:"
+            git status --short
             echo "has_changes=true" >> $GITHUB_OUTPUT
             git add -A
             git commit -m "docs: Improve data persistence documentation
