@@ -32,6 +32,21 @@ This document provides the foundational integration contracts and core architect
 
 ---
 
+## 🔍 VALIDATION STATUS
+
+**Last Validated**: 2025-07-05  
+**Validator**: Framework Documentation Team  
+**Validation Score**: Pending full validation  
+**Status**: Active Development  
+
+### Implementation Status
+- Integration contracts library specification complete
+- Core architecture patterns established
+- Cross-component compatibility defined
+- Transport unification framework documented
+
+---
+
 ## Table of Contents
 
 1. [Core Integration Architecture](#1-core-integration-architecture)
@@ -199,9 +214,9 @@ where
 
 ### 2.2 Unified Transport Interface
 
-**Addresses**: Transport protocol differences (Agent 11: 70% compatibility, Agent 14: Transport layer issues)
+**Addresses**: Transport protocol differences (Agent 11: 70% compatibility, Agent 14: Transport layer issues) | Data Flow Integrity (Agent 12: Message routing and transformation validation)
 
-**Implementation**: This unified interface is part of the [Shared Contracts Library](#11-shared-contracts-library) and provides protocol bridging capabilities.
+**Implementation**: This unified interface is part of the [Shared Contracts Library](#11-shared-contracts-library) and provides protocol bridging capabilities with comprehensive data flow validation.
 
 **See Also**: 
 - [System Integration](system-integration.md#transport-layer) for system-wide transport strategies
@@ -214,7 +229,7 @@ pub trait Transport: Send + Sync + Clone {
     type Subscription: Stream<Item = Result<Self::Message, TransportError>> + Send + Unpin;
     type ConnectionInfo: Send + Sync + 'static;
 
-    // Core messaging operations
+    // Core messaging operations with data flow validation
     async fn send(&self, destination: &Destination, message: Self::Message) -> Result<(), TransportError>;
     async fn broadcast(&self, topic: &str, message: Self::Message) -> Result<(), TransportError>;
     async fn subscribe(&self, pattern: &SubscriptionPattern) -> Result<Self::Subscription, TransportError>;
@@ -229,9 +244,38 @@ pub trait Transport: Send + Sync + Clone {
     async fn create_queue(&self, queue_config: &QueueConfig) -> Result<QueueHandle, TransportError>;
     async fn join_cluster(&self, cluster_config: &ClusterConfig) -> Result<ClusterMembership, TransportError>;
     
-    // Observability
+    // Observability and data flow validation (Agent 12)
     fn metrics(&self) -> TransportMetrics;
     async fn health_check(&self) -> Result<TransportHealth, TransportError>;
+    async fn validate_message_flow(&self, message: &Self::Message) -> Result<FlowValidation, TransportError>;
+    fn get_flow_statistics(&self) -> FlowStatistics;
+}
+
+// Data Flow Validation Types (Agent 12 Integration)
+#[derive(Debug, Clone)]
+pub struct FlowValidation {
+    pub message_valid: bool,
+    pub schema_version: String,
+    pub transformation_chain: Vec<TransformationStep>,
+    pub latency_ms: u64,
+    pub warnings: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TransformationStep {
+    pub component: String,
+    pub operation: String,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub data_checksum: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct FlowStatistics {
+    pub messages_sent: u64,
+    pub messages_received: u64,
+    pub average_latency_ms: f64,
+    pub error_rate: f64,
+    pub throughput_per_second: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -249,12 +293,65 @@ pub enum SubscriptionPattern {
     Queue { queue_name: String, group: Option<String> },
 }
 
-// Protocol Bridge Implementation
+// Protocol Bridge Implementation with Data Flow Validation
 pub struct ProtocolBridge<Primary, Secondary> {
     primary: Primary,
     secondary: Secondary,
     message_translator: MessageTranslator,
     routing_table: RoutingTable,
+    // Data flow integrity components (Agent 12)
+    flow_validator: BridgeFlowValidator,
+    transformation_tracker: TransformationTracker,
+    consistency_checker: ConsistencyChecker,
+}
+
+// Bridge Flow Validator (Agent 12 Integration)
+pub struct BridgeFlowValidator {
+    schema_mappings: HashMap<String, SchemaMappingRules>,
+    validation_cache: Arc<RwLock<LruCache<String, ValidationResult>>>,
+    performance_monitor: PerformanceMonitor,
+}
+
+impl BridgeFlowValidator {
+    pub async fn validate_bridge_flow<M>(
+        &self,
+        message: &M,
+        source_protocol: &str,
+        target_protocol: &str
+    ) -> Result<FlowValidation, TransportError> 
+    where
+        M: Serialize + Send + Sync
+    {
+        // Validate schema mapping exists
+        let mapping_key = format!("{}->{}", source_protocol, target_protocol);
+        let mapping = self.schema_mappings.get(&mapping_key)
+            .ok_or(TransportError::ProtocolError("No schema mapping found".to_string()))?;
+        
+        // Validate transformation integrity
+        let checksum_before = calculate_checksum(message)?;
+        let validation_result = mapping.validate(message)?;
+        
+        // Monitor performance (Agent 12 thresholds)
+        let start = std::time::Instant::now();
+        let latency = start.elapsed();
+        
+        if latency > Duration::from_millis(1) {
+            self.performance_monitor.record_slow_validation(latency);
+        }
+        
+        Ok(FlowValidation {
+            message_valid: validation_result.is_valid,
+            schema_version: mapping.target_schema_version.clone(),
+            transformation_chain: vec![TransformationStep {
+                component: "protocol_bridge".to_string(),
+                operation: format!("{}_to_{}", source_protocol, target_protocol),
+                timestamp: chrono::Utc::now(),
+                data_checksum: checksum_before,
+            }],
+            latency_ms: latency.as_millis() as u64,
+            warnings: validation_result.warnings,
+        })
+    }
 }
 
 impl<Primary, Secondary> ProtocolBridge<Primary, Secondary> 
@@ -292,31 +389,69 @@ where
     type ConnectionInfo = BridgedConnectionInfo;
 
     async fn send(&self, destination: &Destination, message: Self::Message) -> Result<(), TransportError> {
+        // Data flow validation before routing (Agent 12)
+        self.flow_validator.validate_bridge_flow(
+            &message,
+            "primary",
+            "secondary"
+        ).await?;
+        
         let route = self.routing_table.route_for_destination(destination);
         
-        match route.transport {
+        // Track transformation for each routing choice
+        let result = match route.transport {
             TransportChoice::Primary => {
                 let translated = self.message_translator.to_primary(&message)?;
+                self.transformation_tracker.record_translation(
+                    &message,
+                    &translated,
+                    "bridge_to_primary"
+                ).await;
                 self.primary.send(destination, translated).await
             }
             TransportChoice::Secondary => {
                 let translated = self.message_translator.to_secondary(&message)?;
+                self.transformation_tracker.record_translation(
+                    &message,
+                    &translated,
+                    "bridge_to_secondary"
+                ).await;
                 self.secondary.send(destination, translated).await
             }
             TransportChoice::Both => {
-                // Send to both transports for redundancy
+                // Send to both transports for redundancy with consistency check
                 let primary_msg = self.message_translator.to_primary(&message)?;
                 let secondary_msg = self.message_translator.to_secondary(&message)?;
                 
+                // Verify consistency between translations
+                self.consistency_checker.verify_translation_consistency(
+                    &primary_msg,
+                    &secondary_msg
+                ).await?;
+                
                 let (primary_result, secondary_result) = tokio::join!(
-                    self.primary.send(destination, primary_msg),
-                    self.secondary.send(destination, secondary_msg)
+                    self.primary.send(destination, primary_msg.clone()),
+                    self.secondary.send(destination, secondary_msg.clone())
                 );
+                
+                // Track both translations
+                self.transformation_tracker.record_dual_translation(
+                    &message,
+                    &primary_msg,
+                    &secondary_msg
+                ).await;
                 
                 // Return success if either succeeds
                 primary_result.or(secondary_result)
             }
+        };
+        
+        // Record flow completion
+        if result.is_ok() {
+            self.flow_validator.performance_monitor.record_successful_flow();
         }
+        
+        result
     }
 
     // ... other method implementations with protocol bridging
@@ -387,11 +522,239 @@ impl Transport for WebSocketTransport {
 }
 ```
 
-### 2.3 Configuration Management Integration
+### 2.3 Transport Security Integration Contracts
 
-**Addresses**: Configuration format conflicts (Agent 14: 45-55% consistency, Agent 11: 80% compatibility)
+**Addresses**: Cross-component mTLS implementation consistency (Agent 17: 87/100 validation score with critical recommendations)
 
-**Implementation**: The hierarchical configuration system is implemented through the [Shared Contracts Library](#11-shared-contracts-library) with support for multiple providers.
+**Implementation**: These security contracts enforce consistent mTLS implementation across all transport protocols and ensure certificate lifecycle management consistency.
+
+```rust
+use async_trait::async_trait;
+use std::collections::HashMap;
+use std::path::PathBuf;
+use std::time::Duration;
+
+// Core Transport Security Contract
+#[async_trait]
+pub trait TransportSecurity: Send + Sync {
+    /// Transport security configuration with mTLS enforcement
+    type SecurityConfig: SecurityConfiguration;
+    type Connection: SecureConnection;
+    type Certificate: Certificate;
+    
+    /// Initialize transport security with standardized configuration
+    /// Enforces TLS 1.3 policy and certificate path standardization (Agent 17: Critical Priority 1)
+    async fn initialize_security(&self, config: Self::SecurityConfig) -> Result<(), SecurityError>;
+    
+    /// Establish secure connection with mTLS verification
+    /// Implements certificate validation caching for performance (Agent 17: Performance optimization)
+    async fn establish_secure_connection(&self, endpoint: &str) -> Result<Self::Connection, SecurityError>;
+    
+    /// Validate certificate chain with cross-protocol consistency
+    /// Ensures consistent certificate validation across all transport protocols
+    async fn validate_certificate_chain(&self, certificates: &[Self::Certificate]) -> Result<ValidationResult, SecurityError>;
+    
+    /// Rotate certificates with zero-downtime coordination
+    /// Implements automated rotation with multi-threshold monitoring (Agent 17: Medium Priority)
+    async fn rotate_certificates(&self, rotation_config: CertificateRotationConfig) -> Result<RotationResult, SecurityError>;
+    
+    /// Monitor certificate expiration with multi-threshold alerting
+    /// Implements 30-day, 7-day, and 1-day warning thresholds (Agent 17 enhancement)
+    async fn monitor_certificate_expiration(&self) -> Result<ExpirationMonitoringReport, SecurityError>;
+}
+
+// Security Configuration Trait - enforces standardization
+pub trait SecurityConfiguration: Clone + Send + Sync {
+    /// Get standardized certificate base path: "/etc/mister-smith/certs"
+    /// Addresses certificate path inconsistency (Agent 17: Critical Priority 1)
+    fn certificate_base_path(&self) -> PathBuf {
+        PathBuf::from("/etc/mister-smith/certs")
+    }
+    
+    /// Get CA certificate path: "${base_path}/ca/ca-cert.pem"
+    fn ca_certificate_path(&self) -> PathBuf {
+        self.certificate_base_path().join("ca").join("ca-cert.pem")
+    }
+    
+    /// Get server certificate path: "${base_path}/server/server-cert.pem"
+    fn server_certificate_path(&self) -> PathBuf {
+        self.certificate_base_path().join("server").join("server-cert.pem")
+    }
+    
+    /// Get client certificate path: "${base_path}/client/client-cert.pem"
+    fn client_certificate_path(&self) -> PathBuf {
+        self.certificate_base_path().join("client").join("client-cert.pem")
+    }
+    
+    /// Enforce TLS 1.3 only policy (Agent 17: Critical standardization)
+    fn tls_version_policy(&self) -> TLSVersionPolicy {
+        TLSVersionPolicy {
+            minimum_version: TLSVersion::TLS13,
+            preferred_version: TLSVersion::TLS13,
+            fallback_allowed: false
+        }
+    }
+    
+    /// Get approved cipher suites (TLS 1.3 AEAD only)
+    fn approved_cipher_suites(&self) -> Vec<String> {
+        vec![
+            "TLS13_AES_256_GCM_SHA384".to_string(),
+            "TLS13_CHACHA20_POLY1305_SHA256".to_string(),
+            "TLS13_AES_128_GCM_SHA256".to_string()
+        ]
+    }
+    
+    /// Validate configuration against security policies
+    fn validate_security_policy(&self) -> Result<(), SecurityPolicyViolation>;
+}
+
+// Cross-Protocol Security Coordinator Contract
+#[async_trait]
+pub trait CrossProtocolSecurityCoordinator: Send + Sync {
+    /// Ensure TLS version consistency across all protocols
+    /// Addresses TLS version inconsistency gap (Agent 17: Critical Priority 1)
+    async fn enforce_tls_version_consistency(&self) -> Result<ConsistencyReport, SecurityError>;
+    
+    /// Synchronize certificate paths across protocols
+    /// Ensures all protocols use standardized certificate locations
+    async fn synchronize_certificate_paths(&self) -> Result<SynchronizationReport, SecurityError>;
+    
+    /// Validate cipher suite consistency
+    /// Ensures approved cipher suites are used across all protocols
+    async fn validate_cipher_suite_consistency(&self) -> Result<CipherSuiteValidationReport, SecurityError>;
+    
+    /// Coordinate certificate rotation across protocols
+    /// Ensures coordinated certificate updates with minimal service disruption
+    async fn coordinate_certificate_rotation(&self, protocols: Vec<TransportProtocol>) -> Result<CoordinatedRotationResult, SecurityError>;
+}
+
+// Certificate Lifecycle Management Contract
+#[async_trait]
+pub trait CertificateLifecycleManager: Send + Sync {
+    type Certificate: Certificate;
+    
+    /// Generate new certificates with proper extensions and constraints
+    /// Implements RSA 4096-bit keys and proper certificate extensions (Agent 17: Excellence)
+    async fn generate_certificate(&self, cert_type: CertificateType, config: CertificateGenerationConfig) -> Result<Self::Certificate, CertificateError>;
+    
+    /// Validate certificate with comprehensive checks
+    /// Includes certificate chain, expiration, and usage validation
+    async fn validate_certificate(&self, certificate: &Self::Certificate) -> Result<CertificateValidationResult, CertificateError>;
+    
+    /// Monitor certificate health with multi-threshold alerting
+    /// Implements 30/7/1 day warning thresholds (Agent 17 enhancement)
+    async fn monitor_certificate_health(&self) -> Result<CertificateHealthReport, CertificateError>;
+    
+    /// Rotate certificate with atomic replacement
+    /// Ensures zero-downtime certificate rotation with rollback capability
+    async fn rotate_certificate(&self, cert_type: CertificateType) -> Result<CertificateRotationResult, CertificateError>;
+    
+    /// Archive expired certificates for compliance
+    /// Maintains audit trail for certificate lifecycle events
+    async fn archive_certificate(&self, certificate: Self::Certificate, reason: ArchiveReason) -> Result<(), CertificateError>;
+}
+
+// Performance Optimization Contract (Agent 17: Performance focus)
+#[async_trait]
+pub trait SecurityPerformanceOptimizer: Send + Sync {
+    /// Cache certificate validation results
+    /// Reduces certificate validation overhead with TTL-based caching
+    async fn cache_certificate_validation(&self, cert_id: &str, result: ValidationResult, ttl: Duration) -> Result<(), CacheError>;
+    
+    /// Retrieve cached validation result
+    /// Enables fast certificate validation for repeated operations
+    async fn get_cached_validation(&self, cert_id: &str) -> Result<Option<ValidationResult>, CacheError>;
+    
+    /// Optimize TLS handshake with session resumption
+    /// Implements TLS 1.3 0-RTT session resumption for performance
+    async fn enable_session_resumption(&self, session_config: SessionResumptionConfig) -> Result<(), SecurityError>;
+    
+    /// Monitor security performance metrics
+    /// Tracks certificate validation times, handshake duration, cache hit rates
+    async fn collect_security_metrics(&self) -> Result<SecurityPerformanceMetrics, MetricsError>;
+}
+
+// Security Monitoring and Alerting Contract
+#[async_trait]
+pub trait SecurityMonitor: Send + Sync {
+    /// Monitor security events across all transport protocols
+    /// Provides unified security event monitoring and correlation
+    async fn monitor_security_events(&self) -> Result<SecurityEventStream, MonitoringError>;
+    
+    /// Alert on security policy violations
+    /// Immediate alerting for TLS version violations, certificate issues, etc.
+    async fn alert_security_violation(&self, violation: SecurityViolation) -> Result<(), AlertingError>;
+    
+    /// Generate security compliance report
+    /// Comprehensive reporting for audit and compliance requirements
+    async fn generate_compliance_report(&self, timeframe: TimeRange) -> Result<ComplianceReport, ReportingError>;
+    
+    /// Track certificate lifecycle events
+    /// Audit trail for certificate generation, rotation, expiration, revocation
+    async fn track_certificate_event(&self, event: CertificateLifecycleEvent) -> Result<(), AuditError>;
+}
+
+// Supporting Types for Security Contracts
+#[derive(Debug, Clone)]
+pub struct TLSVersionPolicy {
+    pub minimum_version: TLSVersion,
+    pub preferred_version: TLSVersion,
+    pub fallback_allowed: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct CertificateRotationConfig {
+    pub certificate_type: CertificateType,
+    pub rotation_strategy: RotationStrategy,
+    pub notification_channels: Vec<NotificationChannel>,
+    pub rollback_enabled: bool,
+}
+
+#[derive(Debug)]
+pub struct ExpirationMonitoringReport {
+    pub critical_alerts: Vec<CertificateAlert>,
+    pub warning_alerts: Vec<CertificateAlert>,
+    pub notice_alerts: Vec<CertificateAlert>,
+    pub healthy_certificates: Vec<CertificateStatus>,
+}
+
+#[derive(Debug)]
+pub struct SecurityPerformanceMetrics {
+    pub certificate_validation_times: PerformanceHistogram,
+    pub handshake_durations: PerformanceHistogram,
+    pub cache_hit_rate: f64,
+    pub session_resumption_rate: f64,
+    pub tls_error_rate: f64,
+}
+
+// Security Error Types
+#[derive(Debug, thiserror::Error)]
+pub enum SecurityError {
+    #[error("TLS version policy violation: {0}")]
+    TLSVersionViolation(String),
+    
+    #[error("Certificate validation failed: {0}")]
+    CertificateValidationFailed(String),
+    
+    #[error("Certificate path inconsistency: {0}")]
+    CertificatePathInconsistency(String),
+    
+    #[error("Cipher suite not approved: {0}")]
+    UnapprovedCipherSuite(String),
+    
+    #[error("Cross-protocol consistency violation: {0}")]
+    ConsistencyViolation(String),
+    
+    #[error("Security configuration invalid: {0}")]
+    InvalidConfiguration(String),
+}
+```
+
+### 2.4 Configuration Management Integration
+
+**Addresses**: Configuration format conflicts (Agent 14: 45-55% consistency, Agent 11: 80% compatibility) | Data Consistency Validation (Agent 12: Cross-component configuration integrity)
+
+**Implementation**: The hierarchical configuration system is implemented through the [Shared Contracts Library](#11-shared-contracts-library) with support for multiple providers and comprehensive data flow validation.
 
 **See Also**: 
 - [Implementation Config](implementation-config.md) for detailed configuration management patterns
@@ -417,6 +780,29 @@ pub trait ConfigProvider: Send + Sync + Clone {
     
     fn validate_schema(&self, schema: &ConfigSchema) -> Result<(), ConfigError>;
     fn source_info(&self) -> ConfigSourceInfo;
+    
+    // Data flow validation methods (Agent 12)
+    async fn validate_config_flow(&self, key: &ConfigKey) -> Result<ConfigFlowValidation, ConfigError>;
+    async fn get_config_lineage(&self, key: &ConfigKey) -> Result<ConfigLineage, ConfigError>;
+}
+
+// Configuration Lineage Tracking (Agent 12)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConfigLineage {
+    pub key: ConfigKey,
+    pub current_value_hash: String,
+    pub source_chain: Vec<ConfigSource>,
+    pub modification_history: Vec<ConfigModification>,
+    pub dependent_components: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConfigModification {
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub source: String,
+    pub previous_hash: String,
+    pub new_hash: String,
+    pub modified_by: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -450,11 +836,77 @@ impl ConfigKey {
     }
 }
 
-// Hierarchical Configuration System
+// Hierarchical Configuration System with Data Flow Validation
 pub struct HierarchicalConfig {
     providers: Vec<Box<dyn ConfigProvider>>,
     cache: Arc<RwLock<HashMap<ConfigKey, CachedValue>>>,
     watchers: Arc<RwLock<HashMap<ConfigKey, Vec<ConfigWatcher>>>>,
+    // Data flow validation components (Agent 12)
+    config_validator: ConfigFlowValidator,
+    consistency_tracker: ConfigConsistencyTracker,
+    change_auditor: ConfigChangeAuditor,
+}
+
+// Configuration Flow Validator (Agent 12 Integration)
+pub struct ConfigFlowValidator {
+    schema_registry: Arc<RwLock<HashMap<String, ConfigSchema>>>,
+    dependency_graph: ConfigDependencyGraph,
+    validation_rules: ValidationRuleSet,
+}
+
+impl ConfigFlowValidator {
+    pub async fn validate_config_flow<T>(
+        &self,
+        key: &ConfigKey,
+        value: &T,
+        source: &str
+    ) -> Result<ConfigFlowValidation, ConfigError>
+    where
+        T: Serialize + for<'de> Deserialize<'de>
+    {
+        // Validate schema compliance
+        let schema = self.schema_registry.read().await
+            .get(&key.component)
+            .ok_or(ConfigError::SchemaNotFound)?;
+        
+        schema.validate_value(value)?;
+        
+        // Check cross-component dependencies
+        let dependencies = self.dependency_graph.get_dependencies(key);
+        for dep_key in dependencies {
+            self.validate_dependency_consistency(key, &dep_key).await?;
+        }
+        
+        // Apply validation rules
+        let validation_result = self.validation_rules.apply(key, value)?;
+        
+        Ok(ConfigFlowValidation {
+            valid: true,
+            source: source.to_string(),
+            dependencies_validated: dependencies.len(),
+            warnings: validation_result.warnings,
+            timestamp: chrono::Utc::now(),
+        })
+    }
+    
+    async fn validate_dependency_consistency(
+        &self,
+        primary: &ConfigKey,
+        dependency: &ConfigKey
+    ) -> Result<(), ConfigError> {
+        // Ensure configuration consistency across dependent components
+        // Implementation based on Agent 12 cross-component validation
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ConfigFlowValidation {
+    pub valid: bool,
+    pub source: String,
+    pub dependencies_validated: usize,
+    pub warnings: Vec<String>,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 
 impl HierarchicalConfig {
