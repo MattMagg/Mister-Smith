@@ -3,7 +3,7 @@
 **Agent 22 Specification**: Unified message and database system integration patterns for the Mister Smith AI Agent Framework.
 
 > **📊 VALIDATION STATUS: PRODUCTION READY**
-> 
+>
 > | Criterion | Score | Status |
 > |-----------|-------|---------|
 > | Integration Architecture | 5/5 | ✅ Complete |
@@ -18,9 +18,11 @@
 ## Overview & Architecture
 
 ### Integration Philosophy
+
 The Mister Smith framework employs a unified data integration approach that seamlessly connects messaging systems (NATS) with database persistence layers. This integration ensures data consistency, reliability, and performance across all agent operations.
 
 ### Core Principles
+
 - **Event-Driven Architecture**: All data changes propagate through events
 - **Eventual Consistency**: Accept temporary inconsistencies for system availability
 - **Idempotent Operations**: All data operations can be safely retried
@@ -49,6 +51,7 @@ The Mister Smith framework employs a unified data integration approach that seam
 ### 1. Event-Driven Synchronization
 
 #### Publisher-Subscriber Pattern
+
 ```rust
 // Event publishing from database changes
 pub struct DatabaseEventPublisher {
@@ -81,6 +84,7 @@ impl DatabaseEventPublisher {
 ```
 
 #### Event-Driven Database Updates
+
 ```rust
 // Message consumption triggering database updates
 pub struct DatabaseEventConsumer {
@@ -113,6 +117,7 @@ impl DatabaseEventConsumer {
 ### 2. Bidirectional Data Flow
 
 #### Message-to-Database Flow
+
 ```rust
 pub struct MessageToDatabaseFlow {
     message_handler: MessageHandler,
@@ -142,6 +147,7 @@ impl MessageToDatabaseFlow {
 ```
 
 #### Database-to-Message Flow
+
 ```rust
 pub struct DatabaseToMessageFlow {
     database_listener: DatabaseListener,
@@ -165,6 +171,7 @@ impl DatabaseToMessageFlow {
 ### 3. Message-to-Entity Mapping
 
 #### Schema Mapping Configuration
+
 ```rust
 pub struct MessageEntityMapping {
     mappings: HashMap<String, EntityMapping>,
@@ -187,6 +194,7 @@ pub struct FieldMapping {
 ```
 
 #### Dynamic Mapping Implementation
+
 ```rust
 impl MessageEntityMapping {
     pub fn transform_message_to_entity(&self, message: &Message) -> Result<Entity> {
@@ -219,6 +227,7 @@ impl MessageEntityMapping {
 ### 4. Schema Evolution Handling
 
 #### Version Management
+
 ```rust
 pub struct SchemaVersionManager {
     versions: HashMap<String, Vec<SchemaVersion>>,
@@ -256,6 +265,7 @@ impl SchemaVersionManager {
 ### 1. Consistency Models
 
 #### Eventual Consistency Pattern
+
 ```rust
 pub struct EventualConsistencyManager {
     event_store: EventStore,
@@ -283,6 +293,7 @@ impl EventualConsistencyManager {
 ```
 
 #### Strong Consistency Pattern
+
 ```rust
 pub struct StrongConsistencyManager {
     coordinator: TransactionCoordinator,
@@ -320,6 +331,7 @@ impl StrongConsistencyManager {
 ### 2. Distributed Transaction Patterns
 
 #### Saga Pattern Implementation
+
 ```rust
 pub struct SagaOrchestrator {
     saga_store: SagaStore,
@@ -369,6 +381,7 @@ impl SagaOrchestrator {
 ### 3. Outbox Pattern Implementation
 
 #### Transactional Outbox
+
 ```rust
 pub struct TransactionalOutbox {
     database_pool: DatabasePool,
@@ -405,6 +418,7 @@ impl TransactionalOutbox {
 ```
 
 #### Inbox Pattern for Idempotency
+
 ```rust
 pub struct InboxProcessor {
     database_pool: DatabasePool,
@@ -444,6 +458,7 @@ impl InboxProcessor {
 ### 4. Conflict Resolution Strategies
 
 #### Last-Write-Wins Strategy
+
 ```rust
 pub struct LastWriteWinsResolver {
     clock: LogicalClock,
@@ -461,6 +476,7 @@ impl ConflictResolver for LastWriteWinsResolver {
 ```
 
 #### Semantic Conflict Resolution
+
 ```rust
 pub struct SemanticConflictResolver {
     merge_strategies: HashMap<String, MergeStrategy>,
@@ -481,6 +497,7 @@ impl ConflictResolver for SemanticConflictResolver {
 ### 1. Event Store Design
 
 #### Event Store Interface
+
 ```rust
 pub trait EventStore {
     async fn append(&self, event: Event) -> Result<()>;
@@ -502,6 +519,7 @@ pub struct Event {
 ```
 
 #### PostgreSQL Event Store Implementation
+
 ```rust
 pub struct PostgresEventStore {
     pool: PgPool,
@@ -552,6 +570,7 @@ impl EventStore for PostgresEventStore {
 ### 2. Command/Query Separation
 
 #### Command Side Implementation
+
 ```rust
 pub struct CommandHandler {
     event_store: Arc<dyn EventStore>,
@@ -578,6 +597,7 @@ impl CommandHandler {
 ```
 
 #### Query Side Implementation
+
 ```rust
 pub struct QueryHandler {
     read_model_store: Arc<dyn ReadModelStore>,
@@ -606,6 +626,7 @@ impl QueryHandler {
 ### 3. Read Model Management
 
 #### Read Model Updater
+
 ```rust
 pub struct ReadModelUpdater {
     event_store: Arc<dyn EventStore>,
@@ -632,6 +653,7 @@ impl ReadModelUpdater {
 ```
 
 #### Projection Implementation
+
 ```rust
 pub trait Projection {
     async fn apply_event(&self, event: &Event) -> Result<()>;
@@ -666,6 +688,7 @@ impl Projection for EntityProjection {
 ### 4. Event Replay Mechanisms
 
 #### Event Replay Manager
+
 ```rust
 pub struct EventReplayManager {
     event_store: Arc<dyn EventStore>,
@@ -709,6 +732,7 @@ impl EventReplayManager {
 ### 1. Batch Processing Patterns
 
 #### Message Batch Processor
+
 ```rust
 pub struct MessageBatchProcessor {
     batch_size: usize,
@@ -753,6 +777,7 @@ impl MessageBatchProcessor {
 ### 2. Connection Pooling
 
 #### Database Connection Pool Configuration
+
 ```rust
 pub struct DatabaseConnectionPool {
     pool: PgPool,
@@ -790,6 +815,7 @@ impl DatabaseConnectionPool {
 ### 3. Caching Strategies
 
 #### Multi-Level Caching
+
 ```rust
 pub struct MultiLevelCache {
     l1_cache: LruCache<String, CacheValue>, // In-memory
@@ -825,6 +851,7 @@ impl MultiLevelCache {
 ### 4. Throughput Optimization
 
 #### Parallel Processing Pipeline
+
 ```rust
 pub struct ParallelProcessingPipeline {
     workers: usize,
@@ -873,6 +900,7 @@ impl ParallelProcessingPipeline {
 ### 1. Retry Mechanisms
 
 #### Exponential Backoff Retry
+
 ```rust
 pub struct RetryManager {
     max_attempts: usize,
@@ -916,6 +944,7 @@ impl RetryManager {
 ### 2. Circuit Breaker Pattern
 
 #### Circuit Breaker Implementation
+
 ```rust
 pub struct CircuitBreaker {
     state: Arc<Mutex<CircuitBreakerState>>,
@@ -995,6 +1024,7 @@ impl CircuitBreaker {
 ### 3. Data Reconciliation
 
 #### Reconciliation Service
+
 ```rust
 pub struct DataReconciliationService {
     source_store: Arc<dyn DataStore>,
@@ -1051,6 +1081,7 @@ impl DataReconciliationService {
 ### 4. Monitoring & Alerting
 
 #### Health Check System
+
 ```rust
 pub struct HealthCheckSystem {
     checks: Vec<Box<dyn HealthCheck>>,
@@ -1100,6 +1131,7 @@ impl HealthCheck for DataIntegrationHealthCheck {
 ### 1. Integration Testing Patterns
 
 #### Test Containers for Integration Tests
+
 ```rust
 #[cfg(test)]
 mod integration_tests {
@@ -1145,6 +1177,7 @@ mod integration_tests {
 ### 2. Contract Testing
 
 #### Message Contract Tests
+
 ```rust
 #[cfg(test)]
 mod contract_tests {
@@ -1188,6 +1221,7 @@ mod contract_tests {
 ### 3. Data Consistency Validation
 
 #### Consistency Validation Framework
+
 ```rust
 pub struct ConsistencyValidator {
     database_store: Arc<dyn DataStore>,
@@ -1249,6 +1283,7 @@ impl ConsistencyRule for EventualConsistencyRule {
 ### 4. Performance Benchmarking
 
 #### Performance Test Suite
+
 ```rust
 #[cfg(test)]
 mod performance_tests {
@@ -1296,6 +1331,7 @@ mod performance_tests {
 ### 1. Technology-Specific Patterns
 
 #### Rust-Specific Implementation
+
 ```rust
 // Use of async/await for non-blocking operations
 pub struct AsyncDataIntegrationService {
@@ -1347,6 +1383,7 @@ impl AsyncDataIntegrationService {
 ### 2. Agent Coordination Patterns
 
 #### Multi-Agent Data Coordination
+
 ```rust
 pub struct MultiAgentDataCoordinator {
     agents: HashMap<AgentId, AgentDataHandler>,
@@ -1390,6 +1427,7 @@ impl MultiAgentDataCoordinator {
 ### 3. Security Considerations
 
 #### Data Security Implementation
+
 ```rust
 pub struct SecureDataIntegrationService {
     encryption_service: EncryptionService,
@@ -1419,6 +1457,7 @@ impl SecureDataIntegrationService {
 ### 4. Configuration Management
 
 #### Configuration Structure
+
 ```rust
 #[derive(Debug, Clone, Deserialize)]
 pub struct DataIntegrationConfig {

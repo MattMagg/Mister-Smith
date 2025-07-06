@@ -5,6 +5,7 @@ permalink: transport/grpc-transport
 ---
 
 # gRPC Transport Protocol Specification
+
 ## Mister Smith AI Agent Framework
 
 > **Canonical Reference**: See `/Users/mac-main/Mister-Smith/Mister-Smith/tech-framework.md` for authoritative technology stack specifications
@@ -14,11 +15,13 @@ permalink: transport/grpc-transport
 **Implementation Readiness**: 100% ✅ - Production ready with complete Protocol Buffers v3 definitions
 
 **Validation Details**:
+
 - **Validator**: Agent 25 - MS Framework Validation Swarm
 - **Validation Date**: 2025-07-05
 - **Score**: 5/5 - Implementation ready
 
 **Key Findings**:
+
 - ✅ Complete Protocol Buffers v3 definitions for AgentCommunication, TaskManagement, and AgentDiscovery services
 - ✅ All four streaming patterns implemented (unary, server-streaming, client-streaming, bidirectional)
 - ✅ Comprehensive enum definitions and message validation
@@ -28,7 +31,8 @@ permalink: transport/grpc-transport
 
 **Critical Issues**: None - Production deployment ready
 
-**Minor Enhancements**: 
+**Minor Enhancements**:
+
 - Consider enhanced monitoring correlation for cross-protocol metrics
 
 Reference: `/Users/mac-main/Mister-Smith/MisterSmith/validation-swarm/batch5-specialized-domains/agent25-transport-layer-validation.md`
@@ -38,18 +42,21 @@ Reference: `/Users/mac-main/Mister-Smith/MisterSmith/validation-swarm/batch5-spe
 This document specifies the gRPC transport protocol implementation for agent communication within the Mister Smith framework. gRPC provides high-performance, cross-language RPC capabilities using Protocol Buffers for serialization.
 
 **Technology Stack**:
+
 - Tonic 0.11 (gRPC framework for Rust)
 - Protocol Buffers v3 for message serialization
 - HTTP/2 for transport
 - Tokio 1.38 for async runtime
 
 **Transport Core Dependencies**:
+
 - Section 5: Transport abstraction layer integration and protocol selection
 - Section 7.2: gRPC connection pooling patterns and load balancing
 - Section 8: Error handling standards and gRPC status code mapping
 - Section 9: TLS/mTLS security implementation and authentication flows
 
 **Related Specifications**:
+
 - For complete transport patterns, see: `transport-layer-specifications.md`
 - For NATS messaging integration, see: `nats-messaging.md`
 - For HTTP/WebSocket protocols, see: `http-websocket-transport.md`
@@ -458,6 +465,7 @@ IMPLEMENTATIONS:
 ### 5.2 Protocol Selection
 
 gRPC is preferred for:
+
 - Service-to-service communication requiring strong typing
 - Streaming data between agents
 - Cross-language agent implementations
@@ -468,6 +476,7 @@ gRPC is preferred for:
 ### 6.1 TLS Configuration
 
 All gRPC connections must use TLS 1.3 minimum with mutual authentication:
+
 - Server presents certificate validated by CA
 - Client presents certificate for mTLS
 - Strong cipher suites enforced
@@ -500,6 +509,7 @@ All gRPC connections must use TLS 1.3 minimum with mutual authentication:
 ### 8.1 gRPC Status Codes
 
 Standard gRPC status codes are used for error reporting:
+
 - `OK` (0): Success
 - `CANCELLED` (1): Operation cancelled
 - `INVALID_ARGUMENT` (3): Invalid request
@@ -519,6 +529,7 @@ Standard gRPC status codes are used for error reporting:
 ### 8.2 Retry Policy
 
 Automatic retry with exponential backoff for transient errors:
+
 - Initial delay: 1 second
 - Max delay: 30 seconds
 - Max attempts: 3
@@ -527,22 +538,27 @@ Automatic retry with exponential backoff for transient errors:
 ## Navigation
 
 ### Transport Module Cross-References
+
 - **[Transport Core](./transport-core.md)** - Core abstractions, connection management, and security patterns
 - **[NATS Transport](./nats-transport.md)** - High-throughput messaging and pub/sub patterns
 - **[HTTP Transport](./http-transport.md)** - RESTful APIs and WebSocket communication
 - **[Transport CLAUDE.md](./CLAUDE.md)** - Transport module navigation guide
 
 ### Framework Integration Points
+
 - **[Core Architecture](../core-architecture/)** - System integration and async patterns
 - **[Security](../security/)** - Authentication, authorization, and transport security
 - **[Data Management](../data-management/)** - Message schemas and persistence patterns
 
 ### External References
+
 - **Technology Stack**: `/tech-framework.md` - Canonical technology specifications
 - **Protocol Buffers**: For message serialization schemas and definitions
 
 ### Protocol Selection Guidelines
+
 Use gRPC when you need:
+
 - Strongly-typed service interfaces with Protocol Buffers
 - Efficient binary serialization and HTTP/2 transport
 - Streaming capabilities (server, client, or bidirectional)
@@ -550,10 +566,12 @@ Use gRPC when you need:
 - Built-in authentication and load balancing
 
 **Alternative Protocols:**
+
 - **NATS**: For high-throughput pub/sub messaging and event distribution
 - **HTTP**: For RESTful APIs and web-standard communication
 
 ### Implementation Notes
+
 - This document provides complete gRPC service definitions and configuration
 - For connection pooling implementation, see transport-core.md Section 7.2
 - For security patterns including TLS and mTLS, see transport-core.md Section 9

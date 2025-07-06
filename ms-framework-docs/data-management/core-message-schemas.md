@@ -3,7 +3,7 @@
 ## Agent Framework Message Type System
 
 > **📊 VALIDATION STATUS: PRODUCTION READY**
-> 
+>
 > | Criterion | Score | Status |
 > |-----------|-------|---------|
 > | Schema Completeness | 5/5 | ✅ Comprehensive |
@@ -26,8 +26,9 @@ This document provides complete JSON Schema definitions for all message types in
 ### 1.1 Base Message Envelope
 
 All messages in the framework inherit from this base schema to ensure consistent structure and metadata handling. This schema serves as the foundation for:
+
 - [Task and workflow messages](./workflow-message-schemas.md#task-management-messages)
-- [System operation messages](./system-message-schemas.md#system-operation-messages) 
+- [System operation messages](./system-message-schemas.md#system-operation-messages)
 - [Claude CLI integration messages](./system-message-schemas.md#claude-cli-integration-messages)
 
 The validation and serialization framework is detailed in [Message Framework](./message-framework.md#validation-framework).
@@ -112,6 +113,7 @@ The validation and serialization framework is detailed in [Message Framework](./
 ### 1.2 Common Type Definitions
 
 Reusable schema components used across multiple message types. These definitions are referenced extensively in:
+
 - [Workflow orchestration schemas](./workflow-message-schemas.md#workflow-orchestration-messages)
 - [System health monitoring schemas](./system-message-schemas.md#system-health-check-message)
 - [Agent communication patterns](./workflow-message-schemas.md#task-assignment-message)
@@ -257,6 +259,7 @@ For implementation guidelines and type generation, see [Code Generation](./messa
 ### 2.1 Agent Command Message
 
 Schema for commanding agents to perform operations. This message type integrates with:
+
 - [Task assignment workflows](./workflow-message-schemas.md#task-assignment-message) for execution commands
 - [Claude CLI hook events](./system-message-schemas.md#hook-event-message) for tool execution
 - [Agent lifecycle management](./agent-lifecycle.md) for operational commands
@@ -332,6 +335,7 @@ For validation rules and error handling, see [Validation Framework](./message-fr
 ### 2.2 Agent Status Update Message
 
 Schema for agent status reporting and health monitoring. This schema connects to:
+
 - [System health check messages](./system-message-schemas.md#system-health-check-message) for infrastructure monitoring
 - [Task progress updates](./workflow-message-schemas.md#task-progress-update-message) for execution status
 - [Agent operations documentation](./agent-operations.md) for operational procedures
@@ -420,6 +424,7 @@ Health monitoring patterns are detailed in [System Alert Messages](./system-mess
 ### 2.3 Agent Registration Message
 
 Schema for agent registration and capability announcement. Registration integrates with:
+
 - [Agent lifecycle management](./agent-lifecycle.md) for registration workflows
 - [Hook response messages](./system-message-schemas.md#hook-response-message) for agent spawning
 - [Workflow coordination](./workflow-message-schemas.md#workflow-coordination-message) for capability discovery
@@ -534,11 +539,13 @@ For implementation patterns, see [Agent Integration](./agent-integration.md) and
 ## Schema Relationships
 
 ### Core Dependencies
+
 - **Foundation for**: [Workflow Messages](./workflow-message-schemas.md), [System Messages](./system-message-schemas.md)
 - **Extended by**: Task management, health monitoring, and CLI integration schemas
 - **Common types used in**: All message schemas throughout the framework
 
 ### Integration Points
+
 - **Agent Operations**: [Agent Communication](./agent-communication.md), [Agent Lifecycle](./agent-lifecycle.md)
 - **Validation**: [Message Framework](./message-framework.md#validation-framework)
 - **Security**: [Framework Security](./message-framework.md#security-considerations)
@@ -554,6 +561,7 @@ This file is part of the Message Schema Documentation suite:
 4. [Message Framework](./message-framework.md) - Validation, serialization, and framework specifications
 
 ### Quick Access
+
 - **Task Management**: [Task Assignment](./workflow-message-schemas.md#task-assignment-message), [Task Results](./workflow-message-schemas.md#task-result-message)
 - **System Operations**: [Health Checks](./system-message-schemas.md#system-health-check-message), [Alerts](./system-message-schemas.md#system-alert-message)
 - **Claude CLI**: [Hook Events](./system-message-schemas.md#hook-event-message), [Hook Responses](./system-message-schemas.md#hook-response-message)

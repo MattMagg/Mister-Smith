@@ -5,6 +5,7 @@
 This document provides comprehensive authentication implementation specifications for the Mister Smith AI Agent Framework, building on the security framework foundation and integrating with transport layer protocols.
 
 **Integration Points**:
+
 - Security Framework: `/ms-framework-docs/security/security-framework.md`
 - Transport Layer: `/ms-framework-docs/transport/` - Modular transport specifications
   - [Transport Core](../transport/transport-core.md) - Core patterns and security foundations
@@ -1467,6 +1468,7 @@ async fn setup_secure_nats() -> Result<Client, Error> {
 ## Security Considerations
 
 ### Token Security
+
 - Use RS256 or ES256 for JWT signing (asymmetric algorithms)
 - Implement proper key rotation procedures
 - Store refresh tokens securely (hashed in database)
@@ -1474,12 +1476,14 @@ async fn setup_secure_nats() -> Result<Client, Error> {
 - Use short-lived access tokens (15-30 minutes)
 
 ### Network Security
+
 - Enforce TLS 1.3 minimum for all connections
 - Implement certificate pinning for critical services
 - Use mTLS for service-to-service communication
 - Implement proper SNI validation
 
 ### Implementation Security
+
 - Use constant-time comparison for token validation
 - Implement rate limiting at multiple layers
 - Log authentication events for audit
@@ -1489,12 +1493,14 @@ async fn setup_secure_nats() -> Result<Client, Error> {
 ## Performance Optimizations
 
 ### Caching Strategy
+
 - Cache validated tokens for 30 seconds
 - Cache JWKS for 1 hour
 - Cache OAuth2 provider metadata for 24 hours
 - Use Redis for distributed session storage
 
 ### Connection Pooling
+
 - Maintain persistent connections to IdPs
 - Pool database connections for auth queries
 - Reuse TLS sessions where possible
@@ -1502,6 +1508,7 @@ async fn setup_secure_nats() -> Result<Client, Error> {
 ## Monitoring and Metrics
 
 ### Key Metrics
+
 - Authentication success/failure rates
 - Token validation latency
 - MFA adoption rates
@@ -1509,6 +1516,7 @@ async fn setup_secure_nats() -> Result<Client, Error> {
 - API key usage patterns
 
 ### Alerts
+
 - High authentication failure rate
 - Unusual token refresh patterns
 - Certificate expiration warnings

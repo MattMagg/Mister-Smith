@@ -3,7 +3,7 @@
 ## Claude CLI Integration and System Operations
 
 > **📊 VALIDATION STATUS: PRODUCTION READY**
-> 
+>
 > | Criterion | Score | Status |
 > |-----------|-------|---------|
 > | Schema Coverage | 5/5 | ✅ Complete |
@@ -20,11 +20,13 @@
 ## Overview
 
 This file contains schemas for:
+
 - **Claude CLI Integration Messages** - Hook events and responses for CLI integration
 - **System Operation Messages** - System alerts and health monitoring
 - **Message Routing and Addressing** - NATS subject patterns and routing rules
 
 These schemas enable seamless integration with Claude CLI and provide comprehensive system monitoring capabilities. They build upon:
+
 - [Foundation schemas](./core-message-schemas.md#foundation-schemas) for basic message structure
 - [Workflow coordination](./workflow-message-schemas.md#workflow-orchestration-messages) for multi-agent operations
 - [Message framework](./message-framework.md) for validation and routing patterns
@@ -34,6 +36,7 @@ These schemas enable seamless integration with Claude CLI and provide comprehens
 ### 5.1 Hook Event Message
 
 Schema for Claude CLI hook events and integration points. Hook events integrate with:
+
 - [Agent command messages](./core-message-schemas.md#agent-command-message) for tool execution
 - [Task assignment workflows](./workflow-message-schemas.md#task-assignment-message) for parallel agent spawning
 - [Agent registration](./core-message-schemas.md#agent-registration-message) for capability-based spawning
@@ -201,6 +204,7 @@ For implementation details, see [Agent Integration](./agent-integration.md) and 
 ### 5.2 Hook Response Message
 
 Schema for responding to Claude CLI hook events. Hook responses coordinate with:
+
 - [Agent status updates](./core-message-schemas.md#agent-status-update-message) for spawned agent reporting
 - [Task result messages](./workflow-message-schemas.md#task-result-message) for parallel execution results
 - [System health checks](./system-message-schemas.md#system-health-check-message) for infrastructure validation
@@ -338,6 +342,7 @@ See [Agent Operations](./agent-operations.md) for response handling patterns.
 ### 6.1 System Alert Message
 
 Schema for system alerts and notifications. System alerts integrate with:
+
 - [Agent status monitoring](./core-message-schemas.md#agent-status-update-message) for health-based alerts
 - [Task progress tracking](./workflow-message-schemas.md#task-progress-update-message) for execution alerts
 - [Workflow coordination](./workflow-message-schemas.md#workflow-coordination-message) for orchestration failures
@@ -455,6 +460,7 @@ For alert escalation patterns, see [Security monitoring](../security/security-pa
 ### 6.2 System Health Check Message
 
 Schema for system health monitoring and reporting. Health monitoring connects to:
+
 - [Agent registration data](./core-message-schemas.md#agent-registration-message) for capacity tracking
 - [Task assignment validation](./workflow-message-schemas.md#task-assignment-message) for resource requirements
 - [Workflow state sync](./workflow-message-schemas.md#workflow-state-synchronization-message) for infrastructure status
@@ -593,6 +599,7 @@ Implementation details are in [Connection Management](./connection-management.md
 ### 9.1 NATS Subject Pattern Schemas
 
 Schema definitions for NATS subject patterns and routing rules. Routing patterns support:
+
 - [Agent communication](./core-message-schemas.md#agent-communication-messages) via agent-specific subjects
 - [Task distribution](./workflow-message-schemas.md#task-management-messages) through task-based routing
 - [System monitoring](./system-message-schemas.md#system-operation-messages) with severity-based subjects
@@ -717,17 +724,20 @@ For implementation patterns, see [Message Framework Transformation](./message-fr
 ## Schema Relationships
 
 ### Integration Dependencies
+
 - **Foundation**: [Core Message Schemas](./core-message-schemas.md) for base structures
 - **Workflow Integration**: [Workflow Messages](./workflow-message-schemas.md) for orchestration
 - **Framework Support**: [Message Framework](./message-framework.md) for validation and routing
 
 ### System Integration Points
+
 - **CLI Hooks**: Connect tool execution to agent spawning and coordination
 - **Health Monitoring**: Link agent status to system alerts and infrastructure metrics
 - **Message Routing**: Enable transport-agnostic communication patterns
 - **Error Handling**: Provide comprehensive error reporting and recovery
 
 ### External Integrations
+
 - **Transport Layer**: [NATS](../transport/nats-transport.md), [gRPC](../transport/grpc-transport.md), [HTTP](../transport/http-transport.md)
 - **Security**: [Security Patterns](../security/security-patterns.md)
 - **Operations**: [Agent Operations](./agent-operations.md), [Connection Management](./connection-management.md)
@@ -742,6 +752,7 @@ This file is part of the Message Schema Documentation suite:
 4. [Message Framework](./message-framework.md) - Validation, serialization, and framework specifications
 
 ### Quick Access
+
 - **CLI Integration**: [Hook Events](#hook-event-message), [Hook Responses](#hook-response-message)
 - **System Operations**: [System Alerts](#system-alert-message), [Health Checks](#system-health-check-message)
 - **Message Routing**: [NATS Patterns](#nats-subject-pattern-schemas), [Correlation](#message-correlation-strategies)

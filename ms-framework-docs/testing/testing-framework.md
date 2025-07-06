@@ -8,6 +8,7 @@
 **Validation Agent:** Agent 26 (Testing Framework Specialist)
 
 **Related Documents:**
+
 - [Integration Implementation Testing](../core-architecture/integration-implementation.md) - Contract-based testing framework and integration test harness
 - [Test Schemas](test-schemas.md) - Test data structures and message schemas
 - [Testing CLAUDE Guide](CLAUDE.md) - Testing directory navigation and instructions
@@ -15,6 +16,7 @@
 ## TESTING PHILOSOPHY
 
 ### Core Principles
+
 - **Comprehensive Coverage**: 90%+ line coverage for core modules, 100% for security-critical components
 - **Agent-Centric Testing**: All tests designed for AI agent scenarios and workflows
 - **Async-First Architecture**: Native support for asynchronous agent operations
@@ -23,6 +25,7 @@
 - **Security-Validated**: Mandatory security testing for all authentication and authorization flows
 
 ### Testing Hierarchy
+
 ```
 P0: Critical Path Tests (agent lifecycle, security, data integrity)
 P1: Core Functionality Tests (communication, persistence, configuration)
@@ -34,6 +37,7 @@ P4: Compatibility and Regression Tests
 ## TEAM ZETA INTEGRATION
 
 ### Integration Agent Deployment
+
 Team Zeta consists of 5 specialized integration agents deployed to enhance testing capabilities:
 
 1. **Agent Z1 - Contract Testing Specialist**
@@ -62,7 +66,9 @@ Team Zeta consists of 5 specialized integration agents deployed to enhance testi
    - Quality gate enforcement
 
 ### Integration Validation Findings
+
 Based on comprehensive validation by Agent 26:
+
 - **Technical Excellence**: Advanced testing patterns with sophisticated mock infrastructure
 - **Implementation Readiness**: Complete code examples and configuration specifications
 - **Production Quality**: Stringent quality standards and automated validation
@@ -71,6 +77,7 @@ Based on comprehensive validation by Agent 26:
 ## UNIT TEST PATTERNS
 
 ### Agent Testing Template
+
 ```rust
 use tokio_test;
 use mockall::predicate::*;
@@ -129,6 +136,7 @@ fn test_agent_configuration_validation() {
 ```
 
 ### Data Validation Testing Pattern
+
 ```rust
 use crate::data::{MessageSchema, ValidationResult};
 use crate::testing::TestDataGenerator;
@@ -169,6 +177,7 @@ fn test_data_persistence_integrity() {
 ```
 
 ### Security Testing Pattern
+
 ```rust
 use crate::security::{AuthenticationService, AuthorizationPolicy};
 use crate::testing::{MockTokenProvider, TestSecurityContext};
@@ -211,6 +220,7 @@ fn test_authorization_policies() {
 ## INTEGRATION TEST SPECIFICATIONS
 
 ### Multi-Agent Communication Testing
+
 ```rust
 use testcontainers::{clients::Cli, images::generic::GenericImage};
 use crate::transport::NatsMessagingService;
@@ -248,6 +258,7 @@ async fn test_multi_agent_coordination() {
 ```
 
 ### Database Integration Testing
+
 ```rust
 use sqlx::{PgPool, Postgres, migrate::MigrateDatabase};
 use crate::data::{DatabaseManager, MigrationRunner};
@@ -283,6 +294,7 @@ async fn test_database_migrations() {
 ```
 
 ### Claude CLI Integration Testing
+
 ```rust
 use crate::claude::{ClaudeCliService, ClaudeCommand};
 use crate::testing::{MockClaudeProcess, TestTaskBuilder};
@@ -312,6 +324,7 @@ async fn test_claude_cli_integration() {
 ### Mock Service Generators
 
 #### Automated Mock Generation
+
 ```rust
 use mockall::automock;
 use async_trait::async_trait;
@@ -393,6 +406,7 @@ fn test_with_mock_generator() {
 ### Behavior Verification Patterns
 
 #### Comprehensive Interaction Verification
+
 ```rust
 use mockall::Sequence;
 use std::sync::{Arc, Mutex};
@@ -501,6 +515,7 @@ async fn test_complex_behavior_verification() {
 ### State-Based Mocking
 
 #### Advanced State Machine Testing
+
 ```rust
 // Validated Pattern: Comprehensive agent lifecycle state validation
 use std::sync::{Arc, RwLock};
@@ -553,6 +568,7 @@ fn test_agent_lifecycle_state_machine() {
 ```
 
 #### Stateful Mock Implementation
+
 ```rust
 use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
@@ -679,6 +695,7 @@ fn test_agent_state_machine() {
 ### Integration Test Mocks
 
 #### Complex Service Integration Mocks
+
 ```rust
 use wiremock::{MockServer, Mock, ResponseTemplate, Request};
 use wiremock::matchers::{method, path, header, body_partial_json};
@@ -835,6 +852,7 @@ async fn test_resilient_client_integration() {
 ### Performance Test Mocks
 
 #### High-Performance Mock Implementation
+
 ```rust
 use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::sync::RwLock;
@@ -989,6 +1007,7 @@ async fn test_system_performance_under_load() {
 ```
 
 ### Messaging Service Mock
+
 ```rust
 use mockall::automock;
 use async_trait::async_trait;
@@ -1010,6 +1029,7 @@ mock.expect_send_message()
 ```
 
 ### Database Repository Mock
+
 ```rust
 #[automock]
 #[async_trait]
@@ -1022,6 +1042,7 @@ pub trait AgentRepository {
 ```
 
 ### External Service Mock
+
 ```rust
 use wiremock::{MockServer, Mock, ResponseTemplate};
 use wiremock::matchers::{method, path, body_json};
@@ -1055,6 +1076,7 @@ async fn test_external_api_integration() {
 ## TEST DATA GENERATION
 
 ### Property-Based Test Data
+
 ```rust
 use proptest::prelude::*;
 
@@ -1095,6 +1117,7 @@ impl TestDataGenerator {
 ```
 
 ### Test Builder Pattern
+
 ```rust
 pub struct TestAgentBuilder {
     id: Option<String>,
@@ -1139,6 +1162,7 @@ impl TestAgentBuilder {
 ## ADVANCED TESTING PATTERNS
 
 ### Property-Based Testing
+
 ```rust
 // Validated Pattern: Configuration roundtrip validation
 use proptest::prelude::*;
@@ -1185,6 +1209,7 @@ proptest! {
 ```
 
 ### Chaos Engineering Patterns
+
 ```rust
 // Validated Pattern: Resilience testing with failure injection
 use crate::chaos::{ChaosEngine, FailureMode};
@@ -1267,6 +1292,7 @@ async fn test_circuit_breaker_activation() {
 ## PERFORMANCE TEST SPECIFICATIONS
 
 ### Benchmarking Framework
+
 ```rust
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
 use crate::agents::AgentOrchestrator;
@@ -1310,6 +1336,7 @@ criterion_main!(benches);
 ```
 
 ### Load Testing Specifications
+
 ```rust
 use tokio::time::{Duration, Instant};
 use futures::future::join_all;
@@ -1348,24 +1375,28 @@ async fn test_concurrent_agent_operations() {
 ## TESTING STANDARDS
 
 ### Coverage Requirements
+
 - **Line Coverage**: Minimum 90% for all modules
 - **Branch Coverage**: 85% for conditional logic
 - **Function Coverage**: 100% for public APIs
 - **Integration Coverage**: All component interactions tested
 
 ### Performance Budgets
+
 - **Unit Tests**: < 100ms execution time
 - **Integration Tests**: < 5s execution time
 - **End-to-End Tests**: < 30s execution time
 - **Memory Usage**: < 100MB per test suite
 
 ### Quality Gates
+
 - All tests must pass before merge
 - No test flakiness tolerance (0% flaky tests)
 - Performance regression detection (<5% slowdown threshold)
 - Security vulnerability scanning in test dependencies
 
 ### Test Organization
+
 ```
 tests/
 ├── unit/                    # Unit tests co-located with source
@@ -1383,6 +1414,7 @@ tests/
 ## CI/CD INTEGRATION
 
 ### Multi-Stage GitHub Actions Pipeline
+
 ```yaml
 name: Comprehensive Testing Pipeline
 
@@ -1560,6 +1592,7 @@ jobs:
 ```
 
 ### Test Reporting
+
 ```rust
 use serde_json::json;
 use std::fs::File;
@@ -1598,24 +1631,28 @@ impl TestReporter {
 ## IMPLEMENTATION ROADMAP
 
 ### Phase 1: Core Infrastructure (Weeks 1-2)
+
 - [ ] Implement basic unit test patterns and mock frameworks
 - [ ] Set up testcontainer infrastructure for integration tests
 - [ ] Configure GitHub Actions CI/CD pipeline
 - [ ] Deploy Team Zeta integration agents
 
 ### Phase 2: Advanced Testing (Weeks 3-4)
+
 - [ ] Implement performance benchmarking with criterion
 - [ ] Add security testing automation
 - [ ] Configure coverage reporting and quality gates
 - [ ] Integrate chaos engineering patterns
 
 ### Phase 3: Optimization (Weeks 5-6)
+
 - [ ] Implement advanced mock patterns and behavior verification
 - [ ] Add property-based testing across all modules
 - [ ] Optimize test execution performance and resource usage
 - [ ] Complete Team Zeta analytics integration
 
 ### Validation Metrics
+
 - **Coverage Requirements Met**: 90%+ line coverage, 100% security-critical
 - **Performance Budgets Achieved**: <100ms unit, <5s integration
 - **Quality Gates Operational**: Zero flaky tests, automated enforcement

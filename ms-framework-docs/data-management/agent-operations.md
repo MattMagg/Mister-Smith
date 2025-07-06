@@ -7,10 +7,11 @@ tags:
 ---
 
 # Agent Operations Architecture
+
 ## Discovery, Workflow, Error Handling & Metrics
 
 > **📊 VALIDATION STATUS: PRODUCTION READY**
-> 
+>
 > | Criterion | Score | Status |
 > |-----------|-------|---------|
 > | Agent Discovery | 5/5 | ✅ Complete |
@@ -22,13 +23,15 @@ tags:
 >
 > *Validated: 2025-07-05 | Document Lines: 2,718 | Implementation Status: 93%*
 
-> **Cross-References**: 
+> **Cross-References**:
+>
 > - See `agent-lifecycle.md` for basic agent architecture and supervision patterns (sections 1-3)
 > - See `agent-communication.md` for message passing and coordination patterns (sections 4-5)
 > - See `agent-integration.md` for resource management and integration patterns (sections 10-15)
 > - See `../../internal-operations/framework-dev-docs/tech-framework.md` for authoritative technology stack specifications
-> 
-> **Navigation**: 
+>
+> **Navigation**:
+>
 > - **Previous**: [Agent Communication](./agent-communication.md) - Message passing and task distribution
 > - **Next**: [Agent Integration](./agent-integration.md) - Resource management and extensions
 > - **Related**: [Agent Lifecycle](./agent-lifecycle.md) - Foundation agent patterns

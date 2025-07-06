@@ -7,10 +7,11 @@ tags:
 ---
 
 # Agent Integration Architecture
+
 ## Resource Management, Tool-Bus, Extensions & Data Persistence
 
 > **📊 VALIDATION STATUS: PRODUCTION READY**
-> 
+>
 > | Criterion | Score | Status |
 > |-----------|-------|---------|
 > | Resource Management | 5/5 | ✅ Complete |
@@ -22,13 +23,15 @@ tags:
 >
 > *Validated: 2025-07-05 | Document Lines: 3,842 | Implementation Status: 100%*
 
-> **Cross-References**: 
+> **Cross-References**:
+>
 > - See `agent-lifecycle.md` for basic agent architecture and supervision patterns (sections 1-3)
 > - See `agent-communication.md` for message passing and coordination patterns (sections 4-5)
 > - See `agent-operations.md` for discovery, workflow, and error handling patterns (sections 6-9)
 > - See `../../internal-operations/framework-dev-docs/tech-framework.md` for authoritative technology stack specifications
-> 
-> **Navigation**: 
+>
+> **Navigation**:
+>
 > - **Previous**: [Agent Operations](./agent-operations.md) - Discovery, workflow, and error handling
 > - **Foundation**: [Agent Lifecycle](./agent-lifecycle.md) and [Agent Communication](./agent-communication.md)
 > - **Related**: [Database Schemas](./database-schemas.md), [Message Framework](./message-framework.md)
@@ -258,6 +261,7 @@ impl AgentOrchestrator {
 ```
 
 **Key Integration Points:**
+
 - **Task Tool Integration**: Leverages Claude-CLI's built-in Task tool for parallel execution
 - **Output Pattern Recognition**: Handles both `Task(Patch Agent <n>)` and `Task(Description)` formats
 - **NATS Subject Routing**: Routes to `agents.{id}.output` and `tasks.{name}.output` subjects

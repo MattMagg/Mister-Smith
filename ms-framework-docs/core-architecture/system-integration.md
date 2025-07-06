@@ -37,6 +37,7 @@ This document provides comprehensive integration patterns, implementation guidel
 **Status**: Active Development  
 
 ### Implementation Status
+
 - Message routing patterns established
 - Health monitoring framework defined
 - State persistence patterns documented
@@ -1444,6 +1445,7 @@ IMPL SystemTestHarness {
 ### 6.3 Critical Anti-Patterns to Avoid
 
 #### 6.3.1 Uncontrolled Agent Spawning
+
 ```pseudocode
 // ❌ BAD: Unlimited spawning without resource bounds
 ASYNC FUNCTION handle_task_badly(task: Task) {
@@ -1468,6 +1470,7 @@ STRUCT SpawnController {
 ```
 
 #### 6.3.2 Context Overflow
+
 ```pseudocode
 // ❌ BAD: Accumulating unlimited context memory
 STRUCT NaiveAgent {
@@ -1490,6 +1493,7 @@ STRUCT SmartAgent {
 ```
 
 #### 6.3.3 Synchronous Tool Blocking
+
 ```pseudocode
 // ❌ BAD: Blocking tool calls that freeze the runtime
 IMPL Tool FOR WebSearch {
@@ -1513,6 +1517,7 @@ IMPL Tool FOR AsyncWebSearch {
 ```
 
 #### 6.3.4 Monolithic Supervisor
+
 ```pseudocode
 // ❌ BAD: Single supervisor managing all agents directly
 // This creates a bottleneck and single point of failure
@@ -1522,6 +1527,7 @@ IMPL Tool FOR AsyncWebSearch {
 ```
 
 #### 6.3.5 Static Role Assignment
+
 ```pseudocode
 // ❌ BAD: Fixed teams for all projects regardless of needs
 // Wastes resources and limits flexibility
@@ -1687,6 +1693,7 @@ security:
 ```
 
 **Implementation Requirements**:
+
 - Update all transport configurations to enforce TLS 1.3 exclusively
 - Remove TLS 1.2 fallback options from NATS and PostgreSQL configurations
 - Implement configuration validation to prevent TLS version inconsistencies
@@ -1708,6 +1715,7 @@ security:
 ```
 
 **Migration Actions**:
+
 1. Update all protocol configurations to use standardized paths
 2. Create migration scripts for existing certificate deployments
 3. Implement path validation in certificate loading routines
@@ -1752,11 +1760,13 @@ impl GrpcSecurityConfig {
 #### 8.3.1 Enhanced Certificate Monitoring (Priority 2)
 
 **Multi-Threshold Alerting System**:
+
 - **Critical (1 day)**: Immediate alerts, automatic renewal trigger
 - **Warning (7 days)**: Scheduled renewal, operations notification
 - **Notice (30 days)**: Monitoring dashboard, planning notification
 
 **Implementation**:
+
 ```rust
 pub struct CertificateMonitor {
     thresholds: ExpirationThresholds,
@@ -1775,6 +1785,7 @@ impl CertificateMonitor {
 #### 8.3.2 Automated Certificate Rotation (Priority 2)
 
 **Zero-Downtime Rotation Process**:
+
 1. Generate new certificate with extended validity
 2. Validate new certificate against current CA
 3. Update configuration atomically
@@ -1785,6 +1796,7 @@ impl CertificateMonitor {
 #### 8.3.3 Cross-Protocol Validation (Priority 2)
 
 **Implementation Requirements**:
+
 - Certificate chain verification tests across protocols
 - Integration test suite for mTLS handshakes
 - Performance benchmarking for certificate operations
@@ -1795,6 +1807,7 @@ impl CertificateMonitor {
 #### 8.4.1 Certificate Validation Caching
 
 **Caching Strategy**:
+
 - Cache validation results for 5 minutes (300 seconds)
 - Use certificate fingerprint as cache key
 - Implement LRU eviction for memory management
@@ -1803,6 +1816,7 @@ impl CertificateMonitor {
 #### 8.4.2 Session Resumption Optimization
 
 **TLS 1.3 Performance Features**:
+
 - Enable 0-RTT session resumption where appropriate
 - Implement session ticket rotation
 - Monitor resumption success rates
@@ -1811,6 +1825,7 @@ impl CertificateMonitor {
 #### 8.4.3 Connection Pool Optimization
 
 **Performance Targets**:
+
 - TLS handshake completion: <1 second
 - Certificate validation: <100ms
 - Connection pool acquisition: <10ms
@@ -1821,6 +1836,7 @@ impl CertificateMonitor {
 #### 8.5.1 Security Event Monitoring
 
 **Key Metrics to Track**:
+
 - TLS handshake success/failure rates
 - Certificate validation errors
 - Protocol downgrade attempts
@@ -1830,6 +1846,7 @@ impl CertificateMonitor {
 #### 8.5.2 Compliance Reporting
 
 **Automated Reporting**:
+
 - Monthly security posture reports
 - Certificate lifecycle audit trails
 - TLS configuration compliance checks
@@ -1838,6 +1855,7 @@ impl CertificateMonitor {
 #### 8.5.3 Security Incident Response
 
 **Incident Types and Responses**:
+
 - **Certificate Compromise**: Immediate revocation and rotation
 - **TLS Version Downgrade**: Connection rejection and alerting
 - **Cipher Suite Violations**: Audit and configuration review
@@ -1866,6 +1884,7 @@ impl CertificateMonitor {
 Based on architectural consistency validation (ref: `/validation-bridge/team-alpha-validation/agent04-architectural-consistency-validation.md`), the Neural Training Framework requires enhanced integration with the core architecture:
 
 #### Current State
+
 - Neural training patterns exist but are isolated from core framework
 - Limited dependency flow specification between training and agent systems
 - Missing integration points for ML workflows
@@ -1873,6 +1892,7 @@ Based on architectural consistency validation (ref: `/validation-bridge/team-alp
 #### Required Integration Points
 
 **1. Agent Trait Extensions**
+
 ```rust
 // Extend core agent traits for trainable agents
 #[async_trait]
@@ -1885,12 +1905,14 @@ pub trait TrainableAgent: Agent {
 ```
 
 **2. Supervision Tree Support**
+
 - Training workflow supervision nodes
 - GPU/TPU resource allocation management
 - Training failure recovery strategies
 - Checkpoint management in supervision hierarchy
 
 **3. Event Bus Integration**
+
 ```rust
 // Training-specific events for monitoring
 enum TrainingEvent {
@@ -1903,6 +1925,7 @@ enum TrainingEvent {
 ```
 
 **4. Resource Management**
+
 - GPU/TPU resource pool management
 - Memory allocation for model training
 - Distributed training coordination
@@ -1911,18 +1934,21 @@ enum TrainingEvent {
 ### 8.2 Implementation Recommendations
 
 **Priority 1 - Core Integration**:
+
 1. Define `TrainableAgent` trait in core architecture
 2. Extend supervision tree for training workflows
 3. Add training events to event bus specification
 4. Create resource management abstractions
 
 **Priority 2 - Framework Extensions**:
+
 1. Implement training-specific middleware
 2. Add monitoring for training metrics
 3. Create distributed training patterns
 4. Define model versioning strategy
 
 **Priority 3 - Advanced Features**:
+
 1. Federated learning support
 2. Online learning integration
 3. Multi-model ensemble coordination
@@ -1931,6 +1957,7 @@ enum TrainingEvent {
 ### 8.3 Cross-Domain Dependencies
 
 The neural training integration will require coordination with:
+
 - **Data Management**: Training data pipeline integration
 - **Transport Layer**: Distributed training communication
 - **Security**: Model access control and versioning
@@ -1942,7 +1969,7 @@ The neural training integration will require coordination with:
 
 - **Previous**: [System Architecture Overview](system-architecture.md)
 - **Next**: [Implementation Configuration](implementation-config.md)
-- **Related**: 
+- **Related**:
   - [Implementation Configuration](implementation-config.md) - Agent configuration and module organization
   - [Integration Patterns](./integration-patterns.md) - Error handling and event patterns
   - [Transport Protocols](../transport/) - Communication layer specifications

@@ -1,4 +1,5 @@
 # Claude Code CLI Integration Summary
+
 ## Comprehensive Research and Implementation Plan for Mister Smith Framework
 
 ### Executive Summary
@@ -14,6 +15,7 @@ This document summarizes comprehensive research on Claude Code CLI capabilities 
 ### Claude Code CLI Capabilities Confirmed
 
 #### 1. Core CLI Features
+
 - **Interactive Mode**: `claude` - REPL session management
 - **Print Mode**: `claude -p "query"` - non-interactive execution  
 - **Output Formats**: `--output-format` (text, json, stream-json)
@@ -22,6 +24,7 @@ This document summarizes comprehensive research on Claude Code CLI capabilities 
 - **MCP Integration**: `--mcp-config` for Model Context Protocol servers
 
 #### 2. Parallel Execution Architecture
+
 - **Task Tool**: Built-in parallel execution using Task tool
 - **Output Format**: `Task(Patch Agent <n>)` or `Task(Performing task X)`
 - **Independent Context**: Each sub-agent has separate context window
@@ -29,6 +32,7 @@ This document summarizes comprehensive research on Claude Code CLI capabilities 
 - **Scalability**: Confirmed viable for 25-30 concurrent agents
 
 #### 3. Hook System (5 Hook Types)
+
 - **startup**: Runs when Claude Code starts
 - **pre_task**: Runs before task execution
 - **post_task**: Runs after task completion
@@ -36,12 +40,14 @@ This document summarizes comprehensive research on Claude Code CLI capabilities 
 - **on_file_change**: Runs when files are modified
 
 #### 4. Hook Integration Capabilities
+
 - **JSON Input/Output**: Structured data exchange via stdin/stdout
 - **Decision Control**: Hooks can approve, block, or modify tool execution
 - **Tool Matching**: Target specific tools or MCP tools
 - **NATS Integration**: Hook output can be published to NATS subjects
 
 #### 5. MCP Integration
+
 - **Server Mode**: `claude mcp serve` - run as MCP server
 - **Tool Naming**: `mcp__<server>__<tool>` pattern
 - **Slash Commands**: `/mcp__server__prompt` workflow integration
@@ -49,7 +55,9 @@ This document summarizes comprehensive research on Claude Code CLI capabilities 
 ### Framework Architecture Analysis
 
 #### 1. Existing NATS Subject Taxonomy
+
 The framework already defines hook integration subjects:
+
 ```
 control.startup               # CLI initialization
 agent.{id}.pre               # Pre-task hook processing
@@ -60,12 +68,14 @@ ctx.{gid}.file_change        # File change notifications
 ```
 
 #### 2. Perfect Integration Alignment
+
 - Hook system maps directly to existing NATS subjects
 - Parallel execution aligns with Tokio supervision patterns
 - Resource management fits within existing frameworks
 - Memory persistence compatible with Postgres/JetStream KV
 
 #### 3. Minimal Framework Changes Required
+
 - Add new components (Claude CLI Controller, Hook Bridge, Task Parser)
 - Enhance existing components (Agent Orchestration, Transport Layer)
 - No breaking changes to existing architecture
@@ -77,26 +87,32 @@ ctx.{gid}.file_change        # File change notifications
 ### Core Components
 
 #### 1. Claude CLI Controller
+
 **Purpose**: Central management for Claude CLI instance lifecycle
 **Location**: `src/claude_cli/controller.rs`
 **Key Functions**:
+
 - `spawn_agent()` - Create new Claude CLI instances
 - `terminate_agent()` - Graceful shutdown with cleanup
 - `get_agent_status()` - Session monitoring
 - Resource pool management for 25-30 concurrent agents
 
 #### 2. Hook Bridge Service
+
 **Purpose**: Bridge Claude Code hooks to NATS messaging
 **Location**: `src/claude_cli/hook_bridge.rs`
 **Key Functions**:
+
 - `process_hook_input()` - Parse Claude CLI hook JSON
 - `determine_nats_subject()` - Route to appropriate NATS subjects
 - `handle_hook_response()` - Process framework responses
 
 #### 3. Task Output Parser
+
 **Purpose**: Parse parallel task output and route to NATS
 **Location**: `src/claude_cli/task_output_parser.rs`
 **Key Functions**:
+
 - `extract_task_info()` - Parse task output patterns
 - `route_task_output()` - Publish to NATS subjects
 - Support for multiple output formats
@@ -104,6 +120,7 @@ ctx.{gid}.file_change        # File change notifications
 ### Integration Patterns
 
 #### 1. Hook System Integration
+
 ```
 Claude Code Hook → Hook Bridge → NATS Subject → Framework Component
 startup          → control.startup
@@ -114,6 +131,7 @@ on_file_change   → ctx.{gid}.file_change
 ```
 
 #### 2. Parallel Execution Integration
+
 ```
 Claude CLI Task Tool → Task Output Parser → NATS Routing → Agent Coordination
 "Task(Patch Agent 1)" → agents.1.output
@@ -121,6 +139,7 @@ Claude CLI Task Tool → Task Output Parser → NATS Routing → Agent Coordinat
 ```
 
 #### 3. Resource Management Integration
+
 ```
 Spawn Request → Resource Validation → Agent Pool → Claude CLI Process
               → Memory/CPU Check   → Semaphore   → Supervision Tree
@@ -131,40 +150,50 @@ Spawn Request → Resource Validation → Agent Pool → Claude CLI Process
 ## Implementation Strategy
 
 ### Phase 1: Core CLI Integration
+
 **Objective**: Basic Claude CLI process management and NATS integration
 **Deliverables**:
+
 - Claude CLI Controller implementation
 - Basic hook bridge for NATS integration
 - Task output parsing and routing
 - Configuration management
 
 ### Phase 2: Hook System Integration
+
 **Objective**: Complete hook system with error handling and timeout management
 **Deliverables**:
+
 - Enhanced hook bridge with decision control
 - JSON message format standardization
 - Error handling and recovery mechanisms
 - Hook configuration management
 
 ### Phase 3: Parallel Execution Enhancement
+
 **Objective**: Robust parallel coordination for 25-30 concurrent agents
 **Deliverables**:
+
 - Multi-agent coordination patterns
 - Resource pool management
 - Load balancing and work distribution
 - Performance optimization
 
 ### Phase 4: MCP Integration
+
 **Objective**: Model Context Protocol server integration
 **Deliverables**:
+
 - MCP server lifecycle management
 - Tool registry enhancement
 - Slash command workflow integration
 - Permission system integration
 
 ### Phase 5: Advanced Features
+
 **Objective**: Performance optimization and enterprise features
 **Deliverables**:
+
 - Advanced coordination patterns
 - Performance optimization
 - Enterprise security features
@@ -175,6 +204,7 @@ Spawn Request → Resource Validation → Agent Pool → Claude CLI Process
 ## Technical Specifications
 
 ### Configuration Schema
+
 ```toml
 [claude_cli]
 max_concurrent_agents = 25
@@ -190,6 +220,7 @@ hook_execution_timeout = 30
 ```
 
 ### Hook Message Format
+
 ```json
 {
   "hook_type": "pre_task",
@@ -202,6 +233,7 @@ hook_execution_timeout = 30
 ```
 
 ### Resource Requirements
+
 - **Memory**: 8-16GB total system memory
 - **CPU**: 4-8 cores for optimal performance
 - **Network**: Stable internet for Anthropic API
@@ -212,17 +244,20 @@ hook_execution_timeout = 30
 ## Framework Documentation Updates
 
 ### Files Created
+
 1. `claude-code-cli-technical-analysis.md` - Comprehensive technical analysis
 2. `claude-code-cli-integration-plan.md` - Detailed integration strategy
 3. `claude-code-cli-implementation-roadmap.md` - Phased implementation plan
 4. `claude-code-cli-integration-summary.md` - This summary document
 
 ### Files Enhanced
+
 1. `ms-framework-docs/core-architecture/claude-cli-integration.md` - Core component specifications
 2. `ms-framework-docs/transport/nats-transport.md` - Hook message formats and NATS subject patterns
 3. `ms-framework-docs/data-management/agent-orchestration.md` - Parallel execution patterns
 
 ### Configuration Files
+
 1. `config/claude-cli.toml` - Claude CLI configuration schema
 2. `.claude/hooks.json` - Hook configuration for NATS integration
 3. `scripts/nats-hook-bridge` - Hook bridge script for NATS publishing
@@ -232,18 +267,21 @@ hook_execution_timeout = 30
 ## Success Metrics
 
 ### Performance Targets
+
 - **Agent Spawn Time**: < 5 seconds per agent
 - **Concurrent Agents**: 25-30 agents sustained
 - **Memory Usage**: < 6GB total for all agents
 - **Hook Latency**: < 100ms for hook processing
 
 ### Reliability Targets
+
 - **Agent Uptime**: > 99% availability
 - **Hook Success Rate**: > 99.5% successful executions
 - **Error Recovery**: < 30 seconds for agent restart
 - **Message Delivery**: > 99.9% NATS delivery success
 
 ### Integration Targets
+
 - **API Compatibility**: 100% Claude Code CLI feature coverage
 - **Framework Compatibility**: No breaking changes to existing components
 - **Configuration Simplicity**: Single configuration file management
@@ -255,6 +293,7 @@ hook_execution_timeout = 30
 The research confirms that Claude Code CLI integration with the Mister Smith framework is highly feasible and well-aligned with the existing architecture. The framework's existing hook integration points demonstrate it was designed with this integration in mind.
 
 **Key Advantages**:
+
 - Minimal structural changes required
 - Excellent feature alignment
 - Scalable to 25-30 concurrent agents

@@ -5,9 +5,11 @@ permalink: revision-swarm/operations/observability-monitoring-framework-revised
 ---
 
 # Observability & Monitoring Framework - Revised
+
 ## Multi-Agent Systems Monitoring Patterns
 
 ### Validation Status
+
 **Document Status**: ✅ PRODUCTION READY  
 **Validation Score**: 5/5 Points (100% - Full Production Readiness)  
 **Last Validated**: 2025-07-05  
@@ -15,6 +17,7 @@ permalink: revision-swarm/operations/observability-monitoring-framework-revised
 **Document Length**: 3,094 lines of comprehensive production-grade observability
 
 #### Validation Summary
+
 - **Monitoring Stack Completeness**: 5/5 - Complete OpenTelemetry, Prometheus, Jaeger, Grafana, ELK stack
 - **Metrics Collection**: EXCELLENT - Agent-specific metrics with proper Prometheus schemas
 - **Logging Infrastructure**: EXCELLENT - Production-grade structured logging with trace correlation
@@ -22,12 +25,14 @@ permalink: revision-swarm/operations/observability-monitoring-framework-revised
 - **Tool Integration**: EXCELLENT - Seamless integration across entire observability ecosystem
 
 #### Minor Enhancement Recommendations
+
 1. **Security**: Add mTLS configuration examples for production environments
 2. **Compliance**: Include data retention compliance patterns (GDPR, SOX)
 3. **Cost Optimization**: Add cost monitoring and optimization guidelines
 4. **Disaster Recovery**: Include backup and recovery procedures
 
 #### Advanced Feature Opportunities
+
 - ML-based anomaly detection integration patterns
 - Reactive auto-scaling based on observability metrics
 - Cross-region observability and correlation patterns
@@ -36,6 +41,7 @@ permalink: revision-swarm/operations/observability-monitoring-framework-revised
 ### 1. Architecture Overview
 
 #### 1.1 Core Observability Components Pattern
+
 ```pseudocode
 PATTERN ObservabilityArchitecture:
     COMPONENTS:
@@ -48,6 +54,7 @@ PATTERN ObservabilityArchitecture:
 ```
 
 #### 1.2 Data Flow Pattern
+
 ```pseudocode
 PATTERN ObservabilityPipeline:
     STAGES:
@@ -63,6 +70,7 @@ PATTERN ObservabilityPipeline:
 ### 2. Instrumentation Patterns
 
 #### 2.1 Agent Instrumentation Pattern
+
 ```pseudocode
 PATTERN AgentInstrumentation:
     initialize_telemetry_context()
@@ -73,6 +81,7 @@ PATTERN AgentInstrumentation:
 ```
 
 #### 2.2 OpenTelemetry SDK Initialization
+
 ```rust
 // Rust implementation example
 use opentelemetry::{global, sdk::{
@@ -131,6 +140,7 @@ PATTERN OTLPInitialization:
 ```
 
 #### 2.3 Custom Metrics Collection Implementation
+
 ```rust
 PATTERN CustomMetricsImplementation:
     use opentelemetry::{
@@ -250,6 +260,7 @@ PATTERN CustomMetricsImplementation:
 ```
 
 #### 2.4 Context Propagation Pattern
+
 ```rust
 PATTERN ContextPropagationImplementation:
     use opentelemetry::{
@@ -382,6 +393,7 @@ PATTERN ContextPropagationImplementation:
 ```
 
 #### 2.5 Distributed Tracing Implementation
+
 ```rust
 PATTERN DistributedTracingImplementation:
     use opentelemetry::{trace::{Span, Tracer, TracerProvider}, Context};
@@ -510,6 +522,7 @@ PATTERN DistributedTracingImplementation:
 ### 3. Distributed Tracing Patterns
 
 #### 3.1 Trace Structure Pattern
+
 ```pseudocode
 PATTERN TraceStructure:
     COMPONENTS:
@@ -523,6 +536,7 @@ PATTERN TraceStructure:
 ```
 
 #### 3.2 Sampling Strategy Pattern
+
 ```pseudocode
 PATTERN AdaptiveSampling:
     DECISION_FACTORS:
@@ -540,6 +554,7 @@ PATTERN AdaptiveSampling:
 ```
 
 #### 3.3 Cross-Agent Tracing Pattern
+
 ```pseudocode
 PATTERN CrossAgentTracing:
     create_client_span(source_agent)
@@ -551,6 +566,7 @@ PATTERN CrossAgentTracing:
 ```
 
 #### 3.4 Trace Layers Pattern
+
 ```pseudocode
 PATTERN TraceLayers:
     CHILD_PROCESS_TRACING:
@@ -568,6 +584,7 @@ PATTERN TraceLayers:
 ```
 
 #### 3.5 Claude-CLI Parallel Agent Tracing Pattern
+
 ```pseudocode
 PATTERN ClaudeCLIParallelTracing:
     PARALLEL_AGENT_INSTRUMENTATION:
@@ -600,6 +617,7 @@ PATTERN ClaudeCLIParallelTracing:
 ```
 
 #### 3.6 Claude-CLI Hook System Tracing Pattern
+
 ```pseudocode
 PATTERN HookSystemTracing:
     HOOK_EXECUTION_SPANS:
@@ -646,6 +664,7 @@ PATTERN HookSystemTracing:
 ```
 
 #### 3.5 OTLP Integration Pattern
+
 ```pseudocode
 PATTERN OTLPConfiguration:
     EXPORTER_SETUP:
@@ -668,6 +687,7 @@ PATTERN OTLPConfiguration:
 ### 4. Metrics Collection Patterns
 
 #### 4.1 Metric Types Pattern
+
 ```pseudocode
 PATTERN MetricTypes:
     CATEGORIES:
@@ -678,6 +698,7 @@ PATTERN MetricTypes:
 ```
 
 #### 4.2 Agent-Specific Metrics Pattern
+
 ```pseudocode
 PATTERN AgentMetrics:
     COMMON_METRICS:
@@ -694,6 +715,7 @@ PATTERN AgentMetrics:
 ```
 
 #### 4.3 System-Wide Metrics Pattern
+
 ```pseudocode
 PATTERN SystemMetrics:
     CATEGORIES:
@@ -705,6 +727,7 @@ PATTERN SystemMetrics:
 ```
 
 #### 4.4 Messaging Backplane Metrics Pattern
+
 ```pseudocode
 PATTERN BackplaneMetrics:
     CONSUMER_HEALTH:
@@ -733,6 +756,7 @@ PATTERN BackplaneMetrics:
 ```
 
 #### 4.5 Critical Threshold Monitoring Pattern
+
 ```pseudocode
 PATTERN CriticalThresholds:
     MESSAGING_THRESHOLDS:
@@ -751,6 +775,7 @@ PATTERN CriticalThresholds:
 ### 5. Logging Patterns
 
 #### 5.0 Log Aggregation Pipeline Implementation
+
 ```yaml
 PATTERN LogAggregationPipeline:
     # Fluent Bit Configuration for Log Collection
@@ -877,6 +902,7 @@ PATTERN LogAggregationPipeline:
 ```
 
 #### 5.1 Structured Logging Pattern
+
 ```pseudocode
 PATTERN StructuredLogging:
     LOG_ENTRY_STRUCTURE:
@@ -890,6 +916,7 @@ PATTERN StructuredLogging:
 ```
 
 #### 5.2 Log Level Classification Pattern
+
 ```pseudocode
 PATTERN LogLevels:
     DEBUG: detailed_diagnostic_info
@@ -900,6 +927,7 @@ PATTERN LogLevels:
 ```
 
 #### 5.3 Log Aggregation Pattern
+
 ```pseudocode
 PATTERN LogAggregation:
     PIPELINE_STAGES:
@@ -912,6 +940,7 @@ PATTERN LogAggregation:
 ```
 
 #### 5.4 Multiline Log Handling Pattern
+
 ```pseudocode
 PATTERN MultilineLogHandling:
     DETECTION_STRATEGIES:
@@ -935,6 +964,7 @@ PATTERN MultilineLogHandling:
 ### 6. Multi-Agent Observability Patterns
 
 #### 6.1 Agent State Tracking Pattern
+
 ```pseudocode
 PATTERN AgentStateObservability:
     STATES:
@@ -953,6 +983,7 @@ PATTERN AgentStateObservability:
 ```
 
 #### 6.2 Swarm Coordination Observability Pattern
+
 ```pseudocode
 PATTERN SwarmObservability:
     track_agent_assignments()
@@ -963,6 +994,7 @@ PATTERN SwarmObservability:
 ```
 
 #### 6.3 Communication Pattern Analysis
+
 ```pseudocode
 PATTERN CommunicationAnalysis:
     build_communication_graph()
@@ -975,6 +1007,7 @@ PATTERN CommunicationAnalysis:
 ### 7. Alerting and Anomaly Detection Patterns
 
 #### 7.1 Alert Rule Pattern
+
 ```pseudocode
 PATTERN AlertRules:
     RULE_COMPONENTS:
@@ -986,6 +1019,7 @@ PATTERN AlertRules:
 ```
 
 #### 7.2 Anomaly Detection Pattern
+
 ```pseudocode
 PATTERN AnomalyDetection:
     DETECTION_METHODS:
@@ -1003,6 +1037,7 @@ PATTERN AnomalyDetection:
 ```
 
 #### 7.3 Prometheus Alert Pattern
+
 ```pseudocode
 PATTERN PrometheusAlerts:
     ALERT_DEFINITION:
@@ -1035,6 +1070,7 @@ PATTERN PrometheusAlerts:
 ### 8. Visualization Patterns
 
 #### 8.1 Dashboard Organization Pattern
+
 ```pseudocode
 PATTERN DashboardStructure:
     DASHBOARD_TYPES:
@@ -1053,6 +1089,7 @@ PATTERN DashboardStructure:
 ```
 
 #### 8.2 Real-Time Monitoring Pattern
+
 ```pseudocode
 PATTERN RealTimeMonitoring:
     COMPONENTS:
@@ -1066,6 +1103,7 @@ PATTERN RealTimeMonitoring:
 ### 9. Data Management Patterns
 
 #### 9.1 Retention Policy Pattern
+
 ```pseudocode
 PATTERN DataRetention:
     RETENTION_TIERS:
@@ -1081,6 +1119,7 @@ PATTERN DataRetention:
 ```
 
 #### 9.2 Data Lifecycle Pattern
+
 ```pseudocode
 PATTERN DataLifecycle:
     ingest_and_validate()
@@ -1093,6 +1132,7 @@ PATTERN DataLifecycle:
 ### 10. Performance Optimization Patterns
 
 #### 10.0 Performance Profiling Integration
+
 ```rust
 PATTERN PerformanceProfilingIntegration:
     use pprof::{protos::Message, ProfilerGuard, Report};
@@ -1212,6 +1252,7 @@ PATTERN PerformanceProfilingIntegration:
 ```
 
 #### 10.1 Overhead Management Pattern
+
 ```pseudocode
 PATTERN OverheadOptimization:
     STRATEGIES:
@@ -1223,6 +1264,7 @@ PATTERN OverheadOptimization:
 ```
 
 #### 10.2 Scalability Pattern
+
 ```pseudocode
 PATTERN ObservabilityScaling:
     HORIZONTAL_SCALING:
@@ -1239,6 +1281,7 @@ PATTERN ObservabilityScaling:
 ### 11. Integration Patterns
 
 #### 11.1 External System Integration Pattern
+
 ```pseudocode
 PATTERN ExternalIntegration:
     INTEGRATION_POINTS:
@@ -1250,6 +1293,7 @@ PATTERN ExternalIntegration:
 ```
 
 #### 11.2 Data Export Pattern
+
 ```pseudocode
 PATTERN DataExport:
     configure_export_format()
@@ -1262,6 +1306,7 @@ PATTERN DataExport:
 ### 12. Security and Compliance Patterns
 
 #### 12.1 Observability Security Pattern
+
 ```pseudocode
 PATTERN ObservabilitySecurity:
     SECURITY_MEASURES:
@@ -1274,6 +1319,7 @@ PATTERN ObservabilitySecurity:
 ```
 
 #### 12.2 Compliance Pattern
+
 ```pseudocode
 PATTERN ComplianceMonitoring:
     track_data_access()
@@ -1286,6 +1332,7 @@ PATTERN ComplianceMonitoring:
 ### 13. Implementation Considerations
 
 #### 13.1 Framework Selection Criteria
+
 - Language-agnostic instrumentation capabilities
 - Support for distributed tracing standards
 - Flexible metric collection options
@@ -1293,6 +1340,7 @@ PATTERN ComplianceMonitoring:
 - Extensible architecture
 
 #### 13.2 Protocol Performance Considerations
+
 ```pseudocode
 PATTERN ProtocolSelection:
     ENCODING_EFFICIENCY:
@@ -1312,6 +1360,7 @@ PATTERN ProtocolSelection:
 ```
 
 #### 13.3 Deployment Considerations
+
 - Minimize instrumentation overhead
 - Ensure high availability of monitoring
 - Plan for data volume growth
@@ -1322,6 +1371,7 @@ PATTERN ProtocolSelection:
 ### 14. Best Practices Summary
 
 #### 14.1 Instrumentation Best Practices
+
 - Instrument critical code paths
 - Use consistent naming conventions
 - Implement proper context propagation
@@ -1329,6 +1379,7 @@ PATTERN ProtocolSelection:
 - Minimize performance impact
 
 #### 14.2 Data Management Best Practices
+
 - Define clear retention policies
 - Implement data compression strategies
 - Use appropriate storage tiers
@@ -1336,6 +1387,7 @@ PATTERN ProtocolSelection:
 - Monitor storage growth trends
 
 #### 14.3 Operational Best Practices
+
 - Establish baseline metrics
 - Define meaningful alerts
 - Regular review of dashboards
@@ -1349,6 +1401,7 @@ PATTERN ProtocolSelection:
 ### 15.1 Prometheus Metrics Schema
 
 #### 15.1.1 Agent Lifecycle Metrics
+
 ```prometheus
 # HELP agent_spawns_total Number of agent instances spawned
 # TYPE agent_spawns_total counter
@@ -1377,6 +1430,7 @@ agent_cpu_percent{agent_id="agent-42",agent_type="analysis_agent"} 23.5
 ```
 
 #### 15.1.2 Task Execution Metrics
+
 ```prometheus
 # HELP task_completions_total Number of completed tasks
 # TYPE task_completions_total counter
@@ -1401,6 +1455,7 @@ task_queue_depth{queue_type="priority",agent_type="coordinator_agent"} 15
 ```
 
 #### 15.1.3 Communication Metrics
+
 ```prometheus
 # HELP messages_sent_total Number of messages sent between agents
 # TYPE messages_sent_total counter
@@ -1425,6 +1480,7 @@ message_delivery_failures_total{failure_reason="timeout",transport="nats"} 12
 ```
 
 #### 15.1.4 Claude-CLI Integration Metrics
+
 ```prometheus
 # HELP claude_cli_processes_total Number of Claude CLI processes spawned
 # TYPE claude_cli_processes_total counter
@@ -1451,6 +1507,7 @@ claude_cli_hook_duration_seconds_count{hook_type="pre_task",hook_name="setup"} 8
 ### 15.2 OpenTelemetry Tracing Schema
 
 #### 15.2.1 Agent Execution Trace Structure
+
 ```json
 {
   "traceID": "4bf92f3577b34da6a3ce929d0e0e4736",
@@ -1498,6 +1555,7 @@ claude_cli_hook_duration_seconds_count{hook_type="pre_task",hook_name="setup"} 8
 ```
 
 #### 15.2.2 Cross-Agent Correlation Pattern
+
 ```json
 {
   "orchestrator_span": {
@@ -1527,6 +1585,7 @@ claude_cli_hook_duration_seconds_count{hook_type="pre_task",hook_name="setup"} 8
 ```
 
 #### 15.2.3 Hook System Tracing Pattern
+
 ```json
 {
   "traceID": "4bf92f3577b34da6a3ce929d0e0e4736",
@@ -1563,6 +1622,7 @@ claude_cli_hook_duration_seconds_count{hook_type="pre_task",hook_name="setup"} 8
 ### 15.3 Structured Logging Schema
 
 #### 15.3.1 Agent Lifecycle Log Format
+
 ```json
 {
   "timestamp": "2024-01-01T12:00:00.000Z",
@@ -1588,6 +1648,7 @@ claude_cli_hook_duration_seconds_count{hook_type="pre_task",hook_name="setup"} 8
 ```
 
 #### 15.3.2 Task Execution Log Format
+
 ```json
 {
   "timestamp": "2024-01-01T12:01:30.500Z",
@@ -1620,6 +1681,7 @@ claude_cli_hook_duration_seconds_count{hook_type="pre_task",hook_name="setup"} 8
 ```
 
 #### 15.3.3 Communication Log Format
+
 ```json
 {
   "timestamp": "2024-01-01T12:02:15.250Z",
@@ -1649,6 +1711,7 @@ claude_cli_hook_duration_seconds_count{hook_type="pre_task",hook_name="setup"} 8
 ### 15.4 Health Check Endpoints
 
 #### 15.4.0 Health Check Implementation Pattern
+
 ```rust
 PATTERN HealthCheckImplementation:
     use serde::{Deserialize, Serialize};
@@ -1879,6 +1942,7 @@ PATTERN HealthCheckImplementation:
 ```
 
 #### 15.4.1 Basic Health Check
+
 ```http
 GET /health
 Content-Type: application/json
@@ -1923,6 +1987,7 @@ Content-Type: application/json
 ```
 
 #### 15.4.2 Agent-Specific Health Check
+
 ```http
 GET /health/agent/agent-42
 Content-Type: application/json
@@ -1948,6 +2013,7 @@ Content-Type: application/json
 ```
 
 #### 15.4.3 Readiness Check
+
 ```http
 GET /health/ready
 Content-Type: application/json
@@ -1968,6 +2034,7 @@ Content-Type: application/json
 ### 15.5 Alert Rule Definitions
 
 #### 15.5.0 MS Framework Specific Alert Patterns
+
 ```yaml
 groups:
 - name: ms_framework_critical_alerts
@@ -2157,6 +2224,7 @@ groups:
 ```
 
 #### 15.5.2 Warning Alerts
+
 ```yaml
 - name: agent_warning_alerts
   rules:
@@ -2191,6 +2259,7 @@ groups:
 ### 15.6 Dashboard Configurations
 
 #### 15.6.1 System Overview Dashboard (Grafana JSON)
+
 ```json
 {
   "dashboard": {
@@ -2254,6 +2323,7 @@ groups:
 ```
 
 #### 15.6.2 Agent Performance Dashboard Configuration
+
 ```json
 {
   "dashboard": {
@@ -2305,6 +2375,7 @@ groups:
 ### 15.7 Performance Baselines
 
 #### 15.7.1 Agent Performance Baselines
+
 ```yaml
 agent_performance_baselines:
   task_completion:
@@ -2355,6 +2426,7 @@ system_baselines:
 ### 15.8 OTLP Configuration
 
 #### 15.8.0 Prometheus Exporter Implementation
+
 ```rust
 PATTERN PrometheusExporterImplementation:
     use prometheus::{{
@@ -2491,6 +2563,7 @@ PATTERN PrometheusExporterImplementation:
 ```
 
 #### 15.8.1 OpenTelemetry Collector Configuration
+
 ```yaml
 receivers:
   otlp:
@@ -2548,6 +2621,7 @@ service:
 ### 16. Agent-Specific Instrumentation Patterns
 
 #### 16.1 Research Agent Instrumentation
+
 ```rust
 PATTERN ResearchAgentInstrumentation:
     use opentelemetry::{
@@ -2611,6 +2685,7 @@ PATTERN ResearchAgentInstrumentation:
 ```
 
 #### 16.2 Coder Agent Instrumentation
+
 ```rust
 PATTERN CoderAgentInstrumentation:
     pub struct CoderAgentMetrics {
@@ -2668,6 +2743,7 @@ PATTERN CoderAgentInstrumentation:
 ```
 
 #### 16.3 Coordinator Agent Instrumentation
+
 ```rust
 PATTERN CoordinatorAgentInstrumentation:
     pub struct CoordinatorAgentMetrics {
@@ -2724,6 +2800,7 @@ PATTERN CoordinatorAgentInstrumentation:
 ```
 
 #### 16.4 Comprehensive Agent Performance Monitoring
+
 ```rust
 PATTERN ComprehensiveAgentMonitoring:
     use tokio::time::{interval, Duration};
@@ -2949,6 +3026,7 @@ PATTERN ComprehensiveAgentMonitoring:
 ### 17. Production-Ready Deployment Configuration
 
 #### 17.1 Complete Docker Compose Observability Stack
+
 ```yaml
 PATTERN ProductionObservabilityStack:
     version: '3.8'
@@ -3074,6 +3152,7 @@ PATTERN ProductionObservabilityStack:
 ```
 
 #### 17.2 Production Monitoring Best Practices
+
 ```yaml
 PATTERN ProductionBestPractices:
     monitoring_principles:
@@ -3118,6 +3197,7 @@ PATTERN ProductionBestPractices:
 ### 18. Security Enhancements (Production Hardening)
 
 #### 18.1 mTLS Configuration for Production
+
 ```yaml
 # mtls-security.yaml - Production security configuration
 apiVersion: v1
@@ -3163,6 +3243,7 @@ data:
 ```
 
 #### 18.2 Data Retention Compliance Patterns
+
 ```yaml
 # compliance-retention.yaml - GDPR/SOX compliant retention
 PATTERN ComplianceRetention:
@@ -3233,6 +3314,7 @@ PATTERN ComplianceRetention:
 ```
 
 #### 18.3 Cost Monitoring and Optimization
+
 ```yaml
 # cost-optimization.yaml - Monitor and reduce observability costs
 PATTERN CostOptimization:
@@ -3276,6 +3358,7 @@ PATTERN CostOptimization:
 ```
 
 #### 18.4 Disaster Recovery Procedures
+
 ```yaml
 # disaster-recovery.yaml - Backup and recovery for observability
 PATTERN DisasterRecovery:

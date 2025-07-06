@@ -7,6 +7,7 @@ tags:
 ---
 
 # Agent Lifecycle & Supervision Architecture
+
 ## Foundation Patterns Guide
 
 > **Canonical Reference**: See `tech-framework.md` for authoritative technology stack specifications
@@ -45,8 +46,10 @@ INTERFACE Agent {
 ### 1.2 Core Agent Role Taxonomies
 
 #### Planner Agent
+
 - **Purpose**: Decomposes high-level goals into concrete subtasks
 - **Interface Pattern**:
+
 ```rust
 trait Planner {
     async fn create_plan(&self, goal: Goal) -> Result<TaskList, Error>;
@@ -61,8 +64,10 @@ struct TaskList {
 ```
 
 #### Executor Agent
+
 - **Purpose**: Carries out atomic actions and subtasks
 - **Interface Pattern**:
+
 ```rust
 trait Executor {
     async fn execute_task(&self, task: Task) -> Result<TaskOutput, Error>;
@@ -77,8 +82,10 @@ enum TaskOutput {
 ```
 
 #### Critic Agent
+
 - **Purpose**: Validates outcomes against goals and quality criteria
 - **Interface Pattern**:
+
 ```rust
 trait Critic {
     async fn evaluate(&self, output: TaskOutput, criteria: QualityCriteria) -> CriticFeedback;
@@ -93,8 +100,10 @@ struct CriticFeedback {
 ```
 
 #### Router Agent
+
 - **Purpose**: Assigns tasks to appropriate specialized agents
 - **Interface Pattern**:
+
 ```rust
 trait Router {
     async fn route_task(&self, task: Task) -> AgentId;
@@ -104,8 +113,10 @@ trait Router {
 ```
 
 #### Memory Agent
+
 - **Purpose**: Stores and retrieves shared knowledge
 - **Interface Pattern**:
+
 ```rust
 trait Memory {
     async fn store(&self, key: String, value: Value, metadata: Metadata) -> Result<(), Error>;
@@ -1538,6 +1549,7 @@ impl SupervisedCodeAgent {
 ## Navigation
 
 ### Related Documents
+
 - **Agent Communication**: See `agent-communication.md` for message passing, task distribution, coordination patterns, and inter-agent communication protocols
 - **Agent Operations**: See `agent-operations.md` for discovery, workflow management, and operational patterns
 - **Agent Integration**: See `agent-integration.md` for resource management, tool bus integration, and extension patterns
@@ -1548,6 +1560,7 @@ impl SupervisedCodeAgent {
 - **Authorization**: See `../security/authorization-specifications.md` for RBAC implementation
 
 ### Document Status
+
 - **Extracted From**: `agent-orchestration.md` (Sections 1-2)
 - **Extraction Date**: 2025-07-03
 - **Agent**: Agent 11, Phase 1, Group 1B
@@ -1556,11 +1569,13 @@ impl SupervisedCodeAgent {
 - **Validation Agent**: Agent 8 (Batch 2 - Data & Messaging Systems)
 
 ### Cross-References
+
 - Transport Layer: `../transport/`
 - Security Layer: `../security/`
 - Core Architecture: `../core-architecture/`
 
 ### Navigation Links
+
 - **← Previous**: [Agent Communication](agent-communication.md) - Message passing and coordination patterns
 - **→ Next**: [Agent Operations](agent-operations.md) - Discovery and workflow management
 - **↑ Parent**: [Data Management](CLAUDE.md) - Data management overview

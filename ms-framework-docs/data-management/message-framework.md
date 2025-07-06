@@ -3,7 +3,7 @@
 ## Validation, Serialization, and Framework Specifications
 
 > **📊 VALIDATION STATUS: PRODUCTION READY**
-> 
+>
 > | Criterion | Score | Status |
 > |-----------|-------|---------|
 > | Validation Framework | 5/5 | ✅ Multi-Level |
@@ -20,6 +20,7 @@
 ## Overview
 
 This file contains the technical framework supporting the message schemas:
+
 - **Validation Framework** - Multi-level validation with performance optimization
 - **Serialization Specifications** - JSON, Protocol Buffers, and MessagePack support
 - **Event Correlation Logic** - Correlation ID tracking, aggregation, and causality chains
@@ -30,6 +31,7 @@ This file contains the technical framework supporting the message schemas:
 - **Performance Optimization** - High-throughput and low-latency strategies
 
 This framework provides the foundation for all message schemas:
+
 - [Core message schemas](./core-message-schemas.md) for agent communication
 - [Workflow message schemas](./workflow-message-schemas.md) for task management
 - [System message schemas](./system-message-schemas.md) for CLI integration and monitoring
@@ -41,8 +43,9 @@ For practical implementation, see [Agent Communication](./agent-communication.md
 ### 7.1 Validation Rules and Levels
 
 The framework supports multiple validation levels to balance performance and safety. These levels apply to all message types:
+
 - [Agent communication messages](./core-message-schemas.md#agent-communication-messages)
-- [Task management messages](./workflow-message-schemas.md#task-management-messages) 
+- [Task management messages](./workflow-message-schemas.md#task-management-messages)
 - [System operation messages](./system-message-schemas.md#system-operation-messages)
 - [Claude CLI integration messages](./system-message-schemas.md#claude-cli-integration-messages)
 
@@ -76,6 +79,7 @@ validation_configuration:
 ### 7.2 Error Code Classification
 
 Standardized error codes for message validation failures. These codes are used across:
+
 - [Agent status reporting](./core-message-schemas.md#agent-status-update-message) for health monitoring
 - [Task result messages](./workflow-message-schemas.md#task-result-message) for execution feedback
 - [System alert messages](./system-message-schemas.md#system-alert-message) for error escalation
@@ -136,6 +140,7 @@ Standardized error codes for message validation failures. These codes are used a
 ### 7.3 Performance Optimization
 
 Validation performance optimizations and caching strategies. Optimizations apply to:
+
 - High-frequency [agent status updates](./core-message-schemas.md#agent-status-update-message)
 - Batch [task assignment operations](./workflow-message-schemas.md#task-assignment-message)
 - Real-time [system health monitoring](./system-message-schemas.md#system-health-check-message)
@@ -171,6 +176,7 @@ pub struct FastPathValidator {
 ### 8.1 JSON Serialization Standards
 
 JSON serialization standards apply to all framework messages, ensuring consistency across:
+
 - [Base message envelopes](./core-message-schemas.md#base-message-envelope) and common types
 - [Workflow coordination](./workflow-message-schemas.md#workflow-coordination-message) and state sync
 - [System monitoring](./system-message-schemas.md#system-health-check-message) and alert data
@@ -212,6 +218,7 @@ JSON serialization standards apply to all framework messages, ensuring consisten
 ### 8.2 Binary Serialization Alternatives
 
 Support for Protocol Buffers and MessagePack for performance-critical scenarios, especially:
+
 - High-throughput [agent communication](./core-message-schemas.md#agent-communication-messages)
 - Large-scale [workflow orchestration](./workflow-message-schemas.md#workflow-orchestration-messages)
 - Real-time [system monitoring](./system-message-schemas.md#system-operation-messages)
@@ -255,6 +262,7 @@ messagepack_config:
 ### 9.1 Routing Table Implementation
 
 Dynamic routing table management for efficient message delivery across:
+
 - [Agent-to-agent communication](./core-message-schemas.md#agent-communication-messages) pathways
 - [Workflow task distribution](./workflow-message-schemas.md#task-assignment-message) to capable agents
 - [System operation routing](./system-message-schemas.md#system-operation-messages) for monitoring
@@ -314,6 +322,7 @@ routing_table_operations:
 ### 9.2 Dynamic Route Discovery
 
 Automatic route discovery and registration mechanisms for:
+
 - [Agent registration](./core-message-schemas.md#agent-registration-message) auto-routing
 - [Workflow participant discovery](./workflow-message-schemas.md#workflow-state-synchronization-message)
 - [System service discovery](./system-message-schemas.md#system-health-check-message)
@@ -395,6 +404,7 @@ pub struct ServiceMeshDiscovery {
 ### 9.3 Load Balancing Strategies
 
 Intelligent load distribution across message endpoints supporting:
+
 - [High-frequency agent status updates](./core-message-schemas.md#agent-status-update-message)
 - [Parallel task execution](./workflow-message-schemas.md#task-assignment-message) distribution
 - [System monitoring aggregation](./system-message-schemas.md#system-health-check-message)
@@ -476,6 +486,7 @@ load_balancer_config:
 ### 9.4 Topic-Based Routing
 
 Hierarchical topic routing for publish-subscribe patterns supporting:
+
 - [Agent event notifications](./core-message-schemas.md#agent-event-notification-message)
 - [Workflow state changes](./workflow-message-schemas.md#workflow-state-synchronization-message)
 - [System alerts broadcasting](./system-message-schemas.md#system-alert-message)
@@ -536,6 +547,7 @@ Hierarchical topic routing for publish-subscribe patterns supporting:
 ### 9.5 Content-Based Routing
 
 Advanced routing based on message content inspection for:
+
 - [Task requirement matching](./workflow-message-schemas.md#task-assignment-message)
 - [Agent capability filtering](./core-message-schemas.md#agent-command-message)
 - [Alert severity routing](./system-message-schemas.md#system-alert-message)
@@ -694,6 +706,7 @@ pub fn example_content_routing_rules() -> Vec<ContentRoutingRule> {
 ### 9.6 Circuit Breaker Patterns
 
 Fault tolerance and resilience for message routing supporting:
+
 - [Agent communication failures](./core-message-schemas.md#agent-error-message)
 - [Workflow error handling](./workflow-message-schemas.md#task-result-message)
 - [System degradation management](./system-message-schemas.md#system-alert-message)
@@ -772,6 +785,7 @@ per_route_circuit_breakers:
 ### 9.7 Dead Letter Queue Management
 
 Handling of undeliverable messages across the framework for:
+
 - [Failed agent commands](./core-message-schemas.md#agent-command-message)
 - [Unassigned tasks](./workflow-message-schemas.md#task-assignment-message)
 - [Unprocessed system events](./system-message-schemas.md#system-operation-messages)
@@ -847,6 +861,7 @@ Handling of undeliverable messages across the framework for:
 ### 9.8 Routing Monitoring and Metrics
 
 Comprehensive monitoring of routing performance supporting:
+
 - Real-time routing decisions tracking
 - Performance bottleneck identification
 - Route effectiveness analysis
@@ -933,6 +948,7 @@ monitoring_dashboards:
 ### 9.1 Correlation ID Generation and Tracking
 
 The framework provides comprehensive correlation ID management for tracing message flows across distributed agent systems. Correlation enables:
+
 - Request-response pattern tracking across [agent communication](./core-message-schemas.md#agent-communication-messages)
 - Workflow execution tracing in [task management](./workflow-message-schemas.md#task-management-messages)
 - System operation correlation for [monitoring and alerts](./system-message-schemas.md#system-operation-messages)
@@ -1464,6 +1480,7 @@ Configuration for framework integration:
 ### 10.1 Protocol Adaptation
 
 Transformation rules for adapting messages between different transport protocols. Transformations support:
+
 - [NATS subject routing](./system-message-schemas.md#nats-subject-pattern-schemas) for message distribution
 - [gRPC method mapping](../transport/grpc-transport.md) for synchronous operations
 - [HTTP API conversion](../transport/http-transport.md) for web integration
@@ -1495,6 +1512,7 @@ transformation_rules:
 ### 10.2 Message Enrichment
 
 Automatic message enhancement and metadata injection. Enrichment applies to:
+
 - [Base message envelopes](./core-message-schemas.md#base-message-envelope) for metadata completion
 - [Task assignments](./workflow-message-schemas.md#task-assignment-message) for capability matching
 - [System alerts](./system-message-schemas.md#system-alert-message) for context injection
@@ -1535,6 +1553,7 @@ Automatic message enhancement and metadata injection. Enrichment applies to:
 ### 10.3 Content Transformation
 
 Field mapping and data type conversion rules. Transformations enable:
+
 - Cross-version compatibility for [schema evolution](./message-framework.md#schema-version-management)
 - [Agent registration](./core-message-schemas.md#agent-registration-message) format normalization
 - [Workflow state](./workflow-message-schemas.md#workflow-state-synchronization-message) format conversion
@@ -1578,6 +1597,7 @@ field_mappings:
 ### 11.1 Versioning Strategy
 
 Versioning strategy applies to all schema families:
+
 - [Core message schemas](./core-message-schemas.md) for foundational compatibility
 - [Workflow schemas](./workflow-message-schemas.md) for task management evolution
 - [System schemas](./system-message-schemas.md) for CLI and monitoring updates
@@ -1609,6 +1629,7 @@ Versioning strategy applies to all schema families:
 ### 11.2 Compatibility Matrix
 
 Version compatibility and migration support across all message types:
+
 - [Agent communication](./core-message-schemas.md#agent-communication-messages) backward compatibility
 - [Task management](./workflow-message-schemas.md#task-management-messages) forward compatibility
 - [System operation](./system-message-schemas.md#system-operation-messages) graceful degradation
@@ -1652,6 +1673,7 @@ migration_tools:
 ### 11.3 Schema Registry
 
 Central schema registry for version management and discovery. Registry manages:
+
 - [Core schema definitions](./core-message-schemas.md) and common types
 - [Workflow schema versions](./workflow-message-schemas.md) and compatibility
 - [System schema updates](./system-message-schemas.md) and CLI integration
@@ -1686,6 +1708,7 @@ Central schema registry for version management and discovery. Registry manages:
 ### 12.1 Code Generation
 
 Framework for generating type-safe code from schemas. Code generation supports:
+
 - [Agent communication](./core-message-schemas.md#agent-communication-messages) type safety
 - [Workflow orchestration](./workflow-message-schemas.md#workflow-orchestration-messages) validation
 - [System integration](./system-message-schemas.md#claude-cli-integration-messages) type checking
@@ -1740,6 +1763,7 @@ pub enum Message {
 ### 12.2 Validation Integration
 
 Runtime validation with performance optimization. Integration patterns for:
+
 - [Agent message validation](./core-message-schemas.md#agent-communication-messages) in communication pipelines
 - [Task message validation](./workflow-message-schemas.md#task-management-messages) in workflow engines
 - [System message validation](./system-message-schemas.md#system-operation-messages) in monitoring systems
@@ -1783,6 +1807,7 @@ impl MessageValidator {
 ### 12.3 Testing Strategies
 
 Comprehensive testing approach for message schemas. Testing covers:
+
 - [Core message schema](./core-message-schemas.md) validation and serialization
 - [Workflow message](./workflow-message-schemas.md) end-to-end flow testing
 - [System message](./system-message-schemas.md) integration and monitoring validation
@@ -1827,6 +1852,7 @@ test_data_generation:
 ### 13.1 Input Validation and Sanitization
 
 Security-focused validation rules applied to all message types:
+
 - [Agent communication](./core-message-schemas.md#agent-communication-messages) input sanitization
 - [Task data](./workflow-message-schemas.md#task-assignment-message) payload validation
 - [System monitoring](./system-message-schemas.md#system-operation-messages) data integrity
@@ -1869,6 +1895,7 @@ Security-focused validation rules applied to all message types:
 ### 13.2 Message Encryption and Signing
 
 Support for end-to-end encryption and message integrity across:
+
 - [Agent-to-agent communication](./core-message-schemas.md#agent-communication-messages) security
 - [Workflow coordination](./workflow-message-schemas.md#workflow-coordination-message) protection
 - [System alert](./system-message-schemas.md#system-alert-message) integrity
@@ -1903,6 +1930,7 @@ encryption_support:
 ### 14.1 Message Size Optimization
 
 Strategies for reducing message overhead across all schema types:
+
 - [Agent status updates](./core-message-schemas.md#agent-status-update-message) compression
 - [Task assignment](./workflow-message-schemas.md#task-assignment-message) payload optimization
 - [System health data](./system-message-schemas.md#system-health-check-message) aggregation
@@ -1940,6 +1968,7 @@ binary_formats:
 ### 14.2 Validation Performance
 
 High-performance validation strategies optimized for:
+
 - High-frequency [agent communication](./core-message-schemas.md#agent-communication-messages)
 - Batch [workflow operations](./workflow-message-schemas.md#workflow-orchestration-messages)
 - Real-time [system monitoring](./system-message-schemas.md#system-operation-messages)
@@ -1990,6 +2019,7 @@ impl FastPathValidator {
 ## Framework Integration
 
 ### Schema Support Matrix
+
 | Framework Component | Core Messages | Workflow Messages | System Messages |
 |-------------------|---------------|-------------------|------------------|
 | **Validation** | ✓ Base envelope, Agent comm | ✓ Task mgmt, Coordination | ✓ CLI hooks, Health checks |
@@ -2001,6 +2031,7 @@ impl FastPathValidator {
 | **Performance** | ✓ Agent comm optimization | ✓ Workflow batch processing | ✓ Real-time monitoring |
 
 ### Implementation Patterns
+
 - **Agent Systems**: [Agent Communication](./agent-communication.md), [Agent Operations](./agent-operations.md)
 - **Storage Systems**: [Persistence Operations](./persistence-operations.md), [Storage Patterns](./storage-patterns.md)
 - **Transport Systems**: [NATS Transport](../transport/nats-transport.md), [gRPC Transport](../transport/grpc-transport.md)
@@ -2016,6 +2047,7 @@ This file is part of the Message Schema Documentation suite:
 4. **[Message Framework](./message-framework.md)** - Validation, serialization, and framework specifications *(current file)*
 
 ### Technical Implementation
+
 - **Validation**: [Rules](#validation-rules-and-levels), [Error Codes](#error-code-classification), [Performance](#performance-optimization-1)
 - **Serialization**: [JSON Standards](#json-serialization-standards), [Binary Formats](#binary-serialization-alternatives)
 - **Event Correlation**: [Correlation ID Tracking](#correlation-id-generation-and-tracking), [Event Aggregation](#event-aggregation-patterns), [Temporal Windows](#temporal-correlation-windows), [Causality Chains](#causality-chain-tracking), [Deduplication](#event-deduplication), [Performance](#performance-optimizations-for-high-volume-events)
