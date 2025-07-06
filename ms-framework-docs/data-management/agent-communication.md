@@ -7,10 +7,11 @@ tags:
 ---
 
 # Agent Communication Architecture
+
 ## Message Passing, Task Distribution & Coordination
 
 > **📊 VALIDATION STATUS: PRODUCTION READY**
-> 
+>
 > | Criterion | Score | Status |
 > |-----------|-------|---------|
 > | Message Schemas | 5/5 | ✅ Comprehensive |
@@ -1288,6 +1289,7 @@ CLASS EventBus {
 ## Related Documentation
 
 ### Framework Components
+
 - **Agent Lifecycle**: `agent-lifecycle.md` - Basic agent types, supervision patterns, and lifecycle management
 - **Agent Operations**: `agent-operations.md` - Discovery, workflow management, and operational patterns
 - **Agent Integration**: `agent-integration.md` - Resource management, tool bus integration, and extension patterns
@@ -1296,17 +1298,20 @@ CLASS EventBus {
 - **Operations**: `../operations/` - Deployment and monitoring considerations
 
 ### Implementation References
+
 - **Technology Stack**: `tech-framework.md` - Rust/Tokio runtime specifications
 - **Claude CLI Integration**: `../../research/claude-cli-integration/` - Hook system for external tool integration
 - **Data Management**: `data-persistence.md` - State storage and persistence strategies
 
 ### Cross-References
+
 - **Message Schemas**: All JSON schemas in section 3.4 are self-contained and reference the base message schema
 - **Agent Types**: References agent type enums defined in `agent-lifecycle.md`
 - **Task Types**: Task message schemas support extensible task type definitions
 - **Error Handling**: State machine error states integrate with supervision restart policies from `agent-lifecycle.md`
 
 ### Navigation Links
+
 - **← Previous**: [Agent Lifecycle](agent-lifecycle.md) - Basic agent architecture and supervision
 - **→ Next**: [Agent Operations](agent-operations.md) - Discovery and workflow management
 - **↑ Parent**: [Data Management](CLAUDE.md) - Data management overview
@@ -1314,6 +1319,7 @@ CLASS EventBus {
 ---
 
 **File Size Optimization Notes**:
+
 - Current size: 1,304 lines (exceeds recommended 1,000 line limit)
 - **Suggested extraction**: Section 3.4 (Complete Message Schema Definitions) could be moved to `core-message-schemas.md`
 - **Suggested extraction**: Section 3.5 (Enhanced Message Validation) could be moved to a dedicated `message-validation.md`

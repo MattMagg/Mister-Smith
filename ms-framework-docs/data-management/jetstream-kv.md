@@ -9,7 +9,7 @@ tags:
 # JetStream KV Storage Patterns & Configuration
 
 > **📊 VALIDATION STATUS: PRODUCTION READY**
-> 
+>
 > | Criterion | Score | Status |
 > |-----------|-------|---------|
 > | Storage Patterns | 5/5 | ✅ Complete |
@@ -32,7 +32,8 @@ This document specifies the JetStream Key-Value storage patterns and configurati
 
 The patterns defined here implement a hybrid storage approach where JetStream KV serves as the primary fast-access layer for agent state, session data, and caching, while PostgreSQL provides long-term persistence and complex querying capabilities.
 
-> **Related Documentation**: 
+> **Related Documentation**:
+>
 > - See [PostgreSQL Implementation](./postgresql-implementation.md) for comprehensive database schemas and hybrid storage integration
 > - See [Data Management Directory](./CLAUDE.md) for complete data management architecture
 > - See [NATS Transport](../transport/nats-transport.md) for NATS messaging patterns
@@ -664,18 +665,21 @@ CREATE TRIGGER trigger_task_lifecycle_nats_notify
 ## Cross-References & Integration Points
 
 ### Related Framework Documents
+
 - **Hybrid Storage Partner**: [PostgreSQL Implementation](./postgresql-implementation.md) - Database schemas and persistence layer
 - **Data Management Hub**: [Data Management Directory](./CLAUDE.md) - Complete data management navigation
 - **Transport Integration**: [NATS Transport](../transport/nats-transport.md) - JetStream transport configuration
 - **Core Architecture**: [System Integration](../core-architecture/system-integration.md) - Overall system design patterns
 
 ### Key Integration Points
+
 1. **Dual-Store Architecture**: JetStream KV as cache layer, PostgreSQL as authoritative store
 2. **State Hydration**: Loading agent state from PostgreSQL into JetStream KV on startup
 3. **Cross-System Backup**: Coordinated backup procedures with PostgreSQL
 4. **Stream Integration**: JetStream streams work with PostgreSQL triggers for event publishing
 
 ### Implementation Dependencies
+
 - NATS JetStream 2.9+
 - PostgreSQL 15+ (for hybrid storage)
 - Rust NATS client 0.24+

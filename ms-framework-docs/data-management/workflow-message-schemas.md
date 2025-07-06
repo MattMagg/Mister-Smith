@@ -3,7 +3,7 @@
 ## Task Management and Workflow Orchestration
 
 > **📊 VALIDATION STATUS: PRODUCTION READY**
-> 
+>
 > | Criterion | Score | Status |
 > |-----------|-------|---------|
 > | Task Management | 5/5 | ✅ Complete |
@@ -20,10 +20,12 @@
 ## Overview
 
 This file contains schemas for:
+
 - **Task Management Messages** - Assignment, results, and progress tracking
 - **Workflow Orchestration Messages** - Coordination and state synchronization
 
 These schemas build upon the [Foundation Schemas](./core-message-schemas.md) and integrate with:
+
 - [System operation messages](./system-message-schemas.md) for health monitoring and alerts
 - [Claude CLI integration](./system-message-schemas.md#claude-cli-integration-messages) for task spawning
 - [Message framework](./message-framework.md) for validation and serialization
@@ -34,6 +36,7 @@ These schemas build upon the [Foundation Schemas](./core-message-schemas.md) and
 ### 3.1 Task Assignment Message
 
 Schema for assigning tasks to agents. This message type coordinates with:
+
 - [Agent command messages](./core-message-schemas.md#agent-command-message) for execution directives
 - [Agent registration data](./core-message-schemas.md#agent-registration-message) for capability matching
 - [Hook event messages](./system-message-schemas.md#hook-event-message) for CLI-triggered assignments
@@ -190,6 +193,7 @@ See [Agent Communication](./agent-communication.md) for implementation patterns.
 ### 3.2 Task Result Message
 
 Schema for reporting task execution results. Result reporting integrates with:
+
 - [Agent status updates](./core-message-schemas.md#agent-status-update-message) for capacity management
 - [System alerts](./system-message-schemas.md#system-alert-message) for error escalation
 - [Hook responses](./system-message-schemas.md#hook-response-message) for CLI feedback
@@ -320,6 +324,7 @@ For error handling patterns, see [Validation Framework](./message-framework.md#e
 ### 3.3 Task Progress Update Message
 
 Schema for reporting task execution progress. Progress updates connect to:
+
 - [Agent health monitoring](./core-message-schemas.md#agent-status-update-message) for resource tracking
 - [System performance metrics](./system-message-schemas.md#system-health-check-message) for infrastructure monitoring
 - [Workflow state synchronization](./workflow-message-schemas.md#workflow-state-synchronization-message) for coordination
@@ -415,6 +420,7 @@ Performance optimization strategies are detailed in [Message Framework](./messag
 ### 4.1 Workflow Coordination Message
 
 Schema for coordinating complex multi-agent workflows. Coordination relies on:
+
 - [Common type definitions](./core-message-schemas.md#common-type-definitions) for agent identification
 - [System health data](./system-message-schemas.md#system-health-check-message) for participant validation
 - [Message transformation patterns](./message-framework.md#message-transformation-patterns) for protocol adaptation
@@ -503,6 +509,7 @@ See [Agent Operations](./agent-operations.md) for orchestration implementation d
 ### 4.2 Workflow State Synchronization Message
 
 Schema for synchronizing workflow state across agents. State synchronization coordinates with:
+
 - [Agent status reporting](./core-message-schemas.md#agent-status-update-message) for consistency
 - [System monitoring](./system-message-schemas.md#system-health-check-message) for infrastructure state
 - [Message routing patterns](./system-message-schemas.md#message-routing-and-addressing) for delivery
@@ -605,11 +612,13 @@ For persistence patterns, see [Storage Operations](./persistence-operations.md).
 ## Schema Relationships
 
 ### Dependencies
+
 - **Built on**: [Core Message Foundation](./core-message-schemas.md#foundation-schemas)
 - **Integrates with**: [System Operations](./system-message-schemas.md), [Claude CLI](./system-message-schemas.md#claude-cli-integration-messages)
 - **Validated by**: [Message Framework](./message-framework.md#validation-framework)
 
 ### Workflow Integration Points
+
 - **Task Lifecycle**: Assignment → Progress → Results → Coordination
 - **Agent Communication**: [Agent Messages](./core-message-schemas.md#agent-communication-messages)
 - **System Monitoring**: [Health Checks](./system-message-schemas.md#system-health-check-message), [Alerts](./system-message-schemas.md#system-alert-message)
@@ -625,6 +634,7 @@ This file is part of the Message Schema Documentation suite:
 4. [Message Framework](./message-framework.md) - Validation, serialization, and framework specifications
 
 ### Related Documentation
+
 - **Implementation**: [Agent Communication](./agent-communication.md), [Agent Operations](./agent-operations.md)
 - **Storage**: [Persistence Operations](./persistence-operations.md), [Storage Patterns](./storage-patterns.md)
 - **Transport**: [NATS Transport](../transport/nats-transport.md), [gRPC Transport](../transport/grpc-transport.md)

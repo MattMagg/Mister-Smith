@@ -1,4 +1,5 @@
 # Claude Code CLI Implementation Roadmap
+
 ## Technical Implementation Strategy for Mister Smith Framework
 
 ### Implementation Overview
@@ -10,11 +11,13 @@ This roadmap provides a systematic approach to integrating Claude Code CLI capab
 ## Phase 1: Core CLI Integration Foundation
 
 ### Objective
+
 Establish basic Claude CLI process management and NATS integration.
 
 ### Technical Deliverables
 
 #### 1.1 Claude CLI Controller Implementation
+
 **Location**: `src/claude_cli/controller.rs`
 
 ```rust
@@ -34,6 +37,7 @@ pub struct ClaudeCliController {
 ```
 
 #### 1.2 Basic Hook Bridge Service
+
 **Location**: `src/claude_cli/hook_bridge.rs`
 
 ```rust
@@ -50,6 +54,7 @@ pub struct HookBridge {
 ```
 
 #### 1.3 Configuration Management
+
 **Location**: `config/claude-cli.toml`
 
 ```toml
@@ -62,6 +67,7 @@ output_format = "stream-json"
 ```
 
 #### 1.4 Hook Bridge Scripts
+
 **Location**: `scripts/nats-hook-bridge`
 
 ```bash
@@ -77,16 +83,19 @@ echo "$INPUT" | nats pub "$SUBJECT" --stdin
 ### Framework Modifications
 
 #### Update System Architecture
+
 **File**: `ms-framework-docs/core-architecture/system-architecture.md`
 
 Add Claude CLI Controller as new component in architecture diagram and component descriptions.
 
 #### Update Transport Layer
+
 **File**: `ms-framework-docs/transport/nats-transport.md`
 
 Hook message formats already added. Verify integration with existing NATS subject taxonomy.
 
 ### Success Criteria
+
 - Claude CLI instances can be spawned and terminated
 - Basic hook events are published to NATS subjects
 - Configuration system is functional
@@ -97,11 +106,13 @@ Hook message formats already added. Verify integration with existing NATS subjec
 ## Phase 2: Hook System Integration
 
 ### Objective
+
 Complete hook system integration with comprehensive error handling and timeout management.
 
 ### Technical Deliverables
 
 #### 2.1 Enhanced Hook Bridge
+
 **Location**: `src/claude_cli/hook_bridge.rs`
 
 ```rust
@@ -142,6 +153,7 @@ impl HookBridge {
 ```
 
 #### 2.2 Hook Configuration Management
+
 **Location**: `.claude/hooks.json`
 
 ```json
@@ -174,6 +186,7 @@ impl HookBridge {
 ```
 
 #### 2.3 Error Handling and Recovery
+
 **Location**: `src/claude_cli/error_handling.rs`
 
 ```rust
@@ -211,15 +224,18 @@ impl HookBridge {
 ### Framework Modifications
 
 #### Update Observability Framework
+
 **File**: `ms-framework-docs/observability/observability-monitoring-framework.md`
 
 Add hook execution metrics:
+
 - Hook processing latency
 - Hook success/failure rates
 - Hook timeout occurrences
 - NATS message delivery metrics
 
 ### Success Criteria
+
 - All 5 hook types (startup, pre_task, post_task, on_error, on_file_change) are functional
 - Hook responses can control Claude CLI execution (approve/block/continue)
 - Error handling prevents system failures
@@ -230,11 +246,13 @@ Add hook execution metrics:
 ## Phase 3: Parallel Execution Enhancement
 
 ### Objective
+
 Implement robust parallel task coordination and resource management for 25-30 concurrent agents.
 
 ### Technical Deliverables
 
 #### 3.1 Task Output Parser
+
 **Location**: `src/claude_cli/task_output_parser.rs`
 
 ```rust
@@ -273,6 +291,7 @@ impl TaskOutputParser {
 ```
 
 #### 3.2 Agent Pool Management
+
 **Location**: `src/claude_cli/agent_pool.rs`
 
 ```rust
@@ -319,6 +338,7 @@ impl AgentPool {
 ```
 
 #### 3.3 Resource Management
+
 **Location**: `src/claude_cli/resource_manager.rs`
 
 ```rust
@@ -366,19 +386,23 @@ impl ResourceManager {
 ### Framework Modifications
 
 #### Update Agent Orchestration
+
 **File**: `ms-framework-docs/data-management/agent-orchestration.md`
 
 Enhanced parallel coordination patterns already added.
 
 #### Update Deployment Architecture
+
 **File**: `ms-framework-docs/deployment/deployment-architecture-specifications.md`
 
 Add scaling patterns for 25-30 concurrent Claude CLI agents:
+
 - Resource allocation strategies
 - Load balancing patterns
 - Performance optimization guidelines
 
 ### Success Criteria
+
 - 25-30 concurrent Claude CLI agents can be sustained
 - Task output is correctly parsed and routed
 - Resource limits prevent system overload
@@ -389,11 +413,13 @@ Add scaling patterns for 25-30 concurrent Claude CLI agents:
 ## Phase 4: MCP Integration
 
 ### Objective
+
 Integrate Model Context Protocol servers for extended tool capabilities.
 
 ### Technical Deliverables
 
 #### 4.1 MCP Server Integration
+
 **Location**: `src/claude_cli/mcp_integration.rs`
 
 ```rust
@@ -432,6 +458,7 @@ impl McpIntegration {
 ```
 
 #### 4.2 Tool Registry Enhancement
+
 **Location**: `src/tools/tool_registry.rs`
 
 ```rust
@@ -458,15 +485,18 @@ impl ToolRegistry {
 ### Framework Modifications
 
 #### Create MCP Integration Specifications
+
 **File**: `ms-framework-docs/integration/mcp-integration-specifications.md`
 
 New document defining:
+
 - MCP server lifecycle management
 - Tool naming conventions
 - Permission system integration
 - Error handling patterns
 
 ### Success Criteria
+
 - MCP servers can be registered and managed
 - MCP tools are available through framework tool registry
 - Tool calls are correctly routed to MCP servers
@@ -477,29 +507,34 @@ New document defining:
 ## Phase 5: Advanced Features and Optimization
 
 ### Objective
+
 Implement advanced coordination patterns and performance optimizations.
 
 ### Technical Deliverables
 
 #### 5.1 Advanced Coordination Patterns
+
 - Hierarchical task decomposition
 - Dynamic load balancing
 - Adaptive resource allocation
 - Circuit breaker patterns
 
 #### 5.2 Performance Optimization
+
 - Connection pooling for Anthropic API
 - Shared memory for common data
 - Optimized NATS message routing
 - Garbage collection coordination
 
 #### 5.3 Enterprise Features
+
 - Audit logging for all operations
 - Role-based access control
 - Multi-tenant isolation
 - Backup and recovery procedures
 
 ### Success Criteria
+
 - System can handle peak loads efficiently
 - Advanced coordination patterns are functional
 - Enterprise features meet security requirements
@@ -510,18 +545,21 @@ Implement advanced coordination patterns and performance optimizations.
 ## Implementation Dependencies
 
 ### External Dependencies
+
 - Claude Code CLI binary in system PATH
 - Anthropic API key configuration
 - NATS server running and accessible
 - Rust toolchain with required crates
 
 ### Framework Dependencies
+
 - Existing NATS messaging infrastructure
 - Tokio supervision tree patterns
 - Agent lifecycle management
 - Configuration management system
 
 ### Resource Requirements
+
 - 8-16GB system memory
 - 4-8 CPU cores
 - Stable internet connectivity

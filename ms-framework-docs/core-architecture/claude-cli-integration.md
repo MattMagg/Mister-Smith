@@ -1,4 +1,5 @@
 # Claude CLI Integration Architecture
+
 ## Core Component Specifications for Mister Smith Framework
 
 ### Overview
@@ -15,6 +16,7 @@ This document specifies the core architecture for integrating Claude Code CLI ca
 **Status**: Active Development  
 
 ### Implementation Status
+
 - Claude CLI controller architecture defined
 - Hook bridge patterns established
 - Session management framework complete
@@ -413,6 +415,7 @@ pub struct McpConfig {
 ### 1. Framework Integration
 
 **Supervisor Tree Integration**:
+
 ```rust
 // Add to existing supervision tree
 impl SupervisionTree {
@@ -424,6 +427,7 @@ impl SupervisionTree {
 ```
 
 **NATS Integration**:
+
 ```rust
 // Hook bridge publishes to existing NATS subjects
 impl HookBridge {
@@ -444,11 +448,13 @@ impl HookBridge {
 ### 2. Resource Management
 
 **Memory Management**:
+
 - Per-agent memory limits enforced by resource manager
 - Shared memory for common data (CLAUDE.md files)
 - Garbage collection coordination
 
 **Process Management**:
+
 - Tokio supervision patterns for fault tolerance
 - Graceful shutdown with configurable timeouts
 - Process health monitoring and restart policies

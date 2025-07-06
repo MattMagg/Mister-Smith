@@ -5,6 +5,7 @@ permalink: ms-framework/transport/transport-core
 ---
 
 # Transport Core - Abstraction, Connection, Error & Security Patterns
+
 ## Agent Implementation Framework
 
 > **Modularization Note**: This document contains core transport abstractions extracted from the complete transport layer specifications. For protocol-specific implementations, see companion files for NATS, gRPC, and HTTP specifics.
@@ -16,11 +17,13 @@ permalink: ms-framework/transport/transport-core
 **Implementation Readiness**: 93% ✅ - Production ready with minor enhancement opportunities
 
 **Validation Details**:
+
 - **Validator**: Agent 25 - MS Framework Validation Swarm
 - **Validation Date**: 2025-07-05
 - **Score**: 14/15 - Excellent implementation readiness
 
 **Key Findings**:
+
 - ✅ Transport abstraction layer with pluggable protocol implementations
 - ✅ Enterprise-grade connection pool architecture with resource limits
 - ✅ Protocol-specific health checkers with latency tracking
@@ -29,11 +32,13 @@ permalink: ms-framework/transport/transport-core
 - ✅ TLS/mTLS implementation with zero-downtime key rotation
 
 **Critical Issues**: Minor gaps in integration testing guidance
+
 - Missing chaos engineering scenarios for protocol failures
 - Need end-to-end latency testing across all layers
 - Resource exhaustion testing under extreme loads needed
 
-**Minor Enhancements**: 
+**Minor Enhancements**:
+
 - Adaptive configuration based on load metrics
 - Enhanced routing algorithms and traffic shaping
 - Cross-protocol metrics correlation
@@ -48,6 +53,7 @@ As stated in the canonical source:
 This document defines foundational transport patterns for agent communication using the Claude-Flow Rust Stack. Focus is on core abstractions, connection management, error handling, and security suitable for learning distributed systems.
 
 **Technology Stack** (from tech-framework.md):
+
 - async-nats 0.34
 - Tonic 0.11 (gRPC)
 - Axum 0.8 (HTTP)
@@ -777,6 +783,7 @@ KEY_ROTATION_PATTERN:
 ### 10.1 Agent Integration
 
 Agents implementing transport should:
+
 1. Choose appropriate pattern for use case
 2. Handle connection failures gracefully
 3. Implement basic retry logic
@@ -1389,6 +1396,7 @@ VALIDATION_PERFORMANCE:
 ## Summary
 
 This document provides core transport foundations for agent communication, focusing on:
+
 - Basic messaging patterns and abstractions
 - Advanced connection management and pooling
 - Comprehensive error handling and response standards
@@ -1401,6 +1409,7 @@ Agents should implement these patterns incrementally, starting with basic abstra
 ## Navigation
 
 ### Protocol-Specific Implementations
+
 This core document provides foundational patterns implemented by:
 
 - **[NATS Transport](./nats-transport.md)** - High-throughput messaging and pub/sub patterns
@@ -1419,16 +1428,20 @@ This core document provides foundational patterns implemented by:
   - Implements transport abstraction from Section 5
 
 ### Framework Integration Points
+
 - **[Core Architecture](../core-architecture/)** - System integration and async patterns
 - **[Security](../security/)** - Authentication, authorization, and transport security
 - **[Data Management](../data-management/)** - Message schemas and persistence patterns
 
 ### External References
+
 - **Technology Stack**: `/tech-framework.md` - Canonical technology specifications
 - **Transport CLAUDE.md**: `./CLAUDE.md` - Transport module navigation guide
 
 ### Document Organization
+
 This document contains **16 major sections** covering:
+
 - **Sections 1-6**: Basic patterns and agent communication
 - **Sections 7-9**: Connection management and security
 - **Sections 10-16**: Advanced features, configuration, and serialization

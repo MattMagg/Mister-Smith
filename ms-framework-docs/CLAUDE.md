@@ -21,6 +21,7 @@ ms-framework-docs/
 ## WORKING WITH SPECIFICATIONS
 
 ### Before Modifying Any Document
+
 ```bash
 # 1. Understand dependencies
 grep -r "filename_without_extension" . | grep -v "filename.md"
@@ -35,12 +36,14 @@ grep -r "specific_term" . | cut -d: -f1 | sort | uniq
 ### Document Interconnections
 
 **High-Impact Files** (changes affect many others):
+
 - `core-architecture/system-architecture.md` - Foundation for all specs
 - `core-architecture/type-definitions.md` - Core types used everywhere
 - `data-management/message-schemas.md` - Message formats across system
 - `agent-domains/SPECIALIZED_AGENT_DOMAINS_ANALYSIS.md` - Agent type definitions
 
 **Always Check These When Modifying**:
+
 - Agent-related changes → Check all files in `agent-domains/` and `data-management/agent-*.md`
 - Message changes → Update `message-schemas.md`, `core-message-schemas.md`, `workflow-message-schemas.md`
 - Architecture changes → Verify impact on `integration-*.md` files
@@ -68,19 +71,23 @@ grep -r "specific_term" . | cut -d: -f1 | sort | uniq
 ## SPECIFICATION QUALITY STANDARDS
 
 ### Technical Accuracy
+
 - Specifications must be implementable with stated technologies
 - Version numbers must be consistent (e.g., Tokio 1.38)
 - Dependencies must be compatible
 - Patterns must follow Rust best practices
 
 ### Consistency Requirements
+
 When mentioning:
+
 - **Agent Types**: Use exact names from `SPECIALIZED_AGENT_DOMAINS_ANALYSIS.md`
 - **Messages**: Match schemas in `message-schemas.md`
 - **Errors**: Follow patterns in security and transport specs
 - **Async Patterns**: Align with `async-patterns.md` and `tokio-runtime.md`
 
 ### Cross-Reference Validation
+
 ```bash
 # Example: After modifying agent lifecycle
 files_to_check=(
@@ -100,6 +107,7 @@ done
 ## COMMON DOCUMENTATION PATTERNS
 
 ### Component Specification Pattern
+
 ```markdown
 ## Component Name
 
@@ -121,6 +129,7 @@ done
 ```
 
 ### Message Definition Pattern
+
 ```rust
 // Pseudocode only - NOT implementation
 struct MessageName {
@@ -132,6 +141,7 @@ struct MessageName {
 ## VALIDATION CHECKLISTS
 
 ### Before Committing Changes
+
 - [ ] All modified terms are consistent across documents
 - [ ] Cross-references still valid
 - [ ] No implementation code added
@@ -140,6 +150,7 @@ struct MessageName {
 - [ ] No new TODOs or TBDs introduced
 
 ### Weekly Documentation Health Check
+
 ```bash
 # Run these checks periodically
 echo "=== Checking for TODOs ==="
@@ -155,6 +166,7 @@ grep -r "implemented\|working\|tested\|production" . | grep -v "to be implemente
 ## NAVIGATION TIPS
 
 ### Quick Access to Key Specifications
+
 ```bash
 # View all agent specifications
 ls -la agent-domains/
@@ -168,6 +180,7 @@ ls -la core-architecture/integration-*.md
 ```
 
 ### Understanding Component Relationships
+
 1. Start with `system-architecture.md` for overview
 2. Follow to `component-architecture.md` for structure
 3. Check `integration-patterns.md` for connections
@@ -176,14 +189,18 @@ ls -la core-architecture/integration-*.md
 ## DOCUMENTATION MAINTENANCE
 
 ### Identifying Inconsistencies
+
 Common inconsistency patterns:
+
 - Different versions of the same component description
 - Mismatched message field names
 - Varying agent capability descriptions
 - Conflicting architectural decisions
 
 ### Resolving Conflicts
+
 When specifications conflict:
+
 1. Check which is more recently updated
 2. Determine which aligns with core architecture
 3. Validate technical feasibility
@@ -193,6 +210,7 @@ When specifications conflict:
 ## REMEMBER IN THIS FOLDER
 
 You are crafting the blueprint for a complex system. Every specification should be:
+
 - **Clear**: Unambiguous to future implementers
 - **Consistent**: Aligned with all related specs
 - **Complete**: No critical details missing

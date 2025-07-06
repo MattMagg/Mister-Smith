@@ -12,22 +12,26 @@ tags:
 # Security Patterns - Core Framework Implementation
 
 ## Validation Status
+
 **Last Validated**: 2025-07-05  
 **Validator**: Agent 16 - Security Patterns Validator  
 **Security Maturity Score**: 6.8/10  
 **Production Readiness Score**: 17/25 points  
 
 ### Validation Summary
+
 - **Strengths**: Exceptional NATS security patterns, robust hook sandboxing, comprehensive mTLS implementation
 - **Critical Gaps**: Missing incident response framework, inadequate secrets management, no encryption at rest
 - **Overall Assessment**: Solid foundation suitable for basic production but requires enhancement for high-security environments
 
 ## Framework Authority
+
 This document implements specifications from the canonical tech-framework.md located at /Users/mac-main/Mister-Smith/Mister-Smith/tech-framework.md
 
 As stated in the canonical framework: "Agents: use this framework as the canonical source."
 
 ## Purpose
+
 Essential security patterns, guidelines, templates, and sandbox configurations for agent implementation. This document provides the foundational security building blocks that agents need to implement secure systems.
 
 ## Core Security Components
@@ -37,6 +41,7 @@ Essential security patterns, guidelines, templates, and sandbox configurations f
 **Validation Status**: ⚠️ Adequately Implemented (6/10) - Missing enterprise features like MFA and refresh tokens
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Basic JWT Authentication Flow
 function authenticate_request(request):
@@ -73,6 +78,7 @@ function refresh_access_token(refresh_token):
 ```
 
 **Configuration Pattern:**
+
 ```yaml
 authentication:
   jwt:
@@ -87,6 +93,7 @@ authentication:
 **Validation Status**: ⚠️ Adequately Implemented (6/10) - RBAC present but missing ABAC and context-awareness
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Role-Based Access Control Pattern
 function check_permission(user_id, resource, action):
@@ -125,6 +132,7 @@ permissions = {
 ```
 
 **Configuration Pattern:**
+
 ```yaml
 authorization:
   type: role_based
@@ -167,6 +175,7 @@ authorization:
 ### 3. TLS Configuration Pattern
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // TLS Server Setup
 function create_tls_server(cert_path, key_path):
@@ -191,6 +200,7 @@ function create_tls_client(ca_cert_path):
 ```
 
 **Configuration Pattern:**
+
 ```yaml
 tls:
   server:
@@ -209,6 +219,7 @@ tls:
 **CRITICAL SECURITY GAP**: Environment variables visible in process lists pose credential compromise risk
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Environment-Based Secrets (Use only for development)
 function load_secrets():
@@ -262,6 +273,7 @@ function rotate_secret(secret_name):
 ```
 
 **Configuration Pattern:**
+
 ```yaml
 secrets:
   source: environment  # or 'file'
@@ -277,6 +289,7 @@ secrets:
 **Validation Status**: ⚠️ Partially Implemented (5/10) - Essential headers present but missing CSP and CSRF protection
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Security Headers Middleware
 function security_headers_middleware(request, response, next):
@@ -330,6 +343,7 @@ function rate_limit_middleware(request, response, next):
 **Validation Status**: ⚠️ Partially Implemented (5/10) - Structured events present but missing integrity protection and SIEM integration
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Security Event Logging
 function log_security_event(event_type, details):
@@ -394,6 +408,7 @@ security_events = [
 **Validation Status**: ✅ Fully Implemented (9/10) - Production-ready mTLS, isolation, quotas serving as framework gold standard
 
 **Pseudocode Pattern - mTLS Configuration:**
+
 ```pseudocode
 // Initialize secure NATS connection with mTLS
 function init_secure_nats(tenant_id):
@@ -421,6 +436,7 @@ function configure_nats_limits(connection):
 ```
 
 **Configuration Pattern - Server mTLS:**
+
 ```hocon
 # NATS server mTLS configuration
 tls {
@@ -440,6 +456,7 @@ cluster {
 ```
 
 **Account-Based Tenant Isolation Pattern:**
+
 ```yaml
 # NATS account isolation pattern
 account_isolation:
@@ -458,6 +475,7 @@ account_isolation:
 ```
 
 **Fine-Grained ACL Configuration:**
+
 ```json
 // Per-user permission model
 {
@@ -481,6 +499,7 @@ account_isolation:
 ```
 
 **Resource Quota Enforcement:**
+
 ```yaml
 # Per-account resource limits
 jetstream_limits:
@@ -501,6 +520,7 @@ jetstream_limits:
 ```
 
 **Key Rotation Pattern:**
+
 ```pseudocode
 // Zero-downtime key rotation state machine
 key_rotation_states = [
@@ -520,6 +540,7 @@ function handle_sighup_signal():
 ```
 
 **Critical NATS Security Patterns:**
+
 1. **Never share accounts between tenants** - Use NATS accounts for true isolation
 2. **Always enforce mTLS** - Both client and cluster connections must verify certificates
 3. **Apply least privilege** - Restrict subjects to minimum required patterns
@@ -530,30 +551,35 @@ function handle_sighup_signal():
 ## Implementation Guidelines
 
 ### Authentication Flow
+
 1. Extract authentication token from request
 2. Verify token signature and expiration
 3. Extract user identity from token claims
 4. Attach identity to request context
 
 ### Authorization Flow
+
 1. Identify resource and action from request
 2. Retrieve user roles/permissions
 3. Check if user has required permission
 4. Allow or deny based on permission check
 
 ### TLS Setup Flow
+
 1. Generate or obtain TLS certificates
 2. Configure minimum TLS version (1.2+)
 3. Select secure cipher suites
 4. Enable hostname verification for clients
 
 ### Secrets Management Flow
+
 1. Define required secrets
 2. Load from environment or secure file
 3. Validate all required secrets present
 4. Use secrets for service configuration
 
 ### NATS Security Flow
+
 1. Generate or obtain mTLS certificates for NATS
 2. Create isolated accounts for each tenant
 3. Configure ACLs for subject-based access control
@@ -563,6 +589,7 @@ function handle_sighup_signal():
 ## Security Checklist for Agents
 
 ### Foundation Security (Basic Implementation)
+
 - [ ] Implement authentication before processing requests
 - [ ] Check authorization for protected resources
 - [ ] Enable TLS for all network communication
@@ -580,6 +607,7 @@ function handle_sighup_signal():
 - [ ] Implement key rotation for zero-downtime secret updates
 
 ### Critical Security Enhancements (Production Readiness)
+
 - [ ] **CRITICAL**: Implement incident response framework with classification and escalation
 - [ ] **CRITICAL**: Integrate enterprise secrets management (Vault/AWS Secrets Manager)
 - [ ] **CRITICAL**: Implement encryption at rest for databases and file systems
@@ -590,6 +618,7 @@ function handle_sighup_signal():
 - [ ] **MEDIUM**: Implement compliance framework alignment (GDPR/HIPAA/SOX)
 
 ### Advanced Security Controls
+
 - [ ] Implement SQL injection prevention with parameterized queries
 - [ ] Add distributed denial of service (DDoS) protection
 - [ ] Implement supply chain security with dependency verification
@@ -600,6 +629,7 @@ function handle_sighup_signal():
 - [ ] Add log integrity protection with tamper detection
 
 ### Security Validation & Testing
+
 - [ ] Conduct regular penetration testing
 - [ ] Perform security code reviews for all components
 - [ ] Validate security configurations in isolated environments
@@ -610,6 +640,7 @@ function handle_sighup_signal():
 ## Configuration Templates
 
 ### Basic Security Configuration
+
 ```yaml
 security:
   authentication:
@@ -652,6 +683,7 @@ security:
 ### Non-Root User Execution Pattern
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Hook execution with privilege isolation
 function execute_hook_safely(hook_script, payload):
@@ -704,6 +736,7 @@ function setup_hook_user():
 ```
 
 **Configuration Pattern:**
+
 ```yaml
 hook_security:
   execution_user: claude-hook-runner
@@ -737,6 +770,7 @@ hook_security:
 ### Hook Script Validation Pattern
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Validate hook scripts before execution
 function validate_hook_script(script_path):
@@ -793,27 +827,33 @@ function secure_hook_directory(hook_dir):
 ### Critical Priority - Fix Immediately
 
 #### 1. Missing Incident Response Framework
+
 **Impact**: Unable to respond effectively to security breaches  
 **Current Status**: Basic event logging only, no response procedures  
 **Required Actions**:
+
 - Implement incident classification and severity assessment system
 - Create response playbooks for common security scenarios
 - Establish escalation procedures and communication templates
 - Integrate with security operations center (SOC)
 
 #### 2. Inadequate Secrets Management
+
 **Impact**: High risk of credential compromise  
 **Current Status**: Environment variables visible in process lists  
 **Required Actions**:
+
 - Integrate HashiCorp Vault or AWS Secrets Manager
 - Implement automatic secret rotation mechanisms
 - Remove secrets from environment variables and process lists
 - Add key management lifecycle procedures
 
 #### 3. No Encryption at Rest
+
 **Impact**: Data exposure if storage systems compromised  
 **Current Status**: Data storage security not addressed  
 **Required Actions**:
+
 - Implement database encryption guidelines
 - Add file system encryption patterns
 - Provide key management lifecycle procedures
@@ -821,24 +861,30 @@ function secure_hook_directory(hook_dir):
 ### High Priority - Address in Next Sprint
 
 #### 4. Missing Real-Time Security Monitoring
+
 **Impact**: Delayed response to active security incidents  
 **Required Actions**:
+
 - Implement SIEM integration patterns
 - Add real-time alerting for critical security events
 - Create security operations dashboard
 - Implement behavioral analytics and anomaly detection
 
 #### 5. Incomplete Web Application Security
+
 **Impact**: Vulnerable to common web application attacks  
 **Missing Components**:
+
 - Content Security Policy (CSP) implementation
 - Cross-Site Request Forgery (CSRF) protection
 - Advanced XSS prevention beyond basic headers
 - SQL injection prevention patterns
 
 #### 6. No Behavioral Analytics
+
 **Impact**: Advanced threats may go undetected  
 **Required Actions**:
+
 - Implement user behavior baseline establishment
 - Add anomaly detection for suspicious activities
 - Create adaptive security response mechanisms
@@ -846,15 +892,19 @@ function secure_hook_directory(hook_dir):
 ### Medium Priority - Plan for Future Release
 
 #### 7. Limited Compliance Framework
+
 **Impact**: May not meet industry compliance standards  
 **Required Actions**:
+
 - Implement GDPR, SOX, HIPAA compliance patterns
 - Add privacy controls for data protection regulations
 - Create compliance monitoring and reporting
 
 #### 8. Missing Advanced Authentication
+
 **Impact**: Increased risk of account compromise  
 **Required Actions**:
+
 - Implement multi-factor authentication (MFA)
 - Add risk-based authentication
 - Implement adaptive authentication based on context
@@ -862,6 +912,7 @@ function secure_hook_directory(hook_dir):
 ## Attack Vector Coverage Analysis
 
 ### Well-Covered Attack Vectors (Score: 8-9/10)
+
 - **Man-in-the-Middle Attacks**: mTLS implementation provides strong protection
 - **Privilege Escalation**: Sandbox execution and RBAC limit attack surface
 - **Resource Exhaustion**: Rate limiting and NATS quotas prevent DoS
@@ -869,6 +920,7 @@ function secure_hook_directory(hook_dir):
 - **Tenant Isolation Breaches**: NATS account separation ensures true isolation
 
 ### Inadequately Covered Attack Vectors (Score: 3-5/10)
+
 - **SQL Injection**: No database security patterns or parameterized query guidelines
 - **Cross-Site Scripting (XSS)**: Basic security headers only, missing CSP
 - **Cross-Site Request Forgery (CSRF)**: Not addressed in patterns
@@ -882,6 +934,7 @@ function secure_hook_directory(hook_dir):
 ### Immediate Implementation (Critical)
 
 1. **Comprehensive Incident Response Framework**
+
 ```yaml
 incident_response:
   classification:
@@ -899,6 +952,7 @@ incident_response:
 ```
 
 2. **Enterprise Secrets Management Integration**
+
 ```yaml
 secrets_management:
   provider: vault  # HashiCorp Vault, AWS Secrets Manager, Azure Key Vault
@@ -912,6 +966,7 @@ secrets_management:
 ```
 
 3. **Encryption at Rest Patterns**
+
 ```yaml
 encryption_at_rest:
   database:
@@ -926,6 +981,7 @@ encryption_at_rest:
 ### Short-Term Improvements (High Priority)
 
 4. **Real-Time Security Monitoring**
+
 ```yaml
 security_monitoring:
   siem_integration:
@@ -940,6 +996,7 @@ security_monitoring:
 ```
 
 5. **Enhanced Web Application Security**
+
 ```yaml
 web_security:
   content_security_policy:
@@ -959,16 +1016,19 @@ web_security:
 ### Security Maturity Scoring (6.8/10)
 
 **Authentication/Authorization Completeness**: 6/10 points
+
 - JWT authentication implemented but lacks enterprise features
 - RBAC present but missing ABAC and context-aware controls
 - No multi-factor authentication or advanced session management
 
 **Transport Security Implementation**: 8/10 points  
+
 - Excellent mTLS patterns with proper certificate management
 - Strong TLS configuration with hostname verification
 - Minor gaps in TLS 1.3 enforcement and perfect forward secrecy
 
 **Threat Protection Coverage**: 3/5 points
+
 - Good coverage of infrastructure threats
 - Missing web application security patterns
 - Limited advanced persistent threat protection
@@ -993,18 +1053,21 @@ web_security:
 ### Deployment Recommendations by Environment
 
 **Development Environment** (Current patterns sufficient)
+
 - Basic authentication and authorization patterns
 - Environment-based secrets management
 - Standard TLS configuration
 - Basic audit logging
 
 **Staging Environment** (Requires enhancements)
+
 - Enhanced authentication with refresh tokens
 - File-based secrets management with proper permissions
 - Real-time security monitoring setup
 - Incident response testing procedures
 
 **Production Environment** (Critical gaps must be addressed)
+
 - Enterprise secrets management integration (Vault/AWS)
 - Comprehensive incident response framework
 - Real-time security monitoring and SIEM integration
@@ -1017,11 +1080,13 @@ web_security:
 **Current Risk Level**: **MEDIUM-HIGH** for production deployments
 
 **Acceptable for**:
+
 - Development and testing environments
 - Basic production deployments with low security requirements
 - Internal systems with limited external exposure
 
 **Not suitable for**:
+
 - High-security production environments
 - Regulated industries (healthcare, finance, government)
 - Systems handling sensitive customer data
@@ -1036,6 +1101,7 @@ web_security:
 **CRITICAL GAP ADDRESSED: Missing incident response framework (Agent 18 Compliance Audit Finding)**
 
 **Incident Response Pattern:**
+
 ```pseudocode
 // Incident Detection Pattern
 function detect_security_incident(event):
@@ -1092,6 +1158,7 @@ function collect_incident_evidence(incident):
 ```
 
 **Configuration Pattern:**
+
 ```yaml
 incident_response:
   detection:
@@ -1138,6 +1205,7 @@ incident_response:
 **CRITICAL GAP ADDRESSED: Missing regulatory-specific incident handling**
 
 **Compliance Reporting Pattern:**
+
 ```pseudocode
 // Compliance Incident Assessment
 function assess_compliance_impact(incident):
@@ -1188,6 +1256,7 @@ function generate_compliance_reports(incident, assessment):
 **CRITICAL GAP ADDRESSED: Missing evidence chain of custody protocols (Agent 18 Compliance Audit Finding)**
 
 **Evidence Collection Pattern:**
+
 ```pseudocode
 // Evidence Chain of Custody
 function create_evidence_chain(incident_id, investigator_id):
@@ -1266,6 +1335,7 @@ function transfer_evidence_custody(evidence_chain, from_investigator, to_investi
 ```
 
 **Configuration Pattern:**
+
 ```yaml
 forensic_investigation:
   evidence_collection:
@@ -1297,6 +1367,7 @@ forensic_investigation:
 ### Advanced Forensic Analysis Patterns
 
 **User Activity Reconstruction Pattern:**
+
 ```pseudocode
 // Comprehensive User Activity Analysis
 function reconstruct_user_activity(user_id, time_range, include_related_entities):
@@ -1358,6 +1429,7 @@ function correlate_events_across_systems(correlation_id, time_window):
 **CRITICAL GAP ADDRESSED: Missing automated compliance scanning (Agent 18 Compliance Audit Finding)**
 
 **Compliance Validation Pattern:**
+
 ```pseudocode
 // Automated Compliance Assessment
 function validate_compliance_posture(framework_type):
@@ -1413,6 +1485,7 @@ function validate_gdpr_compliance():
 ## Related Documents
 
 ### Security Implementation Files
+
 - **[Authentication Implementation](authentication-implementation.md)** - Certificate management and JWT authentication implementation
 - **[Authorization Implementation](authorization-implementation.md)** - RBAC and security audit implementation
 - **[Security Integration](security-integration.md)** - NATS and hook security implementation
@@ -1421,6 +1494,7 @@ function validate_gdpr_compliance():
 - **[Authorization Specifications](authorization-specifications.md)** - Detailed authorization requirements
 
 ### Framework Integration Points
+
 - **[Core Architecture](../core-architecture/)** - System architecture and design patterns
 - **[Transport Layer](../transport/)** - Communication security specifications
 - **[NATS Transport](../transport/nats-transport.md)** - NATS messaging security implementation

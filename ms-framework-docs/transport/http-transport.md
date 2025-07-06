@@ -5,6 +5,7 @@ permalink: ms-framework/transport/http-transport
 ---
 
 # HTTP Transport Specifications
+
 ## Agent Framework Implementation Module
 
 > **Source**: Extracted from `transport-layer-specifications.md` sections 4 and 14
@@ -15,11 +16,13 @@ permalink: ms-framework/transport/http-transport
 **Implementation Readiness**: 100% ✅ - Production ready with complete REST API and WebSocket specifications
 
 **Validation Details**:
+
 - **Validator**: Agent 25 - MS Framework Validation Swarm
 - **Validation Date**: 2025-07-05
 - **Score**: 5/5 - Implementation ready
 
 **Key Findings**:
+
 - ✅ Complete OpenAPI 3.0 specification with all endpoints defined
 - ✅ WebSocket integration with real-time communication patterns
 - ✅ Multiple auth schemes (Bearer tokens, API keys) properly specified
@@ -29,7 +32,8 @@ permalink: ms-framework/transport/http-transport
 
 **Critical Issues**: None - Production deployment ready
 
-**Minor Enhancements**: 
+**Minor Enhancements**:
+
 - Consider enhanced monitoring correlation for cross-protocol metrics
 
 Reference: `/Users/mac-main/Mister-Smith/MisterSmith/validation-swarm/batch5-specialized-domains/agent25-transport-layer-validation.md`
@@ -37,10 +41,12 @@ Reference: `/Users/mac-main/Mister-Smith/MisterSmith/validation-swarm/batch5-spe
 This document defines HTTP-based transport patterns for agent communication using the Claude-Flow Rust Stack. This module focuses on RESTful APIs, WebSocket communication, and complete HTTP protocol specifications.
 
 **Technology Reference** (from tech-framework.md):
+
 - Axum 0.8 (HTTP)
 - Tokio 1.38 (async runtime)
 
 **Transport Core Dependencies**:
+
 - Section 5: Transport abstraction layer integration and HTTP-specific routing
 - Section 7: Connection management patterns for HTTP client and server pools
 - Section 8: Error handling standards and HTTP status code mapping
@@ -717,6 +723,7 @@ WEBSOCKET_PROTOCOL: {
 ## Summary
 
 This HTTP transport module provides comprehensive specifications for:
+
 - RESTful API endpoints with complete OpenAPI 3.0 documentation
 - WebSocket real-time communication protocols
 - Authentication and security mechanisms
@@ -727,22 +734,27 @@ The specifications are designed for use with Axum 0.8 and provide a complete fou
 ## Navigation
 
 ### Transport Module Cross-References
+
 - **[Transport Core](./transport-core.md)** - Core abstractions, connection management, and security patterns
 - **[NATS Transport](./nats-transport.md)** - High-throughput messaging and pub/sub patterns
 - **[gRPC Transport](./grpc-transport.md)** - RPC communication and streaming protocols
 - **[Transport CLAUDE.md](./CLAUDE.md)** - Transport module navigation guide
 
 ### Framework Integration Points
+
 - **[Core Architecture](../core-architecture/)** - System integration and async patterns
 - **[Security](../security/)** - Authentication, authorization, and transport security
 - **[Data Management](../data-management/)** - Message schemas and persistence patterns
 
 ### External References
+
 - **Technology Stack**: `/tech-framework.md` - Canonical technology specifications
 - **OpenAPI/Swagger**: For API documentation and client generation
 
 ### Protocol Selection Guidelines
+
 Use HTTP when you need:
+
 - RESTful APIs following web standards
 - WebSocket real-time bidirectional communication
 - Integration with web browsers and standard HTTP clients
@@ -750,10 +762,12 @@ Use HTTP when you need:
 - Simple request/response patterns
 
 **Alternative Protocols:**
+
 - **NATS**: For high-throughput pub/sub messaging and event distribution
 - **gRPC**: For typed RPC calls and efficient binary protocols
 
 ### Implementation Notes
+
 - This document provides complete HTTP API specifications with OpenAPI 3.0 schema
 - For connection pooling and management, see transport-core.md Section 7
 - For security implementation including JWT and API keys, see transport-core.md Section 9

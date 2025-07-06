@@ -12,17 +12,20 @@ tags:
 # Security Framework - Foundational Patterns
 
 ## Framework Authority
+
 This document implements specifications from the canonical tech-framework.md located at /Users/mac-main/Mister-Smith/Mister-Smith/tech-framework.md
 
 As stated in the canonical framework: "Agents: use this framework as the canonical source."
 
 ## Validation Status
+
 **Last Validated**: 2025-07-05  
 **Validator**: Agent 13 - Security Framework Specialist  
 **Security Completeness Score**: 18/20 (90%)  
 **Production Readiness**: ✅ APPROVED FOR IMPLEMENTATION  
 
 ### Team Omega Cross-Validation (2025-07-05)
+
 **Related to Critical Gap #6**: Security Protocol Standardization  
 **Current State**: Fragmented security patterns across domains  
 **Required State**: Unified security framework  
@@ -30,12 +33,14 @@ As stated in the canonical framework: "Agents: use this framework as the canonic
 **Note**: While this framework is 90% complete, standardization across all domains remains incomplete
 
 ### Validation Summary
+
 - **Strengths**: Comprehensive multi-layered security architecture, production-ready Rust implementations, strong cross-component integration, detailed implementation guidance
 - **Key Achievements**: Complete JWT/RBAC/ABAC frameworks, robust mTLS configurations, comprehensive audit logging, extensive compliance coverage
 - **Enhancement Areas**: Explicit threat modeling documentation, enhanced security testing frameworks, cross-domain standardization
 - **Overall Assessment**: Exceptional security foundation with comprehensive coverage across all critical domains, ready for production implementation once standardization is complete
 
 ## Purpose
+
 Foundational security patterns for agent implementation focusing on basic authentication, authorization, TLS setup, and secrets management. This document provides pseudocode patterns and configurations for learning and implementation by agents.
 
 ## Core Security Components
@@ -43,6 +48,7 @@ Foundational security patterns for agent implementation focusing on basic authen
 ### 1. Basic Authentication Pattern
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Basic JWT Authentication Flow
 function authenticate_request(request):
@@ -68,6 +74,7 @@ function generate_auth_token(user_id, expires_in):
 ```
 
 **Configuration Pattern:**
+
 ```yaml
 authentication:
   jwt:
@@ -78,6 +85,7 @@ authentication:
 ```
 
 #### Enhanced Agent-Specific JWT Claims Structure
+
 **Validated Implementation (Agent 13 - Score: 5/5)**
 
 ```rust
@@ -109,6 +117,7 @@ pub enum AgentType {
 ### 2. Simple Authorization Pattern
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Role-Based Access Control Pattern
 function check_permission(user_id, resource, action):
@@ -130,6 +139,7 @@ permissions = {
 ```
 
 **Configuration Pattern:**
+
 ```yaml
 authorization:
   type: role_based
@@ -144,6 +154,7 @@ authorization:
 ```
 
 #### Enhanced Hybrid Authorization Model
+
 **Validated Implementation (Agent 13 - Score: 5/5)**
 
 ```rust
@@ -194,6 +205,7 @@ function evaluate_hybrid_authorization(principal, resource, action, context):
 ### 3. TLS Configuration Pattern
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // TLS Server Setup
 function create_tls_server(cert_path, key_path):
@@ -218,6 +230,7 @@ function create_tls_client(ca_cert_path):
 ```
 
 **Configuration Pattern:**
+
 ```yaml
 tls:
   server:
@@ -232,6 +245,7 @@ tls:
 ### 4. Basic Secrets Management
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Environment-Based Secrets
 function load_secrets():
@@ -261,6 +275,7 @@ function load_secrets_from_file(path):
 ```
 
 **Configuration Pattern:**
+
 ```yaml
 secrets:
   source: environment  # or 'file'
@@ -274,6 +289,7 @@ secrets:
 ### 5. Basic Security Middleware
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Security Headers Middleware
 function security_headers_middleware(request, response, next):
@@ -298,6 +314,7 @@ function rate_limit_middleware(request, response, next):
 ### 6. Basic Audit Logging
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Security Event Logging
 function log_security_event(event_type, details):
@@ -323,6 +340,7 @@ security_events = [
 ```
 
 #### Enhanced Security Audit Framework
+
 **Validated Implementation (Agent 13 - Score: 5/5)**
 
 ```rust
@@ -381,6 +399,7 @@ function process_security_audit_event(event_data):
 ### 7. NATS Security Patterns
 
 **Pseudocode Pattern - mTLS Configuration:**
+
 ```pseudocode
 // Initialize secure NATS connection with mTLS
 function init_secure_nats(tenant_id):
@@ -408,6 +427,7 @@ function configure_nats_limits(connection):
 ```
 
 **Configuration Pattern - Server mTLS:**
+
 ```hocon
 # NATS server mTLS configuration
 tls {
@@ -427,6 +447,7 @@ cluster {
 ```
 
 **Account-Based Tenant Isolation Pattern:**
+
 ```yaml
 # NATS account isolation pattern
 account_isolation:
@@ -445,6 +466,7 @@ account_isolation:
 ```
 
 **Fine-Grained ACL Configuration:**
+
 ```json
 // Per-user permission model
 {
@@ -468,6 +490,7 @@ account_isolation:
 ```
 
 **Resource Quota Enforcement:**
+
 ```yaml
 # Per-account resource limits
 jetstream_limits:
@@ -488,6 +511,7 @@ jetstream_limits:
 ```
 
 **Key Rotation Pattern:**
+
 ```pseudocode
 // Zero-downtime key rotation state machine
 key_rotation_states = [
@@ -507,6 +531,7 @@ function handle_sighup_signal():
 ```
 
 **Critical NATS Security Patterns:**
+
 1. **Never share accounts between tenants** - Use NATS accounts for true isolation
 2. **Always enforce mTLS** - Both client and cluster connections must verify certificates
 3. **Apply least privilege** - Restrict subjects to minimum required patterns
@@ -517,30 +542,35 @@ function handle_sighup_signal():
 ## Implementation Guidelines
 
 ### Authentication Flow
+
 1. Extract authentication token from request
 2. Verify token signature and expiration
 3. Extract user identity from token claims
 4. Attach identity to request context
 
 ### Authorization Flow
+
 1. Identify resource and action from request
 2. Retrieve user roles/permissions
 3. Check if user has required permission
 4. Allow or deny based on permission check
 
 ### TLS Setup Flow
+
 1. Generate or obtain TLS certificates
 2. Configure minimum TLS version (1.2+)
 3. Select secure cipher suites
 4. Enable hostname verification for clients
 
 ### Secrets Management Flow
+
 1. Define required secrets
 2. Load from environment or secure file
 3. Validate all required secrets present
 4. Use secrets for service configuration
 
 ### NATS Security Flow
+
 1. Generate or obtain mTLS certificates for NATS
 2. Create isolated accounts for each tenant
 3. Configure ACLs for subject-based access control
@@ -568,6 +598,7 @@ function handle_sighup_signal():
 ## Configuration Templates
 
 ### Basic Security Configuration
+
 ```yaml
 security:
   authentication:
@@ -610,6 +641,7 @@ security:
 ### 11.1 Non-Root User Execution Pattern
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Hook execution with privilege isolation
 function execute_hook_safely(hook_script, payload):
@@ -662,6 +694,7 @@ function setup_hook_user():
 ```
 
 **Configuration Pattern:**
+
 ```yaml
 hook_security:
   execution_user: claude-hook-runner
@@ -695,6 +728,7 @@ hook_security:
 ### 11.2 Hook Script Validation Pattern
 
 **Pseudocode Pattern:**
+
 ```pseudocode
 // Validate hook scripts before execution
 function validate_hook_script(script_path):
@@ -755,6 +789,7 @@ This section provides production-ready implementations that leave zero security 
 ### 1.1 Certificate Generation Scripts
 
 **Complete Certificate Authority Setup:**
+
 ```bash
 #!/bin/bash
 # generate_ca.sh - Complete CA setup for Mister Smith Framework
@@ -834,6 +869,7 @@ echo "Certificates generated successfully in $CA_DIR"
 ```
 
 **Certificate Rotation Script:**
+
 ```bash
 #!/bin/bash
 # rotate_certs.sh - Zero-downtime certificate rotation
@@ -897,6 +933,7 @@ fi
 ### 1.2 Rustls Certificate Management Implementation
 
 **Complete Certificate Manager:**
+
 ```rust
 // certificate_manager.rs
 use rustls::{Certificate, PrivateKey, ServerConfig, ClientConfig};
@@ -1122,6 +1159,7 @@ mod tests {
 ### 2.1 JWT Service Implementation
 
 **Complete JWT Authentication Service:**
+
 ```rust
 // jwt_service.rs
 use jwt_simple::prelude::*;
@@ -1437,6 +1475,7 @@ mod tests {
 ### 3.1 RBAC Policy Engine
 
 **Complete RBAC Implementation:**
+
 ```rust
 // rbac_engine.rs
 use serde::{Deserialize, Serialize};
@@ -1811,6 +1850,7 @@ mod tests {
 ### 4.1 Structured Audit Logging
 
 **Complete Audit Service:**
+
 ```rust
 // audit_service.rs
 use serde::{Deserialize, Serialize};
@@ -2306,6 +2346,7 @@ mod tests {
 ### 4.2 Security Monitoring Configuration
 
 **Prometheus Metrics Configuration:**
+
 ```yaml
 # prometheus_security_metrics.yml
 groups:
@@ -2363,6 +2404,7 @@ groups:
 ```
 
 **Grafana Dashboard Configuration:**
+
 ```json
 {
   "dashboard": {
@@ -2425,6 +2467,7 @@ groups:
 ### 5.1 NATS Server Configuration with mTLS
 
 **Complete NATS Server Configuration:**
+
 ```hocon
 # nats_server_secure.conf
 # NATS Server Security Configuration for Mister Smith Framework
@@ -2583,6 +2626,7 @@ authorization {
 ### 5.2 NATS Client Implementation with mTLS
 
 **Secure NATS Client:**
+
 ```rust
 // nats_client.rs
 use nats::asynk::{Connection, Options};
@@ -2795,6 +2839,7 @@ mod tests {
 ### 6.1 Secure Hook Execution Environment
 
 **Complete Hook Security Manager:**
+
 ```rust
 // hook_security.rs
 use std::process::{Command, Stdio};
@@ -3180,6 +3225,7 @@ mod tests {
 ### 6.2 Hook Security Configuration
 
 **Complete Security Configuration:**
+
 ```yaml
 # hook_security_config.yml
 hook_security:
@@ -3346,9 +3392,11 @@ hook_security:
 ```
 
 ## Security Enhancement Recommendations
+
 **Based on Agent 13 Validation - Priority Implementation Areas**
 
 ### 1. Threat Modeling Framework
+
 **Enhancement Priority: High (Agent 13 Score: 3/5)**
 
 ```pseudocode
@@ -3381,6 +3429,7 @@ function perform_threat_modeling():
 ```
 
 #### Threat Categories for Multi-Agent Systems
+
 - **Agent Impersonation**: Unauthorized agents claiming legitimate identities
 - **Command Injection**: Malicious commands in agent communications
 - **Data Exfiltration**: Unauthorized access to sensitive agent data
@@ -3389,6 +3438,7 @@ function perform_threat_modeling():
 - **Agent Coordination Attacks**: Manipulation of agent collaboration patterns
 
 ### 2. Security Testing Framework
+
 **Enhancement Priority: High (Agent 13 Recommendation)**
 
 ```pseudocode
@@ -3426,6 +3476,7 @@ function security_testing_suite():
 ```
 
 #### Security Testing Categories
+
 - **Penetration Testing**: Regular external security assessments
 - **Fuzzing**: Input validation testing for all interfaces
 - **Load Testing**: Security under high-stress conditions
@@ -3433,9 +3484,11 @@ function security_testing_suite():
 - **Compliance Testing**: Automated regulatory compliance validation
 
 ### 3. Compliance Framework Mapping
+
 **Validated Coverage (Agent 13 Score: 4/5)**
 
 #### Regulatory Compliance Status
+
 - **GDPR**: ✅ Data minimization, user rights, consent management
 - **SOC 2 Type II**: ✅ Security, availability, processing integrity controls
 - **ISO 27001**: ✅ Information security management alignment
@@ -3444,6 +3497,7 @@ function security_testing_suite():
 - **CIS Controls**: ✅ Critical security control implementation
 
 #### Compliance Automation
+
 ```rust
 // Automated compliance monitoring
 pub struct ComplianceMonitor {
@@ -3467,6 +3521,7 @@ impl ComplianceMonitor {
 ```
 
 ## Validation Scoring Summary
+
 **Agent 13 Security Framework Assessment**
 
 | Component | Score | Weight | Weighted Score | Status |
@@ -3477,6 +3532,7 @@ impl ComplianceMonitor {
 | **Total Security Score** | | | **18/20 (90%)** | ✅ **APPROVED** |
 
 ### Implementation Readiness Assessment
+
 - **Production Deployment**: ✅ Ready with documented minor enhancements
 - **Security Architecture**: ✅ Comprehensive multi-layered approach
 - **Integration Patterns**: ✅ Strong cross-component security integration
