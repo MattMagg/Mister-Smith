@@ -1,0 +1,243 @@
+name: Documentation - Data Persistence & Storage
+
+on:
+  workflow_dispatch:
+    inputs:
+      focus_area:
+        description: 'Specific data layer to focus on'
+        required: false
+        type: choice
+        options:
+          - 'all'
+          - 'sqlx-patterns'
+          - 'redis-caching'
+          - 'persistence-operations'
+          - 'database-schemas'
+        default: 'all'
+  schedule:
+    # Run daily at 5 AM UTC
+    - cron: '0 5 * * *'
+  push:
+    paths:
+      - 'ms-framework-docs/data-management/*persistence*.md'
+      - 'ms-framework-docs/data-management/*database*.md'
+      - 'ms-framework-docs/data-management/*storage*.md'
+      - 'ms-framework-docs/data-management/postgresql-implementation.md'
+      - 'ms-framework-docs/data-management/jetstream-kv.md'
+
+jobs:
+  improve-data-docs:
+    name: Improve Data Persistence Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH_NAME="docs/data-persistence-improvements-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH_NAME"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+      
+      - name: Improve SQLx Patterns Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'sqlx-patterns'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith framework SQLx database documentation.
+            
+            CONTEXT7 LIBRARY REFERENCES:
+            - sqlx v0.8.2 (/launchbadge/sqlx) - SQL toolkit
+            - Features: ["runtime-tokio-rustls", "postgres", "sqlite", "any"]
+            
+            TASK: Improve ms-framework-docs/data-management/postgresql-implementation.md by:
+            
+            1. Search Context7 for SQLx patterns and best practices
+            2. Add comprehensive pseudocode for:
+               - Connection pool configuration
+               - Query builder patterns
+               - Compile-time checked queries
+               - Transaction management
+               - Migration strategies
+               - Type-safe query results
+               - Prepared statement caching
+               - Database error handling
+            
+            3. Also update database-schemas.md with:
+               - Agent state tables
+               - Message queue tables
+               - Event sourcing schemas
+               - Audit log structures
+            
+            4. Ensure consistency with:
+               - data-persistence.md
+               - persistence-operations.md
+               - storage-patterns.md
+            
+            IMPORTANT: Use SQL schema definitions and Rust pseudocode only.
+            Web search for "SQLx Rust patterns" if needed.
+      
+      - name: Improve Redis Caching Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'redis-caching'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith framework Redis documentation.
+            
+            CONTEXT7 LIBRARY REFERENCES:
+            - redis v0.27.5 (/redis-rs/redis-rs) - Redis client
+            - Features: ["tokio-comp", "connection-manager"]
+            
+            TASK: Create/improve Redis caching documentation by:
+            
+            1. Search Context7 for redis-rs async patterns
+            2. If file doesn't exist, create ms-framework-docs/data-management/redis-caching.md
+            3. Add pseudocode patterns for:
+               - Connection pool management
+               - Pub/Sub for agent events
+               - Distributed locks (Redlock)
+               - Cache-aside patterns
+               - Write-through caching
+               - Session storage
+               - Rate limiting
+               - Lua scripting patterns
+            
+            4. Cross-reference with:
+               - agent-communication.md (pub/sub)
+               - storage-patterns.md
+               - connection-management.md
+            
+            5. Include cache invalidation strategies
+            
+            IMPORTANT: Documentation phase - pseudocode only.
+      
+      - name: Improve Persistence Operations Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'persistence-operations'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith persistence operations documentation.
+            
+            TASK: Improve ms-framework-docs/data-management/persistence-operations.md by:
+            
+            1. Search web for "database connection pooling best practices Rust"
+            2. Add comprehensive patterns for:
+               - Connection pool sizing strategies
+               - Read replica routing
+               - Write batching and coalescing
+               - Backup and restore procedures
+               - Data archival strategies
+               - Hot/cold data separation
+               - Monitoring and metrics
+            
+            3. Include operation workflows:
+               - Health checks
+               - Failover procedures
+               - Performance tuning
+               - Index management
+            
+            4. Cross-reference with:
+               - postgresql-implementation.md
+               - storage-patterns.md
+               - observability-monitoring-framework.md
+            
+            IMPORTANT: Focus on operational patterns, not implementation.
+      
+      - name: Improve JetStream KV Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'database-schemas'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith JetStream KV documentation.
+            
+            CONTEXT: NATS JetStream KV as distributed state store
+            
+            TASK: Improve ms-framework-docs/data-management/jetstream-kv.md by:
+            
+            1. Search web for "NATS JetStream KV patterns"
+            2. Add patterns for:
+               - KV bucket configuration
+               - Key naming conventions for agents
+               - Watching for changes
+               - TTL and eviction policies
+               - Revision history usage
+               - Distributed state coordination
+               - Leader election patterns
+            
+            3. Show integration with:
+               - Agent state management
+               - Configuration distribution
+               - Service discovery
+            
+            4. Cross-reference with:
+               - nats-transport.md
+               - agent-operations.md
+               - data-persistence.md
+            
+            IMPORTANT: Pseudocode examples showing KV operations.
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes made"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            git add -A
+            git commit -m "docs: Improve data persistence documentation
+            
+            - Enhanced SQLx patterns and database schemas
+            - Added Redis caching strategies
+            - Improved persistence operations
+            - Updated JetStream KV patterns
+            
+            Based on Context7 library documentation:
+            - sqlx v0.8.2
+            - redis v0.27.5
+            - NATS JetStream KV"
+          fi
+      
+      - name: Push changes and create PR
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git push origin "${{ env.BRANCH_NAME }}"
+          gh pr create \
+            --title "docs: Data Persistence Documentation Improvements" \
+            --body "## Data Persistence Documentation Updates
+            
+            This PR improves the data persistence documentation based on:
+            - SQLx v0.8.2 (compile-time SQL, connection pooling)
+            - Redis v0.27.5 (caching, pub/sub, distributed locks)
+            - NATS JetStream KV (distributed state)
+            
+            ### Changes
+            - Enhanced database patterns and schemas
+            - Added comprehensive caching strategies
+            - Improved operational procedures
+            - Updated distributed state patterns
+            
+            ### Context7 References
+            - SQLx: /launchbadge/sqlx
+            - Redis: /redis-rs/redis-rs
+            
+            Generated by Data Persistence Documentation workflow" \
+            --base main \
+            --head "${{ env.BRANCH_NAME }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

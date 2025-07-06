@@ -1,0 +1,237 @@
+name: Documentation - Transport & Messaging
+
+on:
+  workflow_dispatch:
+    inputs:
+      focus_area:
+        description: 'Specific transport layer to focus on'
+        required: false
+        type: choice
+        options:
+          - 'all'
+          - 'nats-messaging'
+          - 'grpc-tonic'
+          - 'http-axum'
+          - 'message-schemas'
+        default: 'all'
+  schedule:
+    # Run daily at 4 AM UTC
+    - cron: '0 4 * * *'
+  push:
+    paths:
+      - 'ms-framework-docs/transport/*.md'
+      - 'ms-framework-docs/data-management/*message*.md'
+
+jobs:
+  improve-transport-docs:
+    name: Improve Transport Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH_NAME="docs/transport-improvements-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH_NAME"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+      
+      - name: Improve NATS Transport Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'nats-messaging'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith framework NATS transport documentation.
+            
+            CONTEXT7 LIBRARY REFERENCES:
+            - async-nats v0.37.0 (/nats-io/nats.rs) - NATS client
+            - Features: ["jetstream", "kv", "object_store", "service"]
+            
+            TASK: Improve ms-framework-docs/transport/nats-transport.md by:
+            
+            1. Search Context7 for async-nats patterns and best practices
+            2. Add comprehensive pseudocode for:
+               - JetStream setup and configuration
+               - Stream and consumer patterns
+               - Key-Value store usage for agent state
+               - Object store for large payloads
+               - Service discovery patterns
+               - Request-reply patterns
+               - Pub/sub with wildcards
+            
+            3. Ensure consistency with:
+               - message-schemas.md (message formats)
+               - agent-communication.md (communication patterns)
+               - connection-management.md
+            
+            4. Add error handling and reconnection strategies
+            5. Include performance tuning guidelines
+            
+            IMPORTANT: Documentation phase - pseudocode only.
+            Web search for "NATS JetStream Rust patterns" if needed.
+      
+      - name: Improve gRPC/Tonic Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'grpc-tonic'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith framework gRPC transport documentation.
+            
+            CONTEXT7 LIBRARY REFERENCES:
+            - tonic v0.11 (/hyperium/tonic) - gRPC framework
+            - Features: ["full"]
+            
+            TASK: Improve ms-framework-docs/transport/grpc-transport.md by:
+            
+            1. Search Context7 for Tonic gRPC patterns
+            2. Add pseudocode for:
+               - Service definitions (.proto equivalents in Rust)
+               - Server implementation patterns
+               - Client connection pooling
+               - Interceptors for auth/logging
+               - Streaming patterns (unary, server, client, bidirectional)
+               - Load balancing configuration
+               - TLS/mTLS setup
+            
+            3. Cross-reference with:
+               - authentication-implementation.md
+               - authorization-implementation.md
+               - integration-contracts.md
+            
+            4. Add protobuf schema examples (as comments)
+            
+            IMPORTANT: Pseudocode only, no real proto files.
+      
+      - name: Improve HTTP/Axum Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'http-axum'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith framework HTTP transport documentation.
+            
+            CONTEXT7 LIBRARY REFERENCES:
+            - axum v0.8 (/tokio-rs/axum) - Web framework
+            - Features: ["full"]
+            
+            TASK: Improve ms-framework-docs/transport/http-transport.md by:
+            
+            1. Search Context7 for Axum patterns and middleware
+            2. Add comprehensive pseudocode for:
+               - Router configuration and nesting
+               - State management patterns
+               - Middleware stacks (auth, logging, cors, compression)
+               - WebSocket upgrade handling
+               - Server-Sent Events (SSE)
+               - Request/response extractors
+               - Error handling and status codes
+               - OpenAPI integration patterns
+            
+            3. Ensure consistency with:
+               - security-framework.md (auth middleware)
+               - observability-monitoring-framework.md (metrics/tracing)
+            
+            4. Include REST API design patterns for agents
+            
+            IMPORTANT: Documentation only - pseudocode examples.
+      
+      - name: Improve Message Schemas Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'message-schemas'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith message schema documentation.
+            
+            CONTEXT7 LIBRARY REFERENCES:
+            - serde v1.0.214 (/serde-rs/serde) - Serialization
+            - serde_json v1.0.132 - JSON support
+            
+            TASK: Improve ms-framework-docs/data-management/message-schemas.md by:
+            
+            1. Search Context7 for Serde patterns and best practices
+            2. Enhance with:
+               - Comprehensive message type definitions
+               - Serialization/deserialization patterns
+               - Schema versioning strategies
+               - Message envelope patterns
+               - Error response schemas
+               - Event sourcing message formats
+            
+            3. Cross-reference and ensure consistency:
+               - core-message-schemas.md
+               - system-message-schemas.md
+               - workflow-message-schemas.md
+               - All transport layers (NATS, gRPC, HTTP)
+            
+            4. Add validation patterns using serde attributes
+            
+            IMPORTANT: Pseudocode structs with serde attributes only.
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes made"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            git add -A
+            git commit -m "docs: Improve transport & messaging documentation
+            
+            - Enhanced NATS transport with JetStream patterns
+            - Added comprehensive gRPC/Tonic examples
+            - Improved HTTP/Axum patterns and middleware
+            - Updated message schemas with Serde patterns
+            
+            Based on Context7 library documentation:
+            - async-nats v0.37.0
+            - tonic v0.11
+            - axum v0.8
+            - serde v1.0.214"
+          fi
+      
+      - name: Push changes and create PR
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git push origin "${{ env.BRANCH_NAME }}"
+          gh pr create \
+            --title "docs: Transport & Messaging Documentation Improvements" \
+            --body "## Transport Layer Documentation Updates
+            
+            This PR improves the transport and messaging documentation based on:
+            - async-nats v0.37.0 (JetStream, KV, Service discovery)
+            - Tonic v0.11 (gRPC patterns)
+            - Axum v0.8 (HTTP/WebSocket)
+            - Serde v1.0.214 (Message schemas)
+            
+            ### Changes
+            - Enhanced transport patterns for each protocol
+            - Added comprehensive pseudocode examples
+            - Improved message schema definitions
+            - Ensured cross-layer consistency
+            
+            ### Context7 References
+            - NATS: /nats-io/nats.rs
+            - Tonic: /hyperium/tonic
+            - Axum: /tokio-rs/axum
+            - Serde: /serde-rs/serde
+            
+            Generated by Transport Documentation workflow" \
+            --base main \
+            --head "${{ env.BRANCH_NAME }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

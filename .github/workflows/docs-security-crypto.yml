@@ -1,0 +1,244 @@
+name: Documentation - Security & Cryptography
+
+on:
+  workflow_dispatch:
+    inputs:
+      focus_area:
+        description: 'Specific security area to focus on'
+        required: false
+        type: choice
+        options:
+          - 'all'
+          - 'authentication'
+          - 'authorization'
+          - 'encryption'
+          - 'security-patterns'
+        default: 'all'
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  push:
+    paths:
+      - 'ms-framework-docs/security/*.md'
+
+jobs:
+  improve-security-docs:
+    name: Improve Security Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH_NAME="docs/security-improvements-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH_NAME"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+      
+      - name: Improve Authentication Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'authentication'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith framework authentication documentation.
+            
+            CONTEXT7 LIBRARY REFERENCES:
+            - jwt-simple v0.12.10 (/rafaelbarbosa/jwt-simple) - JWT handling
+            - ring v0.17.8 (/briansmith/ring) - Cryptography
+            
+            TASK: Improve ms-framework-docs/security/authentication-implementation.md by:
+            
+            1. Search Context7 for jwt-simple patterns and examples
+            2. Add comprehensive pseudocode for:
+               - JWT token generation and validation
+               - RSA/ECDSA key management
+               - Token refresh patterns
+               - Multi-factor authentication flows
+               - OAuth2/OIDC integration patterns
+               - API key management
+               - Session handling strategies
+            
+            3. Search web for "JWT best practices 2024" for latest security guidelines
+            
+            4. Ensure consistency with:
+               - authorization-implementation.md
+               - security-framework.md
+               - All transport layers (HTTP headers, gRPC metadata)
+            
+            5. Include security considerations and threat models
+            
+            IMPORTANT: Documentation phase - pseudocode and patterns only.
+      
+      - name: Improve Authorization Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'authorization'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith framework authorization documentation.
+            
+            TASK: Improve ms-framework-docs/security/authorization-implementation.md and authorization-specifications.md by:
+            
+            1. Search web for "RBAC vs ABAC patterns Rust"
+            2. Add comprehensive patterns for:
+               - Role-Based Access Control (RBAC)
+               - Attribute-Based Access Control (ABAC)
+               - Policy decision points
+               - Resource-based permissions
+               - Hierarchical roles
+               - Dynamic permission evaluation
+               - Audit logging for access decisions
+            
+            3. Define authorization schemas:
+               - Permission models
+               - Role hierarchies
+               - Policy language (pseudocode)
+               - Context propagation
+            
+            4. Cross-reference with:
+               - authentication-implementation.md
+               - All agent operation files
+               - Transport middleware integration
+            
+            IMPORTANT: Focus on flexible, extensible authorization patterns.
+      
+      - name: Improve Encryption Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'encryption'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith framework encryption documentation.
+            
+            CONTEXT7 LIBRARY REFERENCES:
+            - ring v0.17.8 (/briansmith/ring) - Crypto primitives
+            - aes-gcm v0.10.3 - AES encryption
+            - chacha20poly1305 v0.10.1 - ChaCha encryption
+            
+            TASK: Create/improve encryption documentation by:
+            
+            1. Search Context7 for ring cryptography patterns
+            2. If needed, create ms-framework-docs/security/encryption-patterns.md
+            3. Add pseudocode for:
+               - Data encryption at rest (AES-GCM)
+               - Transport encryption (TLS configuration)
+               - Key derivation functions (PBKDF2, Argon2)
+               - Key rotation strategies
+               - Envelope encryption patterns
+               - Secure random generation
+               - Certificate management
+            
+            4. Search web for "encryption key management best practices"
+            
+            5. Cross-reference with:
+               - All transport layers (TLS config)
+               - Database encryption
+               - Message encryption patterns
+            
+            IMPORTANT: Show crypto patterns without revealing sensitive practices.
+      
+      - name: Improve Security Patterns Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'security-patterns'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith security patterns documentation.
+            
+            TASK: Improve ms-framework-docs/security/security-patterns.md by:
+            
+            1. Search web for "zero trust architecture patterns" and "defense in depth"
+            2. Add comprehensive security patterns:
+               - Zero-trust networking
+               - Defense in depth strategies
+               - Input validation patterns
+               - Output encoding
+               - CSRF protection
+               - Rate limiting strategies
+               - Security headers configuration
+               - Secrets management
+               - Secure defaults
+            
+            3. Include threat modeling:
+               - Common attack vectors
+               - Mitigation strategies
+               - Security boundaries
+               - Trust zones
+            
+            4. Cross-reference with:
+               - security-framework.md
+               - security-integration.md
+               - All transport and data layers
+            
+            5. Add security checklist for each component
+            
+            IMPORTANT: Focus on practical, implementable patterns.
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes made"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            git add -A
+            git commit -m "docs: Improve security & cryptography documentation
+            
+            - Enhanced authentication with JWT patterns
+            - Added comprehensive authorization models
+            - Improved encryption and key management
+            - Updated security patterns and threat models
+            
+            Based on Context7 library documentation:
+            - jwt-simple v0.12.10
+            - ring v0.17.8
+            - aes-gcm v0.10.3
+            - chacha20poly1305 v0.10.1"
+          fi
+      
+      - name: Push changes and create PR
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git push origin "${{ env.BRANCH_NAME }}"
+          gh pr create \
+            --title "docs: Security & Cryptography Documentation Improvements" \
+            --body "## Security Documentation Updates
+            
+            This PR improves the security documentation based on:
+            - jwt-simple v0.12.10 (JWT authentication)
+            - ring v0.17.8 (cryptographic primitives)
+            - Modern security patterns and threat models
+            
+            ### Changes
+            - Enhanced authentication flows and patterns
+            - Added authorization models (RBAC/ABAC)
+            - Improved encryption and key management
+            - Updated security patterns and checklists
+            
+            ### Context7 References
+            - jwt-simple: /rafaelbarbosa/jwt-simple
+            - ring: /briansmith/ring
+            
+            ### Security Considerations
+            - All examples use pseudocode only
+            - No sensitive implementation details
+            - Focus on patterns and best practices
+            
+            Generated by Security Documentation workflow" \
+            --base main \
+            --head "${{ env.BRANCH_NAME }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

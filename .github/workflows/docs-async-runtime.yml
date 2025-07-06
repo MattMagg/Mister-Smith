@@ -1,0 +1,232 @@
+name: Documentation - Async Runtime & Concurrency
+
+on:
+  workflow_dispatch:
+    inputs:
+      focus_area:
+        description: 'Specific area to focus on'
+        required: false
+        type: choice
+        options:
+          - 'all'
+          - 'tokio-runtime'
+          - 'async-patterns'
+          - 'supervision-trees'
+          - 'agent-lifecycle'
+        default: 'all'
+  schedule:
+    # Run daily at 3 AM UTC
+    - cron: '0 3 * * *'
+  push:
+    paths:
+      - 'ms-framework-docs/core-architecture/async-patterns.md'
+      - 'ms-framework-docs/core-architecture/tokio-runtime.md'
+      - 'ms-framework-docs/core-architecture/supervision-trees.md'
+      - 'ms-framework-docs/data-management/agent-lifecycle.md'
+      - 'ms-framework-docs/data-management/agent-operations.md'
+
+jobs:
+  improve-async-docs:
+    name: Improve Async Runtime Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH_NAME="docs/async-runtime-improvements-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH_NAME"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+      
+      - name: Improve Tokio Runtime Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'tokio-runtime'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith framework documentation for async runtime patterns.
+            
+            CONTEXT7 LIBRARY REFERENCES:
+            - Tokio v1.45.0 (/tokio-rs/tokio) - Core async runtime
+            - futures v0.3.31 (/rust-lang/futures-rs) - Async utilities
+            - async-trait v0.1.83 (/dtolnay/async-trait) - Async trait support
+            - crossbeam-channel v0.5.13 (/crossbeam-rs/crossbeam) - Lock-free channels
+            
+            TASK: Improve ms-framework-docs/core-architecture/tokio-runtime.md by:
+            
+            1. Search Context7 for Tokio best practices and patterns
+            2. Add comprehensive pseudocode examples for:
+               - Runtime configuration (worker threads, thread pools)
+               - Task spawning patterns (spawn, spawn_blocking, spawn_local)
+               - Channel patterns (mpsc, broadcast, oneshot, watch)
+               - Select! macro usage patterns
+               - Graceful shutdown patterns
+            
+            3. Ensure consistency with:
+               - ms-framework-docs/core-architecture/async-patterns.md
+               - ms-framework-docs/core-architecture/dependency-specifications.md (Tokio 1.45.0)
+            
+            4. Format according to project standards:
+               - Use ```rust blocks for pseudocode
+               - Include // comments explaining patterns
+               - Add cross-references to related docs
+               - Maintain consistent heading structure
+            
+            5. Search web for recent Tokio patterns if needed
+            
+            IMPORTANT: This is documentation phase - use ONLY pseudocode, no real implementation.
+            Follow all guidelines in ms-framework-docs/CLAUDE.md
+      
+      - name: Improve Async Patterns Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'async-patterns'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith framework documentation for async patterns.
+            
+            CONTEXT7 LIBRARY REFERENCES:
+            - futures v0.3.31 (/rust-lang/futures-rs) - Stream, Future combinators
+            - async-trait v0.1.83 (/dtolnay/async-trait) - Async traits
+            
+            TASK: Improve ms-framework-docs/core-architecture/async-patterns.md by:
+            
+            1. Search Context7 for futures-rs patterns and best practices
+            2. Add comprehensive pseudocode for:
+               - Stream processing patterns (map, filter, buffer, chunks)
+               - Future combinators (join, select, race, timeout)
+               - Error handling in async contexts
+               - Async trait definitions and usage
+               - Cancellation and timeout patterns
+            
+            3. Ensure alignment with supervision-trees.md for error propagation
+            4. Cross-reference with agent-lifecycle.md for state machines
+            
+            5. Format with clear sections and examples
+            
+            IMPORTANT: Documentation phase only - pseudocode examples only.
+      
+      - name: Improve Supervision Trees Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'supervision-trees'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith framework supervision tree documentation.
+            
+            CONTEXT: Erlang-style supervision trees implemented with Tokio
+            
+            TASK: Improve ms-framework-docs/core-architecture/supervision-trees.md by:
+            
+            1. Search web for "Erlang supervision trees Rust implementation patterns"
+            2. Add pseudocode for:
+               - Supervisor trait definitions
+               - Child restart strategies (one-for-one, one-for-all, rest-for-one)
+               - Backoff and retry patterns
+               - Health check integration
+               - Graceful shutdown cascading
+            
+            3. Ensure consistency with:
+               - tokio-runtime.md (task spawning)
+               - agent-lifecycle.md (lifecycle states)
+               - process-management-specifications.md
+            
+            4. Add sequence diagrams in mermaid format for supervision flows
+            
+            IMPORTANT: Pseudocode only, follow documentation phase rules.
+      
+      - name: Improve Agent Lifecycle Documentation
+        if: github.event.inputs.focus_area == 'all' || github.event.inputs.focus_area == 'agent-lifecycle'
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-4-20250514"
+          direct_prompt: |
+            You are improving the MisterSmith agent lifecycle documentation.
+            
+            CONTEXT7 REFERENCES:
+            - crossbeam-channel v0.5.13 (/crossbeam-rs/crossbeam) - Actor communication
+            
+            TASK: Improve ms-framework-docs/data-management/agent-lifecycle.md by:
+            
+            1. Search Context7 for crossbeam channel patterns
+            2. Add comprehensive state machine pseudocode:
+               - Agent states (Created, Initializing, Running, Suspended, Terminating)
+               - State transition rules and guards
+               - Channel-based communication patterns
+               - Lifecycle event publishing
+            
+            3. Cross-reference with:
+               - agent-operations.md
+               - agent-orchestration.md
+               - supervision-trees.md
+            
+            4. Include mermaid state diagrams
+            
+            IMPORTANT: Documentation phase - pseudocode only.
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes made"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            git add -A
+            git commit -m "docs: Improve async runtime documentation
+            
+            - Enhanced Tokio runtime patterns and configuration
+            - Added comprehensive async patterns with futures-rs
+            - Improved supervision tree documentation
+            - Updated agent lifecycle state machines
+            
+            Based on Context7 library documentation:
+            - Tokio v1.45.0
+            - futures v0.3.31
+            - async-trait v0.1.83
+            - crossbeam-channel v0.5.13"
+          fi
+      
+      - name: Push changes and create PR
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git push origin "${{ env.BRANCH_NAME }}"
+          gh pr create \
+            --title "docs: Async Runtime Documentation Improvements" \
+            --body "## Async Runtime Documentation Updates
+            
+            This PR improves the async runtime documentation based on:
+            - Tokio v1.45.0 best practices
+            - futures-rs patterns
+            - Supervision tree patterns
+            - Agent lifecycle management
+            
+            ### Changes
+            - Enhanced pseudocode examples
+            - Added comprehensive patterns
+            - Improved cross-references
+            - Ensured version consistency
+            
+            ### Context7 References
+            - Tokio: /tokio-rs/tokio
+            - Futures: /rust-lang/futures-rs
+            - Async-trait: /dtolnay/async-trait
+            - Crossbeam: /crossbeam-rs/crossbeam
+            
+            Generated by Async Runtime Documentation workflow" \
+            --base main \
+            --head "${{ env.BRANCH_NAME }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
