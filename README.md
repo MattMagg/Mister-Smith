@@ -4,7 +4,8 @@ A multi-agent orchestration framework built with Rust, featuring NATS messaging,
 
 ## Overview
 
-Mister Smith is a foundational framework for building distributed agent systems using modern async Rust patterns. The system emphasizes fault tolerance, scalability, and clean separation of concerns through a supervision tree architecture.
+Mister Smith is a foundational framework for building distributed agent systems using modern async Rust patterns.
+The system emphasizes fault tolerance, scalability, and clean separation of concerns through a supervision tree architecture.
 
 ## Architecture
 
@@ -33,18 +34,21 @@ The framework supports multiple specialized agent roles:
 ## Key Features
 
 ### Fault Tolerance
+
 - Automatic agent restart with configurable policies
 - Circuit breaker patterns for external dependencies
 - Graceful degradation under load
 - Health monitoring and failure detection
 
 ### Communication Patterns
+
 - **Request-Response**: Synchronous agent communication
 - **Publish-Subscribe**: Event-driven messaging
 - **Queue Groups**: Load-balanced task distribution
 - **Blackboard**: Shared knowledge coordination
 
 ### Resource Management
+
 - Connection pooling for external services
 - Memory-bounded context windows
 - Adaptive resource allocation
@@ -64,19 +68,24 @@ The framework supports multiple specialized agent roles:
 The framework documentation is organized into several key areas:
 
 ### Core Architecture
+
 - [System Architecture](ms-framework-docs/core-architecture/system-architecture.md) - Tokio runtime, async patterns, and supervision trees
 
 ### Data Management
+
 - [Agent Orchestration](ms-framework-docs/data-management/agent-orchestration.md) - Agent types, coordination patterns, and lifecycle management
 - [Data Persistence](ms-framework-docs/data-management/data-persistence.md) - Storage patterns and data management
 
 ### Transport Layer
+
 - [Transport Specifications](ms-framework-docs/transport/transport-layer-specifications.md) - NATS messaging, communication patterns, and protocol definitions
 
 ### Security
+
 - [Security Framework](ms-framework-docs/security/security-framework.md) - Authentication, authorization, TLS configuration, and secrets management
 
 ### Operations
+
 - [Deployment Architecture](ms-framework-docs/operations/deployment-architecture-specifications.md) - Deployment patterns and infrastructure
 - [Configuration Management](ms-framework-docs/operations/configuration-deployment-specifications.md) - Configuration and deployment specifications
 - [Observability & Monitoring](ms-framework-docs/operations/observability-monitoring-framework.md) - Monitoring, logging, and observability patterns
@@ -84,15 +93,19 @@ The framework documentation is organized into several key areas:
 ## Design Principles
 
 ### Fail-Fast with Graceful Recovery
+
 The system is designed to detect failures quickly and recover gracefully through supervision trees and circuit breakers.
 
 ### Event-Driven Architecture
+
 Components communicate through events, enabling loose coupling and better scalability.
 
 ### Resource Efficiency
+
 Async processing patterns and resource pooling ensure efficient use of system resources.
 
 ### Extensibility
+
 Middleware patterns and plugin architectures allow for easy extension and customization.
 
 ## Anti-Patterns to Avoid
@@ -110,6 +123,7 @@ The framework explicitly avoids several common distributed systems anti-patterns
 > **Note**: This is a framework specification and documentation repository. Implementation details and setup instructions will be added as the system is developed.
 
 The framework is designed to be:
+
 - **Modular**: Components can be used independently
 - **Configurable**: Extensive configuration options for different deployment scenarios
 - **Observable**: Built-in monitoring and logging capabilities

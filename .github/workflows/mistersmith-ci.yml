@@ -56,8 +56,6 @@ jobs:
             !.augment-guidelines.md
             !CLAUDE.md
             !CORE_ARCHITECTURE_INTEGRATION_EVIDENCE_REPORT.md
-            internal-operations/**/*.md
-            !internal-operations/working-prompts/deployment-plans/*.md
           config: .markdownlint.json
           fix: false
 

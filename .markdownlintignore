@@ -5,5 +5,5 @@ CLAUDE.md
 # Ignore report files that have special formatting
 CORE_ARCHITECTURE_INTEGRATION_EVIDENCE_REPORT.md
 
-# Ignore generated workflow documentation  
-internal-operations/working-prompts/deployment-plans/*.md
+# Ignore internal operations directory (contains specialized formatting)
+internal-operations/
