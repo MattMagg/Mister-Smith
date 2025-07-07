@@ -2,8 +2,7 @@
 
 ## FOLDER CONTEXT
 
-You are now in the MisterSmith framework documentation folder. This folder contains the technical specifications
-for the future implementation. Remember: These are SPECIFICATIONS ONLY - no implementation exists yet.
+You are now in the MisterSmith framework documentation folder. This folder contains the technical specifications for the framework. Phase 2 (Single Agent) has been implemented based on these specifications. Remaining specifications describe future phases.
 
 ## DOCUMENTATION STRUCTURE
 
@@ -64,10 +63,11 @@ grep -r "specific_term" . | cut -d: -f1 | sort | uniq
 ### Forbidden Actions
 
 ❌ Adding implementation code examples beyond pseudocode
-❌ Creating actual Rust code files
-❌ Adding build scripts or configuration files
-❌ Claiming specifications are "implemented" or "tested"
+❌ Creating actual Rust code files in this folder
+❌ Adding build scripts or configuration files here
+❌ Claiming unimplemented features are "working" or "tested"
 ❌ Removing complexity that's necessary for the design
+❌ Conflating planned features with implemented ones
 
 ## SPECIFICATION QUALITY STANDARDS
 
@@ -160,8 +160,8 @@ grep -r "TODO\|TBD\|FIXME" . | wc -l
 echo "=== Checking for inconsistent agent names ==="
 grep -r "Agent\|agent" . | grep -v "Agent::" | head -20
 
-echo "=== Checking for implementation claims ==="
-grep -r "implemented\|working\|tested\|production" . | grep -v "to be implemented"
+echo "=== Checking for false implementation claims ==="
+grep -r "implemented\|working\|tested\|production" . | grep -v "to be implemented" | grep -v "Phase 2" | grep -v "not implemented"
 ```
 
 ## NAVIGATION TIPS
@@ -210,11 +210,12 @@ When specifications conflict:
 
 ## REMEMBER IN THIS FOLDER
 
-You are crafting the blueprint for a complex system. Every specification should be:
+You are maintaining the blueprint for a complex system. Every specification should be:
 
-- **Clear**: Unambiguous to future implementers
+- **Clear**: Unambiguous to implementers
 - **Consistent**: Aligned with all related specs
 - **Complete**: No critical details missing
 - **Feasible**: Actually implementable
+- **Accurate**: Reflecting what's built vs planned
 
-The documentation in this folder is the CONTRACT for future implementation. Make it solid.
+The documentation in this folder is the CONTRACT between vision and implementation. Keep it truthful and solid.
