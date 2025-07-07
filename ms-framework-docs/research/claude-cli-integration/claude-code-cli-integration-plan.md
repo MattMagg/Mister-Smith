@@ -1,11 +1,16 @@
 # Claude Code CLI Integration Plan
 
-## Detailed Implementation Strategy for Mister Smith Framework
+## Technical Integration Strategy for Mister Smith Framework
 
 ### Overview
 
-This document provides a comprehensive integration plan for incorporating Claude Code CLI capabilities into the Mister Smith multi-agent framework.
-The integration leverages existing framework architecture while adding minimal new components.
+This document provides technical integration specifications for incorporating Claude Code CLI capabilities into the Mister Smith multi-agent framework. The integration leverages existing framework architecture while adding minimal new components.
+
+**Cross-References:**
+- [System Architecture](../../core-architecture/system-architecture.md)
+- [Agent Orchestration](../../data-management/agent-orchestration.md)
+- [NATS Transport](../../transport/nats-transport.md)
+- [Component Architecture](../../core-architecture/component-architecture.md)
 
 ---
 
@@ -16,18 +21,28 @@ The integration leverages existing framework architecture while adding minimal n
 ```text
 Mister Smith Framework (Rust)
 ├── NATS Server (existing messaging backbone)
+│   └── Subjects: control.*, agent.*, ctx.*
 ├── Agent Supervisor (existing Tokio-based)
+│   └── Supervision Tree Integration
 ├── Claude CLI Controller (NEW COMPONENT)
 │   ├── Agent Pool Manager
-│   ├── Hook Bridge Service  
+│   │   └── Resource Allocation & Lifecycle
+│   ├── Hook Bridge Service
+│   │   └── NATS Event Publishing
 │   └── Output Parser Service
+│       └── Stream Processing & Routing
 ├── Hook Bridge Scripts (NEW COMPONENT)
 │   ├── NATS Publishers
+│   │   └── JSON Event Serialization
 │   └── JSON Processors
+│       └── Hook Input Validation
 └── Claude CLI Instances (1-25)
     ├── claude --output-format=stream-json
+    │   └── Streaming Output Processing
     ├── Hook Scripts (NATS integration)
+    │   └── Bidirectional Communication
     └── MCP Servers (optional)
+        └── Extended Tool Registry
 ```
 
 ### 2. Data Flow Architecture
@@ -46,9 +61,14 @@ User Request → Framework → Claude CLI Controller → Claude CLI Instance
 
 ### 1. New Components to Add
 
-#### A. Claude CLI Controller (`core-architecture/claude-cli-integration.md`)
+#### A. Claude CLI Controller
 
 **Purpose**: Manage Claude CLI instance lifecycle and resource allocation
+
+**Integration Points:**
+- [Agent Orchestration](../../data-management/agent-orchestration.md)
+- [Supervision Trees](../../core-architecture/supervision-trees.md)
+- [NATS Transport](../../transport/nats-transport.md)
 
 **Implementation**:
 
@@ -90,9 +110,14 @@ impl ClaudeCliController {
 }
 ```
 
-#### B. Hook Bridge Service (`nats-transport.md` enhancement)
+#### B. Hook Bridge Service
 
 **Purpose**: Bridge Claude Code hooks to NATS messaging system
+
+**Integration Points:**
+- [NATS Transport](../../transport/nats-transport.md)
+- [Message Schemas](../../data-management/message-schemas.md)
+- [Connection Management](../../data-management/connection-management.md)
 
 **Implementation**:
 
@@ -128,9 +153,14 @@ impl HookBridge {
 }
 ```
 
-#### C. Task Output Parser (`data-management/task-output-parsing.md`)
+#### C. Task Output Parser
 
 **Purpose**: Parse Claude CLI task output and route to NATS subjects
+
+**Integration Points:**
+- [Message Framework](../../data-management/message-framework.md)
+- [Data Integration Patterns](../../data-management/data-integration-patterns.md)
+- [Agent Communication](../../data-management/agent-communication.md)
 
 **Implementation**:
 
@@ -170,7 +200,12 @@ impl TaskOutputParser {
 
 ### 2. Existing Components to Enhance
 
-#### A. Agent Orchestration (`data-management/agent-orchestration.md`)
+#### A. Agent Orchestration Enhancement
+
+**Integration Points:**
+- [Agent Orchestration](../../data-management/agent-orchestration.md)
+- [Agent Lifecycle](../../data-management/agent-lifecycle.md)
+- [Supervision Trees](../../core-architecture/supervision-trees.md)
 
 **Additions Required**:
 
@@ -202,9 +237,14 @@ impl AgentOrchestrator {
 }
 ```
 
-#### B. Transport Layer (`nats-transport.md`)
+#### B. Transport Layer Enhancement
 
-**Hook Integration Subjects** (already defined, just document usage):
+**Integration Points:**
+- [NATS Transport](../../transport/nats-transport.md)
+- [Message Schemas](../../data-management/message-schemas.md)
+- [Connection Management](../../data-management/connection-management.md)
+
+**Hook Integration Subjects** (already defined, document usage):
 
 ```text
 control.startup               # Claude CLI initialization
@@ -383,115 +423,258 @@ exit 0
 
 ---
 
-## Implementation Roadmap
+## Implementation Sequence
 
-### Phase 1: Core CLI Integration (Weeks 1-2)
+### Phase 1: Core CLI Integration
 
-**Priority**: Critical
 **Dependencies**: None
 
-**Deliverables**:
+**Components**:
 
-1. Claude CLI Controller implementation
-2. Basic hook bridge for NATS integration
-3. Task output parsing and routing
-4. Configuration management
+1. **Claude CLI Controller implementation**
+   - Agent lifecycle management
+   - Resource allocation system
+   - Process supervision integration
+
+2. **Basic hook bridge for NATS integration**
+   - Hook event capture
+   - NATS message publishing
+   - Error handling and recovery
+
+3. **Task output parsing and routing**
+   - Stream processing implementation
+   - Message routing logic
+   - Output format standardization
+
+4. **Configuration management**
+   - TOML configuration parsing
+   - Environment variable handling
+   - Validation and defaults
 
 **Framework Files to Create/Modify**:
 
 - Create: `core-architecture/claude-cli-integration.md`
 - Modify: `core-architecture/system-architecture.md`
-- Modify: `nats-transport.md`
+- Modify: `transport/nats-transport.md`
 - Create: `config/claude-cli.toml`
 
-### Phase 2: Hook System Integration (Weeks 3-4)
+### Phase 2: Hook System Integration
 
-**Priority**: High
 **Dependencies**: Phase 1
 
-**Deliverables**:
+**Components**:
 
-1. Complete hook bridge implementation
-2. JSON message format standardization
-3. Hook configuration management
-4. Error handling and timeout management
+1. **Complete hook bridge implementation**
+   - Full hook type coverage
+   - Bidirectional communication
+   - State synchronization
+
+2. **JSON message format standardization**
+   - Schema validation
+   - Serialization/deserialization
+   - Version compatibility
+
+3. **Hook configuration management**
+   - Dynamic hook registration
+   - Configuration hot-reload
+   - Hook script validation
+
+4. **Error handling and timeout management**
+   - Graceful degradation
+   - Retry mechanisms
+   - Circuit breaker patterns
 
 **Framework Files to Modify**:
 
-- Enhance: `nats-transport.md`
-- Modify: `observability-monitoring-framework.md`
+- Enhance: `transport/nats-transport.md`
+- Modify: `operations/observability-monitoring-framework.md`
 - Create: `scripts/nats-hook-bridge`
 
-### Phase 3: Parallel Execution Enhancement (Weeks 5-6)
+### Phase 3: Parallel Execution Enhancement
 
-**Priority**: High
 **Dependencies**: Phase 1, 2
 
-**Deliverables**:
+**Components**:
 
-1. Multi-agent coordination patterns
-2. Resource pool management
-3. Load balancing and work distribution
-4. Performance optimization
+1. **Multi-agent coordination patterns**
+   - Task distribution algorithms
+   - Result aggregation
+   - Dependency management
+
+2. **Resource pool management**
+   - Agent pool sizing
+   - Load balancing
+   - Resource contention handling
+
+3. **Performance optimization**
+   - Connection pooling
+   - Message batching
+   - Memory optimization
 
 **Framework Files to Modify**:
 
 - Enhance: `data-management/agent-orchestration.md`
-- Modify: `deployment-architecture-specifications.md`
-- Enhance: `observability-monitoring-framework.md`
+- Modify: `operations/deployment-architecture-specifications.md`
+- Enhance: `operations/observability-monitoring-framework.md`
 
-### Phase 4: MCP Integration (Weeks 7-8)
+### Phase 4: MCP Integration
 
-**Priority**: Medium
 **Dependencies**: Phase 1
 
-**Deliverables**:
+**Components**:
 
-1. MCP server integration
-2. Tool registry enhancement
-3. Slash command workflow integration
-4. Permission system integration
+1. **MCP server integration**
+   - MCP protocol implementation
+   - Server lifecycle management
+   - Tool capability discovery
+
+2. **Tool registry enhancement**
+   - Dynamic tool registration
+   - Capability negotiation
+   - Permission validation
+
+3. **Slash command workflow integration**
+   - Command parsing
+   - Context preservation
+   - Response handling
 
 **Framework Files to Create/Modify**:
 
 - Create: `integration/mcp-integration-specifications.md`
 - Enhance: `data-management/tool-registry.md`
-- Modify: `security-framework.md`
+- Modify: `security/security-framework.md`
 
-### Phase 5: Advanced Features (Weeks 9-10)
+### Phase 5: Advanced Features
 
-**Priority**: Low
 **Dependencies**: All previous phases
 
-**Deliverables**:
+**Components**:
 
-1. Advanced coordination patterns
-2. Performance optimization
-3. Enterprise features
-4. Monitoring and observability enhancements
+1. **Advanced coordination patterns**
+   - Distributed consensus
+   - Event sourcing
+   - CQRS implementation
+
+2. **Performance optimization**
+   - Connection multiplexing
+   - Message compression
+   - Async I/O optimization
+
+3. **Monitoring and observability enhancements**
+   - Distributed tracing
+   - Metrics collection
+   - Log aggregation
 
 ---
 
-## Success Metrics
+## Technical Specifications
 
-### 1. Performance Metrics
+### 1. Performance Requirements
 
-- **Agent Spawn Time**: < 5 seconds per agent
-- **Concurrent Agents**: 25-30 agents sustained
-- **Memory Usage**: < 6GB total for all agents
-- **Hook Latency**: < 100ms for hook processing
+```rust
+// Performance targets for Claude CLI integration
+const PERFORMANCE_TARGETS: PerformanceTargets = PerformanceTargets {
+    agent_spawn_time_ms: 5000,
+    max_concurrent_agents: 25,
+    max_memory_usage_mb: 6000,
+    hook_latency_ms: 100,
+    message_throughput_per_sec: 1000,
+};
+```
 
-### 2. Reliability Metrics
+**Monitoring Integration:**
+- [Observability Framework](../../operations/observability-monitoring-framework.md)
+- [Performance Monitoring](../../operations/performance-monitoring.md)
+- [Health Checks](../../operations/health-checks.md)
 
-- **Agent Uptime**: > 99% availability
-- **Hook Success Rate**: > 99.5% successful hook executions
-- **Error Recovery**: < 30 seconds for agent restart
-- **Message Delivery**: > 99.9% NATS message delivery
+### 2. Reliability Requirements
 
-### 3. Integration Metrics
+```rust
+// Reliability targets for Claude CLI integration
+const RELIABILITY_TARGETS: ReliabilityTargets = ReliabilityTargets {
+    agent_uptime_percentage: 99.0,
+    hook_success_rate: 99.5,
+    error_recovery_time_sec: 30,
+    message_delivery_rate: 99.9,
+};
+```
 
-- **API Compatibility**: 100% Claude Code CLI feature coverage
-- **Framework Compatibility**: No breaking changes to existing components
-- **Configuration Simplicity**: Single configuration file for all settings
+**Error Handling Integration:**
+- [Error Handling](../../core-architecture/error-handling.md)
+- [Supervision Trees](../../core-architecture/supervision-trees.md)
+- [Recovery Patterns](../../core-architecture/recovery-patterns.md)
 
-This integration plan provides a clear path to incorporate Claude Code CLI capabilities while maintaining the integrity and performance of the existing Mister Smith framework.
+### 3. Integration Compatibility
+
+```rust
+// Integration compatibility requirements
+const INTEGRATION_REQUIREMENTS: IntegrationRequirements = IntegrationRequirements {
+    claude_cli_feature_coverage: 100,
+    breaking_changes_allowed: false,
+    configuration_complexity: ConfigComplexity::Single,
+    backward_compatibility: true,
+};
+```
+
+**Framework Integration:**
+- [System Architecture](../../core-architecture/system-architecture.md)
+- [Component Architecture](../../core-architecture/component-architecture.md)
+- [Integration Patterns](../../core-architecture/integration-patterns.md)
+
+### 4. Security Requirements
+
+```rust
+// Security requirements for Claude CLI integration
+const SECURITY_REQUIREMENTS: SecurityRequirements = SecurityRequirements {
+    authentication_required: true,
+    authorization_granularity: AuthzGranularity::Agent,
+    audit_logging: true,
+    secure_communication: true,
+};
+```
+
+**Security Integration:**
+- [Security Framework](../../security/security-framework.md)
+- [Authentication](../../security/authentication.md)
+- [Authorization](../../security/authorization.md)
+
+---
+
+## Implementation Validation
+
+### Testing Strategy
+
+1. **Unit Tests**
+   - Component isolation testing
+   - Mock service validation
+   - Error condition coverage
+
+2. **Integration Tests**
+   - End-to-end workflow validation
+   - Cross-component communication
+   - Performance benchmarking
+
+3. **Load Tests**
+   - Concurrent agent spawning
+   - Message throughput limits
+   - Resource exhaustion scenarios
+
+### Verification Commands
+
+```bash
+# Verify Claude CLI integration
+cargo test --package claude-cli-integration
+
+# Benchmark performance
+cargo bench --package claude-cli-integration
+
+# Load test with multiple agents
+cargo run --bin load-test -- --agents 25 --duration 300
+```
+
+**Testing Integration:**
+- [Testing Framework](../../testing/testing-framework.md)
+- [Integration Tests](../../testing/integration-tests.md)
+- [Load Testing](../../testing/load-testing.md)
+
+This integration plan provides technical specifications for incorporating Claude Code CLI capabilities while maintaining the integrity and performance of the existing Mister Smith framework.

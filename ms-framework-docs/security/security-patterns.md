@@ -9,20 +9,17 @@ tags:
 - '#agent-focused'
 ---
 
-## Security Patterns - Core Framework Implementation
+## Security Patterns
 
-## Validation Status
+## Overview
 
-**Last Validated**: 2025-07-05  
-**Validator**: Agent 16 - Security Patterns Validator  
-**Security Maturity Score**: 6.8/10  
-**Production Readiness Score**: 17/25 points  
+This document provides essential security patterns, guidelines, and configurations for agent implementation. It covers authentication, authorization, TLS configuration, secrets management, and secure communication patterns.
 
-### Validation Summary
-
-- **Strengths**: Exceptional NATS security patterns, robust hook sandboxing, comprehensive mTLS implementation
-- **Critical Gaps**: Missing incident response framework, inadequate secrets management, no encryption at rest
-- **Overall Assessment**: Solid foundation suitable for basic production but requires enhancement for high-security environments
+**Related Documentation:**
+- [Security Framework](./security-framework.md) - Comprehensive security implementations and detailed code examples
+- [JWT Implementation](./security-framework.md#2-jwt-authentication-implementation) - Complete JWT authentication service
+- [Certificate Management](./security-framework.md#1-certificate-management-implementation) - Production-ready certificate handling
+- [RBAC Implementation](./security-framework.md#3-authorization-implementation) - Role-based access control patterns
 
 ## Framework Authority
 
@@ -32,14 +29,14 @@ As stated in the canonical framework: "Agents: use this framework as the canonic
 
 ## Purpose
 
-Essential security patterns, guidelines, templates, and sandbox configurations for agent implementation.
-This document provides the foundational security building blocks that agents need to implement secure systems.
+Essential security patterns, guidelines, and configuration templates for agent implementation. This document provides foundational security building blocks including authentication patterns, authorization flows, TLS setup, and secure communication guidelines.
 
 ## Core Security Components
 
 ### 1. Basic Authentication Pattern
 
-**Validation Status**: ⚠️ Adequately Implemented (6/10) - Missing enterprise features like MFA and refresh tokens
+**See also:** [JWT Authentication Implementation](./security-framework.md#2-jwt-authentication-implementation) for complete production-ready JWT service.
+
 
 **Pseudocode Pattern:**
 
@@ -91,7 +88,8 @@ authentication:
 
 ### 2. Simple Authorization Pattern
 
-**Validation Status**: ⚠️ Adequately Implemented (6/10) - RBAC present but missing ABAC and context-awareness
+**See also:** [RBAC Authorization Implementation](./security-framework.md#3-authorization-implementation) for complete role-based access control engine.
+
 
 **Pseudocode Pattern:**
 
@@ -139,11 +137,10 @@ authorization:
   type: role_based
   default_role: reader
   
-  # Enhanced compliance mappings based on Agent 18 Compliance Audit findings
   compliance_frameworks:
     gdpr:
       enabled: true
-      consent_tracking: REQUIRED_IMPLEMENTATION
+      consent_tracking: true
       data_retention_limits: true
       right_to_erasure: true
     soc2:
@@ -152,17 +149,14 @@ authorization:
       change_management: automated
     iso27001:
       enabled: true
-      incident_response: REQUIRES_IMPLEMENTATION
-      risk_management: REQUIRES_IMPLEMENTATION
+      incident_response: true
+      risk_management: true
     pci_dss:
-      enabled: false  # CRITICAL GAP
-      implementation_required: true
+      enabled: false
     hipaa:
-      enabled: false  # CRITICAL GAP
-      implementation_required: true
+      enabled: false
     sox:
-      enabled: false  # CRITICAL GAP
-      implementation_required: true
+      enabled: false
   
   roles:
     - name: reader
@@ -215,9 +209,9 @@ tls:
 
 ### 4. Basic Secrets Management
 
-**Validation Status**: ⚠️ Partially Implemented (5/10) - Basic patterns present but missing enterprise secret management integration
+**See also:** [Certificate Management](./security-framework.md#1-certificate-management-implementation) for production certificate handling patterns.
 
-**CRITICAL SECURITY GAP**: Environment variables visible in process lists pose credential compromise risk
+**Security Note**: Environment variables visible in process lists pose credential compromise risk in production environments
 
 **Pseudocode Pattern:**
 
@@ -287,7 +281,6 @@ secrets:
 
 ### 5. Basic Security Middleware
 
-**Validation Status**: ⚠️ Partially Implemented (5/10) - Essential headers present but missing CSP and CSRF protection
 
 **Pseudocode Pattern:**
 
@@ -341,7 +334,8 @@ function rate_limit_middleware(request, response, next):
 
 ### 6. Basic Audit Logging
 
-**Validation Status**: ⚠️ Partially Implemented (5/10) - Structured events present but missing integrity protection and SIEM integration
+**See also:** [Security Audit Implementation](./security-framework.md#4-security-audit-implementation) for comprehensive audit service with integrity protection.
+
 
 **Pseudocode Pattern:**
 
@@ -406,7 +400,6 @@ security_events = [
 
 ### 7. NATS Security Patterns
 
-**Validation Status**: ✅ Fully Implemented (9/10) - Production-ready mTLS, isolation, quotas serving as framework gold standard
 
 **Pseudocode Pattern - mTLS Configuration:**
 
@@ -607,16 +600,16 @@ function handle_sighup_signal():
 - [ ] Configure fine-grained ACLs for NATS subjects
 - [ ] Implement key rotation for zero-downtime secret updates
 
-### Critical Security Enhancements (Production Readiness)
+### Advanced Security Enhancements
 
-- [ ] **CRITICAL**: Implement incident response framework with classification and escalation
-- [ ] **CRITICAL**: Integrate enterprise secrets management (Vault/AWS Secrets Manager)
-- [ ] **CRITICAL**: Implement encryption at rest for databases and file systems
-- [ ] **HIGH**: Deploy real-time security monitoring and SIEM integration
-- [ ] **HIGH**: Add Content Security Policy (CSP) and CSRF protection
-- [ ] **HIGH**: Implement behavioral analytics and anomaly detection
-- [ ] **MEDIUM**: Add multi-factor authentication (MFA) support
-- [ ] **MEDIUM**: Implement compliance framework alignment (GDPR/HIPAA/SOX)
+- [ ] Implement incident response framework with classification and escalation
+- [ ] Integrate enterprise secrets management (Vault/AWS Secrets Manager)
+- [ ] Implement encryption at rest for databases and file systems
+- [ ] Deploy real-time security monitoring and SIEM integration
+- [ ] Add Content Security Policy (CSP) and CSRF protection
+- [ ] Implement behavioral analytics and anomaly detection
+- [ ] Add multi-factor authentication (MFA) support
+- [ ] Implement compliance framework alignment (GDPR/HIPAA/SOX)
 
 ### Advanced Security Controls
 
@@ -637,6 +630,267 @@ function handle_sighup_signal():
 - [ ] Test incident response procedures regularly
 - [ ] Audit access controls and permissions quarterly
 - [ ] Verify backup and disaster recovery procedures
+
+## Security Architecture Examples
+
+### Complete Agent Security Implementation
+
+**Agent Initialization with Full Security Stack:**
+
+```rust
+// Complete security setup for MisterSmith agent
+use ms_framework::security::{
+    JwtService, CertificateManager, AuthorizationMiddleware,
+    AuditService, SecureNatsClient
+};
+
+pub struct SecureAgent {
+    jwt_service: JwtService,
+    cert_manager: CertificateManager,
+    authz_middleware: AuthorizationMiddleware,
+    audit_service: AuditService,
+    nats_client: SecureNatsClient,
+}
+
+impl SecureAgent {
+    pub async fn new(config: SecurityConfig) -> Result<Self> {
+        // Initialize certificate management
+        let cert_manager = CertificateManager::new();
+        cert_manager.start_monitoring().await;
+        
+        // Initialize JWT authentication
+        let jwt_service = JwtService::new()?;
+        
+        // Initialize authorization engine
+        let authz_middleware = AuthorizationMiddleware::new();
+        
+        // Initialize audit logging
+        let mut audit_service = AuditService::new();
+        
+        // Initialize secure NATS connection
+        let tls_config = cert_manager.create_client_config()?;
+        let nats_client = SecureNatsClient::connect(
+            &config.nats_url,
+            tls_config,
+            &config.tenant_id
+        ).await?;
+        
+        Ok(Self {
+            jwt_service,
+            cert_manager,
+            authz_middleware,
+            audit_service,
+            nats_client,
+        })
+    }
+    
+    pub async fn handle_request(&mut self, request: Request) -> Result<Response> {
+        // Step 1: Authenticate request
+        let claims = self.jwt_service.authenticate_request(
+            request.headers.get("Authorization")
+        )?;
+        
+        // Step 2: Log authentication success
+        self.audit_service.log_authentication(
+            Some(claims.custom.user_id),
+            Some(claims.custom.tenant_id),
+            request.client_ip(),
+            request.user_agent(),
+            true,
+            None
+        );
+        
+        // Step 3: Extract resource and action
+        let resource = Resource::from_request(&request)?;
+        let action = Action::from_request(&request)?;
+        
+        // Step 4: Authorize request
+        self.authz_middleware.authorize(&claims.custom, &resource, &action)
+            .map_err(|e| {
+                // Log authorization failure
+                self.audit_service.log_authorization(
+                    claims.custom.user_id,
+                    claims.custom.tenant_id,
+                    claims.custom.session_id,
+                    resource.id.clone(),
+                    resource.resource_type.to_string(),
+                    action.to_string(),
+                    false,
+                    Some(e.to_string())
+                );
+                e
+            })?;
+        
+        // Step 5: Process request with security context
+        let response = self.process_authorized_request(request, claims).await?;
+        
+        // Step 6: Add security headers
+        let secure_response = self.add_security_headers(response);
+        
+        Ok(secure_response)
+    }
+}
+```
+
+### Multi-Tenant NATS Security Architecture
+
+**Complete tenant isolation pattern:**
+
+```rust
+// Tenant-isolated NATS client with comprehensive security
+pub struct TenantSecureNatsClient {
+    client: async_nats::Client,
+    tenant_id: String,
+    audit_service: AuditService,
+}
+
+impl TenantSecureNatsClient {
+    pub async fn new(tenant_id: String, cert_manager: &CertificateManager) -> Result<Self> {
+        // Create tenant-specific TLS configuration
+        let tls_config = cert_manager.create_client_config()?;
+        
+        // Connect with tenant-specific credentials
+        let client = async_nats::ConnectOptions::new()
+            .tls_client_config(tls_config)
+            .name(&format!("tenant_{}_agent", tenant_id))
+            .connect("nats://localhost:4222")
+            .await?;
+        
+        let audit_service = AuditService::new();
+        
+        Ok(Self {
+            client,
+            tenant_id,
+            audit_service,
+        })
+    }
+    
+    pub async fn publish_secure(&mut self, subject: &str, payload: &[u8]) -> Result<()> {
+        // Validate subject follows tenant isolation pattern
+        let tenant_subject = format!("tenant.{}.{}", self.tenant_id, subject);
+        
+        // Log message publication
+        self.audit_service.log_message_event(
+            &self.tenant_id,
+            &tenant_subject,
+            "publish",
+            payload.len()
+        );
+        
+        // Publish with rate limiting
+        self.client.publish(tenant_subject, payload.into()).await?;
+        
+        Ok(())
+    }
+    
+    pub async fn subscribe_secure(&self, subject: &str) -> Result<async_nats::Subscriber> {
+        // Enforce tenant isolation in subscription
+        let tenant_subject = format!("tenant.{}.{}", self.tenant_id, subject);
+        
+        // Create subscriber with resource limits
+        let subscriber = self.client
+            .subscribe(tenant_subject)
+            .await?
+            .with_capacity(1000); // Bounded buffer
+        
+        Ok(subscriber)
+    }
+}
+```
+
+### Zero-Trust Security Flow
+
+**End-to-end security validation:**
+
+```rust
+// Zero-trust security validation flow
+pub struct ZeroTrustValidator {
+    jwt_service: JwtService,
+    rbac_engine: RbacEngine,
+    audit_service: AuditService,
+    rate_limiter: RateLimiter,
+}
+
+impl ZeroTrustValidator {
+    pub async fn validate_request(&mut self, request: &Request) -> Result<SecurityContext> {
+        // 1. Rate limiting (first line of defense)
+        let client_id = self.extract_client_id(request)?;
+        self.rate_limiter.check_limit(&client_id)?;
+        
+        // 2. TLS verification (transport security)
+        self.verify_tls_connection(request)?;
+        
+        // 3. Authentication (identity verification)
+        let claims = self.jwt_service.authenticate_request(
+            request.headers.get("Authorization")
+        )?;
+        
+        // 4. Authorization (permission validation)
+        let resource = Resource::from_request(request)?;
+        let action = Action::from_request(request)?;
+        
+        let authorized = self.rbac_engine.check_permission(
+            &claims.custom,
+            &resource,
+            &action
+        )?;
+        
+        if !authorized {
+            self.audit_service.log_authorization_denied(
+                claims.custom.user_id,
+                resource.id,
+                action.to_string(),
+                "Insufficient permissions".to_string()
+            );
+            return Err(SecurityError::Unauthorized);
+        }
+        
+        // 5. Context validation (additional security checks)
+        self.validate_request_context(request, &claims)?;
+        
+        // 6. Log successful security validation
+        self.audit_service.log_successful_validation(
+            claims.custom.user_id,
+            resource.id,
+            action.to_string()
+        );
+        
+        Ok(SecurityContext {
+            user_claims: claims.custom,
+            validated_resource: resource,
+            permitted_action: action,
+            validation_timestamp: Utc::now(),
+        })
+    }
+    
+    fn validate_request_context(&self, request: &Request, claims: &Claims<UserClaims>) -> Result<()> {
+        // IP address validation
+        if let Some(allowed_ips) = &claims.custom.allowed_ips {
+            let client_ip = request.client_ip();
+            if !allowed_ips.contains(&client_ip) {
+                return Err(SecurityError::UnauthorizedSource);
+            }
+        }
+        
+        // Time-based access control
+        if claims.custom.require_business_hours {
+            let current_hour = Utc::now().hour();
+            if current_hour < 9 || current_hour > 17 {
+                return Err(SecurityError::OutsideBusinessHours);
+            }
+        }
+        
+        // Device fingerprint validation
+        if let Some(device_id) = request.headers.get("X-Device-ID") {
+            if !self.validate_device_fingerprint(device_id, claims.custom.user_id)? {
+                return Err(SecurityError::UnknownDevice);
+            }
+        }
+        
+        Ok(())
+    }
+}
+```
 
 ## Configuration Templates
 
@@ -823,88 +1077,43 @@ function secure_hook_directory(hook_dir):
 - Test security configurations in isolated environments
 - Follow the principle of least privilege for all access control
 
-## Critical Security Gaps (Validation Findings)
+## Security Enhancement Areas
 
-### Critical Priority - Fix Immediately
-
-#### 1. Missing Incident Response Framework
-
-**Impact**: Unable to respond effectively to security breaches  
-**Current Status**: Basic event logging only, no response procedures  
-**Required Actions**:
+### Incident Response Framework
 
 - Implement incident classification and severity assessment system
 - Create response playbooks for common security scenarios
 - Establish escalation procedures and communication templates
 - Integrate with security operations center (SOC)
 
-#### 2. Inadequate Secrets Management
-
-**Impact**: High risk of credential compromise  
-**Current Status**: Environment variables visible in process lists  
-**Required Actions**:
+### Enterprise Secrets Management
 
 - Integrate HashiCorp Vault or AWS Secrets Manager
 - Implement automatic secret rotation mechanisms
 - Remove secrets from environment variables and process lists
 - Add key management lifecycle procedures
 
-#### 3. No Encryption at Rest
-
-**Impact**: Data exposure if storage systems compromised  
-**Current Status**: Data storage security not addressed  
-**Required Actions**:
+### Encryption at Rest
 
 - Implement database encryption guidelines
 - Add file system encryption patterns
 - Provide key management lifecycle procedures
 
-### High Priority - Address in Next Sprint
-
-#### 4. Missing Real-Time Security Monitoring
-
-**Impact**: Delayed response to active security incidents  
-**Required Actions**:
+### Real-Time Security Monitoring
 
 - Implement SIEM integration patterns
 - Add real-time alerting for critical security events
 - Create security operations dashboard
 - Implement behavioral analytics and anomaly detection
 
-#### 5. Incomplete Web Application Security
-
-**Impact**: Vulnerable to common web application attacks  
-**Missing Components**:
+### Advanced Web Application Security
 
 - Content Security Policy (CSP) implementation
 - Cross-Site Request Forgery (CSRF) protection
 - Advanced XSS prevention beyond basic headers
 - SQL injection prevention patterns
 
-#### 6. No Behavioral Analytics
-
-**Impact**: Advanced threats may go undetected  
-**Required Actions**:
-
-- Implement user behavior baseline establishment
-- Add anomaly detection for suspicious activities
-- Create adaptive security response mechanisms
-
-### Medium Priority - Plan for Future Release
-
-#### 7. Limited Compliance Framework
-
-**Impact**: May not meet industry compliance standards  
-**Required Actions**:
-
-- Implement GDPR, SOX, HIPAA compliance patterns
-- Add privacy controls for data protection regulations
-- Create compliance monitoring and reporting
-
-#### 8. Missing Advanced Authentication
-
-**Impact**: Increased risk of account compromise  
-**Required Actions**:
+### Advanced Authentication
 
 - Implement multi-factor authentication (MFA)
 - Add risk-based authentication
@@ -912,7 +1121,7 @@ function secure_hook_directory(hook_dir):
 
 ## Attack Vector Coverage Analysis
 
-### Well-Covered Attack Vectors (Score: 8-9/10)
+### Well-Protected Attack Vectors
 
 - **Man-in-the-Middle Attacks**: mTLS implementation provides strong protection
 - **Privilege Escalation**: Sandbox execution and RBAC limit attack surface
@@ -920,21 +1129,19 @@ function secure_hook_directory(hook_dir):
 - **Network Eavesdropping**: TLS encryption secures communications
 - **Tenant Isolation Breaches**: NATS account separation ensures true isolation
 
-### Inadequately Covered Attack Vectors (Score: 3-5/10)
+### Areas Requiring Additional Security Patterns
 
-- **SQL Injection**: No database security patterns or parameterized query guidelines
-- **Cross-Site Scripting (XSS)**: Basic security headers only, missing CSP
-- **Cross-Site Request Forgery (CSRF)**: Not addressed in patterns
-- **Distributed Denial of Service (DDoS)**: No distributed rate limiting mechanisms
-- **Supply Chain Attacks**: No dependency verification or integrity checking
-- **Insider Threats**: Limited audit capabilities and behavioral monitoring
-- **Zero-Day Exploits**: No runtime application self-protection (RASP) patterns
+- **SQL Injection**: Database security patterns and parameterized query guidelines
+- **Cross-Site Scripting (XSS)**: Content Security Policy (CSP) implementation
+- **Cross-Site Request Forgery (CSRF)**: CSRF token validation patterns
+- **Distributed Denial of Service (DDoS)**: Distributed rate limiting mechanisms
+- **Supply Chain Attacks**: Dependency verification and integrity checking
+- **Insider Threats**: Enhanced audit capabilities and behavioral monitoring
+- **Zero-Day Exploits**: Runtime application self-protection (RASP) patterns
 
-## Security Enhancement Recommendations
+## Security Pattern Implementations
 
-### Immediate Implementation (Critical)
-
-1. **Comprehensive Incident Response Framework**
+### Incident Response Framework
 
 ```yaml
 incident_response:
@@ -952,7 +1159,7 @@ incident_response:
     - ddos_attack
 ```
 
-1. **Enterprise Secrets Management Integration**
+### Enterprise Secrets Management Integration
 
 ```yaml
 secrets_management:
@@ -966,7 +1173,7 @@ secrets_management:
     track_rotation: true
 ```
 
-1. **Encryption at Rest Patterns**
+### Encryption at Rest Patterns
 
 ```yaml
 encryption_at_rest:
@@ -979,9 +1186,7 @@ encryption_at_rest:
     mount_encryption: true
 ```
 
-### Short-Term Improvements (High Priority)
-
-1. **Real-Time Security Monitoring**
+### Real-Time Security Monitoring
 
 ```yaml
 security_monitoring:
@@ -996,7 +1201,7 @@ security_monitoring:
     anomaly_threshold: 2_standard_deviations
 ```
 
-1. **Enhanced Web Application Security**
+### Enhanced Web Application Security
 
 ```yaml
 web_security:

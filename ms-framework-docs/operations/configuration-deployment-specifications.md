@@ -1,14 +1,27 @@
----
-title: Configuration & Deployment Specifications - Revised
-type: note
-permalink: revision-swarm/operations/configuration-deployment-specifications-revised
----
+# Configuration & Deployment Specifications
 
-## Configuration & Deployment Specifications - Revised
+## Framework Implementation Patterns
 
-## Framework Implementation Guide
+### Cross-Reference Integration
+
+**Related Documentation**:
+- [Configuration Management](configuration-management.md) - Complete configuration schemas and management framework
+- [System Architecture](../core-architecture/system-architecture.md) - Overall framework architecture
+- [Agent Orchestration](../data-management/agent-orchestration.md) - Agent coordination patterns
+
+### Technical Overview
+
+This specification defines deployment patterns and infrastructure integration for the Mister Smith AI Agent Framework. It provides implementation patterns that utilize the configuration schemas defined in [Configuration Management](configuration-management.md) for:
+
+- **Environment Management** with tier-based deployment strategies
+- **Secret Management** patterns for secure credential handling
+- **Progressive Deployment** strategies for safe rollouts
+- **Container Orchestration** patterns for scalable deployment
+- **Infrastructure-as-Code** integration for automated provisioning
 
 ### 1. Environment Management Patterns
+
+**Configuration Integration**: These patterns implement the environment tier configurations defined in [Configuration Management](configuration-management.md) Section 5.1.
 
 #### 1.1 Environment Hierarchy Pattern
 
@@ -34,6 +47,8 @@ ENVIRONMENT_TIERS = {
     }
 }
 ```
+
+**Reference**: Configuration defaults for each tier are defined in [Configuration Management](configuration-management.md) Section 5.1.
 
 #### 1.2 Environment Configuration Pattern
 
@@ -68,6 +83,8 @@ PATTERN EnvironmentVariableLoading:
 ```
 
 ### 2. Secret Management Patterns
+
+**Configuration Integration**: These patterns implement the secret management configurations defined in [Configuration Management](configuration-management.md) Section 2.2.1.
 
 #### 2.1 Secret Storage Architecture Pattern
 
@@ -168,6 +185,8 @@ PATTERN DeploymentSafety:
 
 ### 4. Configuration Management Patterns
 
+**Configuration Integration**: These patterns utilize the configuration schemas and validation framework defined in [Configuration Management](configuration-management.md) Sections 2-4.
+
 #### 4.1 Configuration Templating Pattern
 
 ```rust
@@ -198,6 +217,8 @@ PATTERN ConfigurationValidation:
 ```
 
 ### 5. Infrastructure Pattern Integration
+
+**Configuration Integration**: These patterns are implemented with detailed examples in [Configuration Management](configuration-management.md) Section 10.
 
 #### 5.1 Infrastructure as Code Pattern
 
@@ -346,6 +367,8 @@ PATTERN BuildOptimization:
 ```
 
 ### 6. Scaling and Resource Management Patterns
+
+**Configuration Integration**: These patterns implement the resource allocation configurations defined in [Configuration Management](configuration-management.md) Section 5.2.
 
 #### 6.1 Horizontal Scaling Pattern
 
@@ -584,5 +607,33 @@ PATTERN DisasterRecovery:
 
 ---
 
-This specification provides framework patterns for implementing robust configuration and deployment systems without including actual
-implementation code, following framework documentation standards for specialized research agents.
+## Configuration Management Integration
+
+### Pattern Implementation Reference
+
+This specification provides framework patterns for implementing robust configuration and deployment systems. These patterns integrate with the detailed configuration schemas defined in [Configuration Management](configuration-management.md):
+
+**Environment Management Integration**:
+- [Environment Tier Defaults](configuration-management.md#51-environment-tier-defaults) - Default configurations for each tier
+- [Environment Variable Specifications](configuration-management.md#3-environment-variable-specifications) - Environment-specific variable patterns
+
+**Secret Management Integration**:
+- [Security Configuration Schema](configuration-management.md#221-security-configuration-securitytoml) - Security configuration structure
+- [Secret Access Control Patterns](configuration-management.md#91-configuration-security-best-practices) - Security best practices
+
+**Deployment Strategy Integration**:
+- [Configuration Override Hierarchies](configuration-management.md#6-configuration-override-hierarchies) - Configuration merge strategies
+- [Dynamic Configuration Updates](configuration-management.md#63-dynamic-configuration-updates) - Hot reload capabilities
+
+**Infrastructure Integration**:
+- [Infrastructure-as-Code Integration](configuration-management.md#10-infrastructure-as-code-integration) - Terraform, CloudFormation, and Helm examples
+- [Container Resource Management](configuration-management.md#container-resource-patterns) - Resource allocation patterns
+
+### Implementation Guidelines
+
+1. **Configuration First**: Load configurations using [Configuration Management](configuration-management.md) schemas
+2. **Apply Deployment Patterns**: Use the deployment patterns in this specification
+3. **Validate Integration**: Ensure configuration and deployment patterns work together
+4. **Monitor and Scale**: Implement monitoring and scaling using integrated patterns
+
+This approach ensures consistent, secure, and scalable agent framework deployment across all environment tiers.

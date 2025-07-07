@@ -1,20 +1,15 @@
 # System Message Schemas
 
-## Claude CLI Integration and System Operations
+## Technical Specifications for Claude CLI Integration and System Operations
 
-> **📊 VALIDATION STATUS: PRODUCTION READY**
->
-> | Criterion | Score | Status |
-> |-----------|-------|---------|
-> | Schema Coverage | 5/5 | ✅ Complete |
-> | CLI Integration | 5/5 | ✅ Comprehensive |
-> | System Operations | 5/5 | ✅ Well-Defined |
-> | Routing Patterns | 5/5 | ✅ Robust |
-> | Cross-References | 4/5 | ✅ Good |
-> | **TOTAL SCORE** | **14/15** | **✅ DEPLOYMENT APPROVED** |
->
-> *Validated: 2025-07-05 | Document Lines: 2,134 | Implementation Status: 93%*
-> **Purpose**: This document defines message schemas for Claude CLI integration, system operations, and message routing within the Mister Smith AI Agent Framework.
+**🔍 AGENT OPTIMIZATION STATUS**
+- **Agent**: Agent 7, Team Beta  
+- **Optimization Date**: 2025-07-07
+- **Target**: Remove business content, enhance framework integration
+- **Status**: OPTIMIZING
+- **Focus**: CLI integration patterns, system operation schemas, routing specifications
+
+**Purpose**: This document defines technical message schemas for Claude CLI integration, system operations, and NATS-based message routing within the Mister Smith AI Agent Framework.
 
 ## Overview
 
@@ -689,34 +684,54 @@ For transport implementation, see [NATS Transport](../transport/nats-transport.m
 
 ### 9.2 Message Correlation Strategies
 
-Correlation strategies connect to framework-wide patterns:
+Correlation strategies integrate with [Message Framework](./message-framework.md) patterns:
 
 ```json
 {
   "correlation_strategies": {
-    "request_response": {
-      "pattern": "Include correlation_id in request, match in response",
-      "timeout_handling": "Exponential backoff with max attempts",
-      "correlation_storage": "In-memory cache with TTL",
-      "references": ["core-message-schemas.md#base-message-envelope"]
+    "hook_event_response": {
+      "pattern": "Correlate CLI hook events with agent responses using correlation_id",
+      "timeout_handling": "30-second timeout with exponential backoff (1s, 2s, 4s)",
+      "correlation_storage": "In-memory LRU cache with 1-hour TTL",
+      "implementation": "CorrelationTracker from message-framework.md",
+      "example_flow": [
+        "1. Hook event generated with correlation_id",
+        "2. Agent processes and includes correlation_id in response", 
+        "3. Framework matches request-response using correlation context"
+      ]
     },
-    "workflow_coordination": {
-      "pattern": "Use workflow_id for all related messages",
-      "state_tracking": "Persistent storage with checkpointing",
-      "recovery": "Replay from last checkpoint",
-      "references": ["workflow-message-schemas.md#workflow-coordination-message"]
+    "session_tracking": {
+      "pattern": "Track CLI session lifecycle using session_id across all messages",
+      "state_tracking": "Session state in distributed cache",
+      "cleanup": "Automatic session cleanup after 24 hours of inactivity",
+      "span_generation": "16-character hex span IDs for distributed tracing"
     },
-    "distributed_tracing": {
-      "pattern": "Propagate trace_id across all service boundaries",
-      "sampling": "Configurable sampling rate",
-      "span_creation": "Automatic span creation per message hop",
-      "references": ["message-framework.md#message-enrichment"]
+    "system_health_aggregation": {
+      "pattern": "Aggregate health messages by component using component correlation",
+      "windowing": "5-second tumbling windows for metrics aggregation",
+      "correlation_attributes": ["component", "node_id", "service_type"],
+      "aggregation_strategy": "Latest value with timestamp tracking"
+    },
+    "alert_escalation_chains": {
+      "pattern": "Maintain causality chains for alert root cause analysis",
+      "causality_tracking": "Directed graph with parent-child relationships",
+      "chain_length_limit": "Maximum 10 hops to prevent infinite chains",
+      "cleanup": "Automatic cleanup of resolved alert chains after 7 days"
     }
   }
 }
 ```
 
-For implementation patterns, see [Message Framework Transformation](./message-framework.md#content-transformation) and [Agent Communication](./agent-communication.md).
+### Integration with Message Framework Components
+
+System message correlation uses these [Message Framework](./message-framework.md) components:
+
+- **CorrelationContext**: Session and trace tracking for CLI operations
+- **CorrelationTracker**: Automatic cleanup and chain management
+- **ContentRouter**: Route messages based on correlation metadata
+- **EventAggregator**: Aggregate system health data by correlation attributes
+
+For implementation patterns, see [Message Framework Correlation Logic](./message-framework.md#event-correlation-logic) and [Content-Based Routing](./message-framework.md#content-based-routing).
 
 ---
 

@@ -8,32 +8,97 @@ tags:
 
 ## Agent Communication Architecture
 
-## Message Passing, Task Distribution & Coordination
+### Technical Implementation Guide
 
-> **📊 VALIDATION STATUS: PRODUCTION READY**
->
-> | Criterion | Score | Status |
-> |-----------|-------|---------|
-> | Message Schemas | 5/5 | ✅ Comprehensive |
-> | RPC Implementation | 5/5 | ✅ Complete |
-> | Pub/Sub Patterns | 5/5 | ✅ Well-Defined |
-> | Error Handling | 5/5 | ✅ Robust |
-> | Performance Optimization | 4/5 | ✅ Good |
-> | **TOTAL SCORE** | **14/15** | **✅ DEPLOYMENT APPROVED** |
->
-> *Validated: 2025-07-05 | Document Lines: 2,156 | Implementation Status: 93%*
-> **Canonical Reference**: See `tech-framework.md` for authoritative technology stack specifications
+This document provides technical specifications for agent communication patterns, message passing protocols, and coordination mechanisms within the MisterSmith framework. It includes verified async implementations using Tokio, comprehensive message schemas, and error handling patterns for distributed agent systems.
 
-## Executive Summary
-
-This document defines the communication protocols, message passing patterns, task distribution mechanisms,
-and coordination strategies for agent interactions within the Mister Smith framework. It covers direct RPC,
-publish/subscribe, blackboard patterns, comprehensive message schemas, and coordination mechanisms
-for distributed agent systems.
+**Key Communication Patterns:**
+- **Direct RPC**: Point-to-point communication for immediate responses
+- **Publish/Subscribe**: Topic-based message distribution using NATS
+- **Internal Channels**: Tokio mpsc/broadcast/watch for intra-process communication
+- **Blackboard Pattern**: Shared state coordination
+- **Message Validation**: Runtime schema validation and processing
+- **State Management**: Event-sourced agent state with supervision integration
 
 ## 3. Message Passing and Communication Patterns
 
-### 3.1 Direct RPC Pattern
+### 3.1 Internal Agent Communication with Tokio Channels
+
+For intra-process agent communication, use Tokio channels for high-performance message passing:
+
+```rust
+use tokio::sync::{mpsc, broadcast, watch};
+use std::sync::Arc;
+
+// Multi-producer, single-consumer for task distribution
+struct TaskChannel {
+    sender: mpsc::UnboundedSender<Task>,
+    receiver: Arc<tokio::sync::Mutex<mpsc::UnboundedReceiver<Task>>>,
+}
+
+// Broadcast for system-wide notifications
+struct NotificationBus {
+    sender: broadcast::Sender<SystemNotification>,
+}
+
+// Watch for configuration changes
+struct ConfigWatcher {
+    sender: watch::Sender<AgentConfig>,
+    receiver: watch::Receiver<AgentConfig>,
+}
+
+impl TaskChannel {
+    pub fn new() -> Self {
+        let (sender, receiver) = mpsc::unbounded_channel();
+        Self {
+            sender,
+            receiver: Arc::new(tokio::sync::Mutex::new(receiver)),
+        }
+    }
+
+    pub async fn send_task(&self, task: Task) -> Result<(), mpsc::error::SendError<Task>> {
+        self.sender.send(task)
+    }
+
+    pub async fn receive_task(&self) -> Option<Task> {
+        let mut receiver = self.receiver.lock().await;
+        receiver.recv().await
+    }
+}
+
+impl NotificationBus {
+    pub fn new(capacity: usize) -> Self {
+        let (sender, _) = broadcast::channel(capacity);
+        Self { sender }
+    }
+
+    pub fn subscribe(&self) -> broadcast::Receiver<SystemNotification> {
+        self.sender.subscribe()
+    }
+
+    pub fn notify(&self, notification: SystemNotification) -> Result<usize, broadcast::error::SendError<SystemNotification>> {
+        self.sender.send(notification)
+    }
+}
+
+impl ConfigWatcher {
+    pub fn new(initial_config: AgentConfig) -> Self {
+        let (sender, receiver) = watch::channel(initial_config);
+        Self { sender, receiver }
+    }
+
+    pub async fn update_config(&self, config: AgentConfig) -> Result<(), watch::error::SendError<AgentConfig>> {
+        self.sender.send(config)
+    }
+
+    pub async fn watch_config(&mut self) -> Result<AgentConfig, watch::error::RecvError> {
+        self.receiver.changed().await?;
+        Ok(self.receiver.borrow().clone())
+    }
+}
+```
+
+### 3.2 Direct RPC Pattern
 
 Point-to-point communication for immediate responses:
 
@@ -65,72 +130,280 @@ impl DirectChannel {
 
 > **Supervision Integration**: See `agent-lifecycle.md` section 2.2 for event-driven message bus patterns and supervisor coordination
 
-Topic-based message distribution:
+Topic-based message distribution using NATS with proper async/await patterns:
 
 ```rust
+use tokio::sync::mpsc;
+use async_nats::{Client, Subscriber};
+use std::collections::HashMap;
+use tracing::{error, info, warn};
+
 struct PubSubBus {
-    broker_url: String,
-    subscriptions: HashMap<Topic, Vec<CallbackFn>>,
+    client: Client,
+    subscriptions: HashMap<String, mpsc::UnboundedSender<()>>,
+}
+
+#[derive(Debug, thiserror::Error)]
+enum PubSubError {
+    #[error("Connection failed: {0}")]
+    Connection(#[from] async_nats::Error),
+    #[error("Serialization failed: {0}")]
+    Serialization(#[from] serde_json::Error),
+    #[error("Subscription already exists for topic: {0}")]
+    DuplicateSubscription(String),
 }
 
 impl PubSubBus {
-    async fn publish(&self, topic: Topic, message: Message) -> Result<(), Error> {
-        // Publish to broker (e.g., NATS)
-        let nc = nats::connect(&self.broker_url)?;
-        nc.publish(&topic.as_str(), &message.serialize()?)?;
+    pub async fn new(broker_url: &str) -> Result<Self, PubSubError> {
+        let client = async_nats::connect(broker_url).await?;
+        Ok(Self {
+            client,
+            subscriptions: HashMap::new(),
+        })
+    }
+
+    #[tracing::instrument(skip(self, message))]    
+    pub async fn publish(&self, topic: &str, message: &Message) -> Result<(), PubSubError> {
+        let payload = serde_json::to_vec(message)?;
+        self.client.publish(topic, payload.into()).await?;
+        
+        info!(topic = %topic, message_id = %message.id, "Message published");
         Ok(())
     }
     
-    async fn subscribe<F>(&mut self, topic: Topic, callback: F) 
-    where F: Fn(Message) + Send + 'static {
-        let nc = nats::connect(&self.broker_url)?;
-        let sub = nc.subscribe(&topic.as_str())?;
+    #[tracing::instrument(skip(self, handler))]    
+    pub async fn subscribe<F, Fut>(&mut self, topic: &str, mut handler: F) -> Result<(), PubSubError>
+    where 
+        F: FnMut(Message) -> Fut + Send + 'static,
+        Fut: std::future::Future<Output = Result<(), Box<dyn std::error::Error + Send + Sync>>> + Send,
+    {
+        if self.subscriptions.contains_key(topic) {
+            return Err(PubSubError::DuplicateSubscription(topic.to_string()));
+        }
+
+        let subscriber = self.client.subscribe(topic).await?;
+        let (shutdown_tx, mut shutdown_rx) = mpsc::unbounded_channel();
         
+        self.subscriptions.insert(topic.to_string(), shutdown_tx);
+        
+        let topic_name = topic.to_string();
         tokio::spawn(async move {
-            for msg in sub.messages() {
-                callback(Message::deserialize(&msg.data).unwrap());
+            let mut messages = subscriber.messages();
+            
+            loop {
+                tokio::select! {
+                    Some(msg) = messages.next() => {
+                        match serde_json::from_slice::<Message>(&msg.payload) {
+                            Ok(message) => {
+                                if let Err(e) = handler(message).await {
+                                    error!(topic = %topic_name, error = %e, "Handler error");
+                                }
+                            },
+                            Err(e) => {
+                                warn!(topic = %topic_name, error = %e, "Failed to deserialize message");
+                            }
+                        }
+                    },
+                    _ = shutdown_rx.recv() => {
+                        info!(topic = %topic_name, "Subscription shutdown");
+                        break;
+                    }
+                }
             }
         });
+        
+        info!(topic = %topic_name, "Subscription established");
+        Ok(())
+    }
+    
+    pub async fn unsubscribe(&mut self, topic: &str) -> bool {
+        if let Some(shutdown_tx) = self.subscriptions.remove(topic) {
+            let _ = shutdown_tx.send(());
+            true
+        } else {
+            false
+        }
     }
 }
 ```
 
 ### 3.3 Blackboard Pattern
 
-Shared memory coordination:
+Shared memory coordination with proper async patterns and change notifications:
 
 ```rust
-struct Blackboard {
-    store: Arc<RwLock<HashMap<String, BlackboardEntry>>>,
-    watchers: Arc<RwLock<HashMap<Pattern, Vec<WatcherFn>>>>,
+use tokio::sync::{RwLock, broadcast};
+use std::collections::HashMap;
+use std::sync::Arc;
+use serde::{Deserialize, Serialize};
+use std::time::{Instant, SystemTime};
+use uuid::Uuid;
+use tracing::{info, warn, instrument};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct BlackboardEntry {
+    value: serde_json::Value,
+    timestamp: SystemTime,
+    author: String,
+    version: u64,
+    metadata: HashMap<String, String>,
 }
 
-struct BlackboardEntry {
-    value: Value,
-    timestamp: Instant,
-    author: AgentId,
-    version: u64,
+#[derive(Debug, Clone)]
+struct BlackboardChange {
+    key: String,
+    entry: BlackboardEntry,
+    change_type: ChangeType,
+}
+
+#[derive(Debug, Clone)]
+enum ChangeType {
+    Created,
+    Updated,
+    Deleted,
+}
+
+#[derive(Debug, thiserror::Error)]
+enum BlackboardError {
+    #[error("Key not found: {0}")]
+    KeyNotFound(String),
+    #[error("Version conflict: expected {expected}, got {actual}")]
+    VersionConflict { expected: u64, actual: u64 },
+    #[error("Serialization error: {0}")]
+    Serialization(#[from] serde_json::Error),
+}
+
+struct Blackboard {
+    store: Arc<RwLock<HashMap<String, BlackboardEntry>>>,
+    change_notifier: broadcast::Sender<BlackboardChange>,
 }
 
 impl Blackboard {
-    async fn write(&self, key: String, value: Value, agent_id: AgentId) -> Result<(), Error> {
+    pub fn new() -> Self {
+        let (change_notifier, _) = broadcast::channel(1000);
+        Self {
+            store: Arc::new(RwLock::new(HashMap::new())),
+            change_notifier,
+        }
+    }
+
+    #[instrument(skip(self, value), fields(key = %key, agent_id = %agent_id))]
+    pub async fn write(
+        &self, 
+        key: String, 
+        value: serde_json::Value, 
+        agent_id: String
+    ) -> Result<u64, BlackboardError> {
         let mut store = self.store.write().await;
         let version = store.get(&key).map(|e| e.version + 1).unwrap_or(1);
         
-        store.insert(key.clone(), BlackboardEntry {
+        let entry = BlackboardEntry {
             value: value.clone(),
-            timestamp: Instant::now(),
-            author: agent_id,
+            timestamp: SystemTime::now(),
+            author: agent_id.clone(),
             version,
-        });
+            metadata: HashMap::new(),
+        };
         
-        // Notify watchers
-        self.notify_watchers(&key, &value).await;
-        Ok(())
+        let change_type = if store.contains_key(&key) {
+            ChangeType::Updated
+        } else {
+            ChangeType::Created
+        };
+        
+        store.insert(key.clone(), entry.clone());
+        
+        // Notify watchers (non-blocking)
+        let change = BlackboardChange {
+            key: key.clone(),
+            entry: entry.clone(),
+            change_type,
+        };
+        
+        if let Err(_) = self.change_notifier.send(change) {
+            warn!(key = %key, "No active watchers for blackboard changes");
+        }
+        
+        info!(key = %key, version = version, "Blackboard entry written");
+        Ok(version)
     }
     
-    async fn read(&self, key: &str) -> Option<BlackboardEntry> {
+    #[instrument(skip(self), fields(key = %key))]
+    pub async fn read(&self, key: &str) -> Option<BlackboardEntry> {
         self.store.read().await.get(key).cloned()
+    }
+    
+    #[instrument(skip(self), fields(key = %key, expected_version = %expected_version))]
+    pub async fn write_with_version_check(
+        &self,
+        key: String,
+        value: serde_json::Value,
+        agent_id: String,
+        expected_version: u64,
+    ) -> Result<u64, BlackboardError> {
+        let mut store = self.store.write().await;
+        
+        if let Some(existing) = store.get(&key) {
+            if existing.version != expected_version {
+                return Err(BlackboardError::VersionConflict {
+                    expected: expected_version,
+                    actual: existing.version,
+                });
+            }
+        } else if expected_version != 0 {
+            return Err(BlackboardError::KeyNotFound(key));
+        }
+        
+        let version = expected_version + 1;
+        let entry = BlackboardEntry {
+            value,
+            timestamp: SystemTime::now(),
+            author: agent_id,
+            version,
+            metadata: HashMap::new(),
+        };
+        
+        store.insert(key.clone(), entry.clone());
+        
+        let change = BlackboardChange {
+            key: key.clone(),
+            entry,
+            change_type: ChangeType::Updated,
+        };
+        
+        let _ = self.change_notifier.send(change);
+        Ok(version)
+    }
+    
+    pub async fn delete(&self, key: &str) -> Option<BlackboardEntry> {
+        let mut store = self.store.write().await;
+        if let Some(entry) = store.remove(key) {
+            let change = BlackboardChange {
+                key: key.to_string(),
+                entry: entry.clone(),
+                change_type: ChangeType::Deleted,
+            };
+            let _ = self.change_notifier.send(change);
+            Some(entry)
+        } else {
+            None
+        }
+    }
+    
+    pub fn subscribe(&self) -> broadcast::Receiver<BlackboardChange> {
+        self.change_notifier.subscribe()
+    }
+    
+    pub async fn list_keys(&self) -> Vec<String> {
+        self.store.read().await.keys().cloned().collect()
+    }
+    
+    pub async fn watch_key(&self, key: &str) -> Option<broadcast::Receiver<BlackboardChange>> {
+        if self.store.read().await.contains_key(key) {
+            Some(self.change_notifier.subscribe())
+        } else {
+            None
+        }
     }
 }
 ```
@@ -829,6 +1102,70 @@ IMPL AgentMailbox {
             }
         }
     }
+    
+    async fn drop_lower_priority_messages(&self, min_priority: MessagePriority) -> usize {
+        let mut dropped_count = 0;
+        
+        for priority_index in 0..(min_priority as usize) {
+            let mut queue = self.priority_queues[priority_index].lock().await;
+            dropped_count += queue.len();
+            queue.clear();
+        }
+        
+        self.current_size.fetch_sub(dropped_count, Ordering::Release);
+        dropped_count
+    }
+    
+    async fn schedule_overflow_cleanup(&self) {
+        // Implementation would spawn a background task to clean up overflow
+        // This is a placeholder for the actual implementation
+        warn!("Overflow detected, cleanup scheduled");
+    }
+    
+    async fn spill_to_storage(&self, message: &Message, storage_path: &str) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+        // Implementation would write message to secondary storage
+        // This is a placeholder for the actual implementation
+        let spill_id = uuid::Uuid::new_v4().to_string();
+        warn!(spill_id = %spill_id, storage_path = %storage_path, "Message spilled to storage");
+        Ok(spill_id)
+    }
+    
+    async fn estimate_queue_position(&self, message: &Message) -> usize {
+        let mut position = 0;
+        
+        // Count messages in higher priority queues
+        for priority_index in ((message.priority as usize + 1)..5).rev() {
+            let queue = self.priority_queues[priority_index].lock().await;
+            position += queue.len();
+        }
+        
+        // Add current queue position
+        let current_queue = self.priority_queues[message.priority as usize].lock().await;
+        position += current_queue.len();
+        
+        position
+    }
+    
+    async fn handle_priority_queue_full(&self, message: Message, priority_index: usize) -> Result<SendResult, MailboxError> {
+        // Try to drop a lower priority message to make space
+        if priority_index > 0 {
+            for lower_priority in 0..priority_index {
+                let mut queue = self.priority_queues[lower_priority].lock().await;
+                if !queue.is_empty() {
+                    let dropped = queue.pop_front();
+                    drop(queue);
+                    
+                    if let Some(dropped_msg) = dropped {
+                        self.current_size.fetch_sub(1, Ordering::Release);
+                        self.metrics.record_message_dropped(&dropped_msg.message_type, "priority_preemption");
+                        return self.send(message).await;
+                    }
+                }
+            }
+        }
+        
+        Err(MailboxError::CapacityExceeded)
+    }
 }
 ```
 
@@ -1288,35 +1625,160 @@ CLASS EventBus {
 }
 ```
 
+## Error Handling Patterns
+
+### Comprehensive Error Handling for Agent Communication
+
+```rust
+use thiserror::Error;
+use std::time::Duration;
+
+#[derive(Debug, Error)]
+enum CommunicationError {
+    #[error("Network timeout after {timeout:?}")]
+    Timeout { timeout: Duration },
+    
+    #[error("Connection failed: {source}")]
+    ConnectionFailed { source: Box<dyn std::error::Error + Send + Sync> },
+    
+    #[error("Message validation failed: {details}")]
+    ValidationFailed { details: String },
+    
+    #[error("Serialization error: {message}")]
+    SerializationError { message: String },
+    
+    #[error("Agent {agent_id} not found")]
+    AgentNotFound { agent_id: String },
+    
+    #[error("Channel closed for topic {topic}")]
+    ChannelClosed { topic: String },
+    
+    #[error("Retry limit exceeded after {attempts} attempts")]
+    RetryLimitExceeded { attempts: u32 },
+}
+
+// Error recovery patterns
+async fn with_retry<F, Fut, T>(
+    operation: F,
+    max_retries: u32,
+    base_delay: Duration,
+) -> Result<T, CommunicationError>
+where
+    F: Fn() -> Fut,
+    Fut: std::future::Future<Output = Result<T, CommunicationError>>,
+{
+    let mut attempt = 0;
+    
+    loop {
+        match operation().await {
+            Ok(result) => return Ok(result),
+            Err(e) => {
+                attempt += 1;
+                if attempt > max_retries {
+                    return Err(CommunicationError::RetryLimitExceeded { attempts: attempt });
+                }
+                
+                let delay = base_delay * (1 << (attempt - 1)); // Exponential backoff
+                tokio::time::sleep(delay).await;
+            }
+        }
+    }
+}
+
+// Circuit breaker pattern for agent communication
+struct CircuitBreaker {
+    failure_count: std::sync::atomic::AtomicU32,
+    last_failure: std::sync::atomic::AtomicU64,
+    threshold: u32,
+    timeout: Duration,
+}
+
+impl CircuitBreaker {
+    pub fn new(threshold: u32, timeout: Duration) -> Self {
+        Self {
+            failure_count: std::sync::atomic::AtomicU32::new(0),
+            last_failure: std::sync::atomic::AtomicU64::new(0),
+            threshold,
+            timeout,
+        }
+    }
+    
+    pub async fn call<F, Fut, T>(&self, operation: F) -> Result<T, CommunicationError>
+    where
+        F: FnOnce() -> Fut,
+        Fut: std::future::Future<Output = Result<T, CommunicationError>>,
+    {
+        use std::sync::atomic::Ordering;
+        
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+            
+        let failures = self.failure_count.load(Ordering::Acquire);
+        let last_failure = self.last_failure.load(Ordering::Acquire);
+        
+        // Check if circuit is open
+        if failures >= self.threshold {
+            let time_since_failure = Duration::from_secs(now - last_failure);
+            if time_since_failure < self.timeout {
+                return Err(CommunicationError::ConnectionFailed {
+                    source: "Circuit breaker open".into(),
+                });
+            }
+        }
+        
+        match operation().await {
+            Ok(result) => {
+                // Reset on success
+                self.failure_count.store(0, Ordering::Release);
+                Ok(result)
+            }
+            Err(e) => {
+                // Record failure
+                self.failure_count.fetch_add(1, Ordering::AcqRel);
+                self.last_failure.store(now, Ordering::Release);
+                Err(e)
+            }
+        }
+    }
+}
+```
+
 ## Related Documentation
 
 ### Framework Components
 
-- **Agent Lifecycle**: `agent-lifecycle.md` - Basic agent types, supervision patterns, and lifecycle management
-- **Agent Operations**: `agent-operations.md` - Discovery, workflow management, and operational patterns
-- **Agent Integration**: `agent-integration.md` - Resource management, tool bus integration, and extension patterns
-- **Security Protocols**: `../security/` - Authentication and authorization for agent communications
-- **Transport Layer**: `../transport/` - Low-level messaging infrastructure
-- **Operations**: `../operations/` - Deployment and monitoring considerations
+- **[Agent Lifecycle](agent-lifecycle.md)** - Agent types, supervision patterns, and state management
+  - *Section 2.2*: Event-driven message bus patterns and supervisor coordination
+  - *Section 1.2*: Planner, Executor, and Router agent role taxonomies
+- **[Agent Operations](agent-operations.md)** - Discovery, workflow management, and operational patterns
+- **[Agent Integration](agent-integration.md)** - Resource management, tool bus integration, and extension patterns
+- **[Security Protocols](../security/)** - Authentication and authorization for agent communications
+- **[Transport Layer](../transport/)** - Low-level messaging infrastructure and protocols
+- **[Operations](../operations/)** - Deployment, monitoring, and observability
 
 ### Implementation References
 
-- **Technology Stack**: `tech-framework.md` - Rust/Tokio runtime specifications
-- **Claude CLI Integration**: `../../research/claude-cli-integration/` - Hook system for external tool integration
-- **Data Management**: `data-persistence.md` - State storage and persistence strategies
+- **[Technology Stack](../core-architecture/tech-framework.md)** - Rust/Tokio runtime specifications
+- **[Data Persistence](data-persistence.md)** - State storage and persistence strategies
+- **[Message Schemas](core-message-schemas.md)** - Comprehensive message format definitions
 
-### Cross-References
+### Message Schema Cross-References
 
-- **Message Schemas**: All JSON schemas in section 3.4 are self-contained and reference the base message schema
-- **Agent Types**: References agent type enums defined in `agent-lifecycle.md`
-- **Task Types**: Task message schemas support extensible task type definitions
-- **Error Handling**: State machine error states integrate with supervision restart policies from `agent-lifecycle.md`
+- **Base Message Schema** (Section 3.4.1): Foundation for all agent messages
+- **System Messages** (Section 3.4.2): Agent lifecycle control messages
+- **Task Messages** (Section 3.4.3): Task assignment and execution tracking
+- **Agent Communication** (Section 3.4.4): Inter-agent communication protocols
+- **Supervision Messages** (Section 3.4.5): Agent supervision and health monitoring
+- **Hook Integration** (Section 3.4.6): Claude-CLI integration points
 
 ### Navigation Links
 
-- **← Previous**: [Agent Lifecycle](agent-lifecycle.md) - Basic agent architecture and supervision
+- **← Previous**: [Agent Lifecycle](agent-lifecycle.md) - Agent architecture and supervision
 - **→ Next**: [Agent Operations](agent-operations.md) - Discovery and workflow management
-- **↑ Parent**: [Data Management](CLAUDE.md) - Data management overview
+- **↑ Parent**: [Data Management](../CLAUDE.md) - Data management overview
+- **📋 Schemas**: [Message Schemas](core-message-schemas.md) - Complete schema definitions
 
 ---
 

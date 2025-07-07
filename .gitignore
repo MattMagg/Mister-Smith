@@ -66,6 +66,11 @@
 # Workspace configuration files
 # *.code-workspace
 
+# External dependencies - agenterra MCP generator (10k+ commits)
+agenterra/
+agenterra/*
+agenterra/**/*
+
 # macOS system files
 # .DS_Store
 # .DS_Store?

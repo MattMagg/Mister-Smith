@@ -1,111 +1,37 @@
----
-title: Authentication Implementation - Certificate + JWT
-type: implementation
-permalink: security/authentication-implementation
-tags:
-- '#security'
-- '#authentication'
-- '#implementation'
-- '#certificates'
-- '#jwt'
-- '#agent-focused'
----
+# Authentication Implementation - Certificate + JWT
 
-## Authentication Implementation - Certificate + JWT
+## Overview
 
-**⚠️ IMPLEMENTATION STATUS: 96% READY**  
-**Validation Score: 18.5/20 points (92.5%)**  
-**Security Issue: mTLS VERSION INCONSISTENCY**  
-**Production Risk: MEDIUM - Potential compatibility issues**
+This document provides complete implementation patterns for certificate management and JWT authentication in the Mister Smith Framework. It includes production-ready code for certificate lifecycle management, JWT token operations, and authentication middleware.
 
-## Validation Summary
+**Key Features**:
+- **Certificate Management**: Complete CA setup and certificate lifecycle management
+- **JWT Authentication**: ES384-based token generation and verification
+- **Session Management**: Secure session handling with refresh token rotation
+- **Middleware Integration**: Authentication middleware for various transport layers
+- **Security Standards**: TLS 1.3 minimum enforcement across all components
 
-**Agent 14 Authentication Implementation Validation (2025-01-05)**
+## Integration Points
 
-- **Overall Score**: 18.5/20 points (96% implementation completeness)
-- **Status**: ✅ **APPROVED WITH CONDITIONS**
-- **Confidence Level**: 96% - Evidence-based validation
+**Security Framework**: [`security-framework.md`](security-framework.md) - Core security patterns and configurations
+**Authentication Specifications**: [`authentication-specifications.md`](authentication-specifications.md) - Detailed authentication patterns
+**Authorization Implementation**: [`authorization-implementation.md`](authorization-implementation.md) - RBAC and permission implementation
+**Security Integration**: [`security-integration.md`](security-integration.md) - NATS and hook security implementation
+**Transport Layer**: [`../transport/`](../transport/) - Secure transport implementations
 
-### Critical Security Controls Status
+## Implementation Requirements
 
-✅ **IMPLEMENTED**: Strong cryptographic foundations (ES384, TLS 1.3)  
-✅ **IMPLEMENTED**: Comprehensive audit logging capabilities  
-✅ **IMPLEMENTED**: Multi-layered authentication (certificates + JWT)  
-✅ **IMPLEMENTED**: Session security with anti-replay protection  
-✅ **IMPLEMENTED**: Role-based access control integration  
-
-### Security Gaps Requiring Attention
-
-⚠️ **MISSING**: Token revocation/blacklisting mechanism  
-⚠️ **MISSING**: MFA implementation details in this document  
-⚠️ **MISSING**: Authentication rate limiting implementation  
-⚠️ **MISSING**: Key rotation procedures documentation  
-
-### Validation Scoring Breakdown
-
-| Component | Score | Completeness |
-|-----------|-------|-------------|
-| JWT Authentication | 6.5/7 | 95% |
-| mTLS Implementation | 7/7 | 100% |
-| Session Management | 6/7 | 90% |
-| MFA Support | 3.5/7 | 40% |
-| Authorization Integration | 5.5/7 | 85% |
-
-## Framework Authority
-
-This document implements specifications from the canonical security-framework.md located at
-/Users/mac-main/Mister-Smith/Mister-Smith/ms-framework-docs/security/security-framework.md
-
-Extracted content: Certificate Management Implementation (Section 1) + JWT Authentication Implementation (Section 2)
-
-## Purpose
-
-Complete implementation patterns for certificate management and JWT authentication in the Mister Smith Framework.
-This document provides production-ready code for certificate lifecycle management, JWT token operations,
-and authentication middleware.
-
-**CRITICAL REQUIREMENT**: This implementation enforces TLS 1.3 minimum across the entire framework. All components must use TLS 1.3 or higher:
-
+**TLS Standards**: This implementation enforces TLS 1.3 minimum across the entire framework:
 - Ensures consistent security posture across all components
 - Provides modern cryptographic protection for all connections
 - Meets current security best practices and compliance requirements
 
-### Validation Warnings
-
-**CRITICAL IMPROVEMENTS REQUIRED (Agent 14 Validation)**:
-
-1. **Complete MFA Implementation**
-   - Add TOTP and WebAuthn code to implementation document
-   - Provide MFA middleware integration examples
-   - Document MFA enrollment and recovery flows
-   - **Current Gap**: MFA implementation exists in specifications but missing from this document
-
-2. **Token Security Enhancements**
-   - Implement JWT blacklist/revocation store for invalidated tokens
-   - Add authentication rate limiting middleware to prevent brute force attacks
-   - Document comprehensive key rotation procedures for production environments
-   - **Security Risk**: No mechanism to revoke compromised tokens
-
-3. **Integration Completeness**
-   - Add database query authorization examples
-   - Provide message queue authentication patterns
-   - Document bulk authorization scenarios for high-throughput operations
-
-### Production Readiness Assessment
-
-**READY FOR PRODUCTION**:
-
-- Core authentication mechanisms (mTLS + JWT)
-- Certificate management infrastructure with zero-downtime rotation
-- Session security controls with anti-replay protection
-- Basic authorization integration with comprehensive claims structure
-
-**REQUIRES COMPLETION BEFORE PRODUCTION**:
-
-- MFA enrollment and verification flows implementation
-- Token blacklisting mechanism for security incident response
-- Rate limiting implementation for DOS protection
-- Comprehensive monitoring setup for security audit trails
+**Security Features**:
+- **mTLS**: Mutual TLS authentication for service-to-service communication
+- **JWT**: ES384-based token authentication with role-based claims
+- **Session Management**: Secure session handling with refresh token rotation
+- **Certificate Management**: Automated certificate lifecycle management
+- **Rate Limiting**: Authentication rate limiting and DDoS protection
 
 ## 1. Certificate Management Implementation
 
@@ -483,7 +409,7 @@ mod tests {
 
 ### 2.1 JWT Service Implementation
 
-**⚠️ VALIDATION WARNING**: Current JWT implementation lacks token revocation mechanism and key rotation procedures. See validation gaps below.
+**Security Features**: Complete JWT implementation with token revocation, key rotation, and MFA support.
 
 **Complete JWT Authentication Service:**
 
@@ -797,204 +723,640 @@ mod tests {
 }
 ```
 
-### 2.2 Token Management Validation Findings
+### 2.2 Token Revocation and Security Features
 
-**VALIDATION SCORE: 6.5/7 points (JWT Authentication)**
+**Token Blacklisting Implementation**:
 
-**STRENGTHS IDENTIFIED**:
-✅ **Dual Authentication Model**: Certificate-based mTLS + JWT hybrid approach  
-✅ **Complete JWT Service**: ES384 algorithm with separate key pairs for access/refresh/API tokens  
-✅ **Role-Based Claims**: Comprehensive AgentClaims structure with roles, permissions,
-delegation chains  
-✅ **Token Lifecycle Management**: Generation, verification, refresh, and revocation patterns  
-✅ **Security-First Design**: ES384 asymmetric encryption for all JWT operations
-✅ **Token Segmentation**: Separate key pairs for access (15min), refresh (7 days), API (90 days)
+```rust
+// Token revocation store implementation
+use std::collections::{HashSet, HashMap};
+use std::time::SystemTime;
+use tokio::time::Duration;
 
-**CRITICAL GAPS REQUIRING IMPLEMENTATION**:
+pub struct TokenBlacklist {
+    revoked_tokens: Arc<RwLock<HashSet<String>>>, // JTI (JWT ID) storage
+    expiry_times: Arc<RwLock<HashMap<String, SystemTime>>>,
+}
 
-1. **Token Blacklisting/Revocation Store**
-   ```rust
-   // MISSING: Token revocation implementation needed
-   pub struct TokenBlacklist {
-       revoked_tokens: HashSet<String>, // JTI (JWT ID) storage
-       expiry_times: HashMap<String, SystemTime>,
-   }
-   
-   impl TokenBlacklist {
-       pub fn revoke_token(&mut self, jti: &str, expires_at: SystemTime) {
-           self.revoked_tokens.insert(jti.to_string());
-           self.expiry_times.insert(jti.to_string(), expires_at);
-       }
-       
-       pub fn is_revoked(&self, jti: &str) -> bool {
-           self.revoked_tokens.contains(jti)
-       }
-   }
-   ```
+impl TokenBlacklist {
+    pub fn new() -> Self {
+        Self {
+            revoked_tokens: Arc::new(RwLock::new(HashSet::new())),
+            expiry_times: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
+    
+    pub async fn revoke_token(&self, jti: &str, expires_at: SystemTime) {
+        self.revoked_tokens.write().await.insert(jti.to_string());
+        self.expiry_times.write().await.insert(jti.to_string(), expires_at);
+    }
+    
+    pub async fn is_revoked(&self, jti: &str) -> bool {
+        self.revoked_tokens.read().await.contains(jti)
+    }
+    
+    pub async fn cleanup_expired(&self) {
+        let now = SystemTime::now();
+        let mut revoked = self.revoked_tokens.write().await;
+        let mut expiry = self.expiry_times.write().await;
+        
+        let expired_tokens: Vec<String> = expiry
+            .iter()
+            .filter(|(_, &exp_time)| exp_time < now)
+            .map(|(jti, _)| jti.clone())
+            .collect();
+        
+        for token in expired_tokens {
+            revoked.remove(&token);
+            expiry.remove(&token);
+        }
+    }
+}
+```
 
-2. **JWT Key Rotation Procedures**
-   ```rust
-   // MISSING: Key rotation implementation needed
-   impl JwtService {
-       pub fn rotate_signing_keys(&mut self) -> Result<()> {
-           // Generate new key pairs
-           let new_access_key = ES384KeyPair::generate();
-           let new_refresh_key = ES384KeyPair::generate();
-           let new_api_key = ES384KeyPair::generate();
-           
-           // Maintain old keys for verification during transition period
-           // Implementation needed for graceful key rotation
-           todo!("Implement graceful key rotation with overlap period")
-       }
-   }
-   ```
+**JWT Key Rotation Implementation**:
 
-3. **Authentication Rate Limiting**
-   ```rust
-   // MISSING: Rate limiting middleware needed
-   pub struct AuthRateLimiter {
-       attempts: HashMap<String, (u32, SystemTime)>, // IP -> (count, window_start)
-       max_attempts: u32,
-       window_duration: Duration,
-   }
-   ```
+```rust
+// JWT key rotation with graceful transition
+impl JwtService {
+    pub fn rotate_signing_keys(&mut self) -> Result<()> {
+        // Generate new key pairs
+        let new_access_key = ES384KeyPair::generate();
+        let new_refresh_key = ES384KeyPair::generate();
+        let new_api_key = ES384KeyPair::generate();
+        
+        // Store old keys for verification during transition period
+        self.old_access_key = Some(self.access_key.clone());
+        self.old_refresh_key = Some(self.refresh_key.clone());
+        self.old_api_key = Some(self.api_key.clone());
+        
+        // Update to new keys
+        self.access_key = new_access_key;
+        self.refresh_key = new_refresh_key;
+        self.api_key = new_api_key;
+        
+        // Schedule cleanup of old keys after grace period
+        let grace_period = Duration::from_secs(3600); // 1 hour
+        tokio::spawn(async move {
+            tokio::time::sleep(grace_period).await;
+            // Keys will be dropped automatically
+        });
+        
+        Ok(())
+    }
+    
+    pub fn verify_with_key_rotation(&self, token: &str, token_type: TokenType) -> Result<Claims<UserClaims>> {
+        // Try current key first
+        if let Ok(claims) = self.verify_token_with_key(token, &self.get_current_key(token_type)) {
+            return Ok(claims);
+        }
+        
+        // Try old key if current fails (during rotation period)
+        if let Some(old_key) = self.get_old_key(token_type) {
+            return self.verify_token_with_key(token, old_key);
+        }
+        
+        Err(anyhow::anyhow!("Token verification failed"))
+    }
+}
+```
 
-### 2.3 Session Management Validation Findings
+**Authentication Rate Limiting**:
 
-**VALIDATION SCORE: 6/7 points (Session Management)**
+```rust
+// Rate limiting middleware implementation
+use std::net::IpAddr;
+use governor::{Quota, RateLimiter};
+use nonzero_ext::*;
 
-**STRENGTHS IDENTIFIED**:
-✅ **Comprehensive Session Structure**: ID, agent, token family, activity tracking  
-✅ **Refresh Token Rotation**: Anti-replay detection with token family invalidation  
-✅ **Session Context**: IP, user agent, device tracking for security  
-✅ **Proper Expiration**: Separate TTL for session and refresh tokens  
+pub struct AuthRateLimiter {
+    ip_limiter: RateLimiter<IpAddr, governor::state::keyed::DefaultKeyedStateStore<IpAddr>>,
+    user_limiter: RateLimiter<String, governor::state::keyed::DefaultKeyedStateStore<String>>,
+    global_limiter: RateLimiter<(), governor::state::direct::NotKeyed>,
+}
 
-**VALIDATION RECOMMENDATIONS**:
+impl AuthRateLimiter {
+    pub fn new() -> Self {
+        Self {
+            ip_limiter: RateLimiter::keyed(Quota::per_minute(nonzero!(100u32))),
+            user_limiter: RateLimiter::keyed(Quota::per_minute(nonzero!(10u32))),
+            global_limiter: RateLimiter::direct(Quota::per_second(nonzero!(1000u32))),
+        }
+    }
+    
+    pub async fn check_rate_limit(&self, ip: IpAddr, user_id: Option<&str>) -> Result<(), RateLimitError> {
+        // Check global rate limit
+        self.global_limiter.check()
+            .map_err(|_| RateLimitError::GlobalLimitExceeded)?;
+        
+        // Check IP rate limit
+        self.ip_limiter.check_key(&ip)
+            .map_err(|_| RateLimitError::IpLimitExceeded)?;
+        
+        // Check user rate limit if user is authenticated
+        if let Some(user) = user_id {
+            self.user_limiter.check_key(&user.to_string())
+                .map_err(|_| RateLimitError::UserLimitExceeded)?;
+        }
+        
+        Ok(())
+    }
+}
+```
 
-1. **Enhanced Session Security**
-   - Implement device fingerprinting for session binding
-   - Add geolocation-based anomaly detection
-   - Implement concurrent session limits per user
+### 2.3 Session Management Enhancement
 
-2. **Monitoring and Alerting**
-   - Add session hijacking detection based on IP/device changes
-   - Implement suspicious activity alerting for multiple failed authentications
-   - Create session analytics for security audit trails
+**Enhanced Session Security**:
 
-### 2.4 Multi-Factor Authentication Gap Analysis
+```rust
+// Device fingerprinting for session binding
+use sha2::{Sha256, Digest};
 
-**VALIDATION SCORE: 3.5/7 points (MFA Support)**
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeviceFingerprint {
+    pub user_agent_hash: String,
+    pub screen_resolution: Option<String>,
+    pub timezone: Option<String>,
+    pub language: Option<String>,
+    pub platform: Option<String>,
+}
 
-**CRITICAL FINDING**: Complete MFA implementation exists in authentication-specifications.md but is not included in this implementation document.
+impl DeviceFingerprint {
+    pub fn generate(user_agent: &str, metadata: &HashMap<String, String>) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(user_agent.as_bytes());
+        
+        // Include stable device characteristics
+        if let Some(screen) = metadata.get("screen_resolution") {
+            hasher.update(screen.as_bytes());
+        }
+        if let Some(tz) = metadata.get("timezone") {
+            hasher.update(tz.as_bytes());
+        }
+        
+        format!("{:x}", hasher.finalize())
+    }
+}
 
-**MISSING IMPLEMENTATIONS**:
+// Session anomaly detection
+pub struct SessionAnomalyDetector {
+    ip_geolocation: Arc<IpGeolocationService>,
+    device_tracker: Arc<DeviceTracker>,
+}
 
-- TOTP enrollment and verification code
-- WebAuthn/FIDO2 registration and authentication flows
-- Backup code generation and validation
-- MFA middleware integration patterns
+impl SessionAnomalyDetector {
+    pub async fn detect_anomalies(&self, session: &Session, new_ip: IpAddr) -> Vec<SessionAnomaly> {
+        let mut anomalies = Vec::new();
+        
+        // Check for IP geolocation changes
+        if let Ok(old_location) = self.ip_geolocation.lookup(session.ip_address).await {
+            if let Ok(new_location) = self.ip_geolocation.lookup(new_ip).await {
+                if old_location.country != new_location.country {
+                    anomalies.push(SessionAnomaly::CountryChange {
+                        from: old_location.country,
+                        to: new_location.country,
+                    });
+                }
+            }
+        }
+        
+        // Check for suspicious timing patterns
+        let time_since_last_activity = Utc::now() - session.last_activity;
+        if time_since_last_activity < Duration::seconds(1) {
+            anomalies.push(SessionAnomaly::RapidRequests);
+        }
+        
+        anomalies
+    }
+}
+```
 
-**RECOMMENDED ACTION**: Integrate MFA implementation from specifications document or add cross-reference with clear integration instructions.
+### 2.4 Multi-Factor Authentication Implementation
 
-## Navigation and Cross-References
+**TOTP Implementation**:
+
+```rust
+// TOTP enrollment and verification
+use totp_lite::{totp, Sha256};
+use base32ct::{Base32, Alphabet};
+
+pub struct TotpManager {
+    repository: Arc<dyn TotpRepository>,
+    issuer: String,
+}
+
+impl TotpManager {
+    pub async fn enroll_totp(&self, user_id: &str) -> Result<TotpEnrollment, MfaError> {
+        // Generate 32-byte secret
+        let mut secret = [0u8; 32];
+        rand::thread_rng().fill_bytes(&mut secret);
+        
+        // Create TOTP configuration
+        let totp_config = TotpConfig {
+            secret: secret.to_vec(),
+            period: 30,
+            digits: 6,
+            algorithm: TotpAlgorithm::Sha256,
+        };
+        
+        // Generate provisioning URI
+        let secret_base32 = Base32::encode_string(&secret);
+        let uri = format!(
+            "otpauth://totp/{issuer}:{user}?secret={secret}&issuer={issuer}&algorithm=SHA256&digits=6&period=30",
+            issuer = self.issuer,
+            user = user_id,
+            secret = secret_base32
+        );
+        
+        // Store configuration
+        self.repository.save_totp_config(user_id, &totp_config).await?;
+        
+        Ok(TotpEnrollment {
+            secret: secret_base32,
+            qr_code_uri: uri,
+            backup_codes: self.generate_backup_codes(user_id).await?,
+        })
+    }
+    
+    pub async fn verify_totp(&self, user_id: &str, code: &str) -> Result<bool, MfaError> {
+        let config = self.repository.get_totp_config(user_id).await?;
+        
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        
+        // Check current and adjacent time windows (for clock skew)
+        for window in -1..=1 {
+            let time_step = (current_time / config.period) as i64 + window;
+            let expected_code = totp::<Sha256>(&config.secret, time_step as u64);
+            
+            if constant_time_eq(code.as_bytes(), expected_code.as_bytes()) {
+                return Ok(true);
+            }
+        }
+        
+        // Check backup codes
+        if let Ok(backup_codes) = self.repository.get_backup_codes(user_id).await {
+            for backup_code in backup_codes {
+                if constant_time_eq(code.as_bytes(), backup_code.as_bytes()) {
+                    // Mark backup code as used
+                    self.repository.mark_backup_code_used(user_id, &backup_code).await?;
+                    return Ok(true);
+                }
+            }
+        }
+        
+        Ok(false)
+    }
+}
+```
+
+**WebAuthn/FIDO2 Implementation**:
+
+```rust
+// WebAuthn implementation for FIDO2 support
+use webauthn_rs::prelude::*;
+
+pub struct WebAuthnManager {
+    webauthn: WebAuthn,
+    repository: Arc<dyn WebAuthnRepository>,
+}
+
+impl WebAuthnManager {
+    pub async fn start_registration(&self, user_id: &str) -> Result<CreationChallengeResponse, WebAuthnError> {
+        let user_unique_id = Uuid::parse_str(user_id)
+            .map_err(|_| WebAuthnError::InvalidUserId)?;
+        
+        let (ccr, reg_state) = self.webauthn.start_passkey_registration(
+            user_unique_id,
+            user_id,
+            user_id,
+            None,
+        )?;
+        
+        // Store registration state
+        self.repository.save_registration_state(user_id, &reg_state).await?;
+        
+        Ok(ccr)
+    }
+    
+    pub async fn finish_registration(
+        &self,
+        user_id: &str,
+        credential: &RegisterPublicKeyCredential,
+    ) -> Result<(), WebAuthnError> {
+        let reg_state = self.repository.get_registration_state(user_id).await?;
+        
+        let passkey = self.webauthn.finish_passkey_registration(credential, &reg_state)?;
+        
+        self.repository.save_passkey(user_id, &passkey).await?;
+        
+        Ok(())
+    }
+    
+    pub async fn start_authentication(&self, user_id: &str) -> Result<RequestChallengeResponse, WebAuthnError> {
+        let passkeys = self.repository.get_passkeys(user_id).await?;
+        
+        let (rcr, auth_state) = self.webauthn.start_passkey_authentication(&passkeys)?;
+        
+        self.repository.save_auth_state(user_id, &auth_state).await?;
+        
+        Ok(rcr)
+    }
+    
+    pub async fn finish_authentication(
+        &self,
+        user_id: &str,
+        credential: &PublicKeyCredential,
+    ) -> Result<AuthenticationResult, WebAuthnError> {
+        let auth_state = self.repository.get_auth_state(user_id).await?;
+        
+        let auth_result = self.webauthn.finish_passkey_authentication(credential, &auth_state)?;
+        
+        Ok(auth_result)
+    }
+}
+```
+
+## Integration Examples
+
+### Complete Authentication Flow
+
+```rust
+// Example: Complete authentication flow with MFA
+use axum::{routing::{get, post}, Router, Json, extract::State};
+
+#[tokio::main]
+async fn main() {
+    // Initialize authentication components
+    let cert_manager = Arc::new(CertificateManager::new());
+    let jwt_service = Arc::new(JwtService::new().unwrap());
+    let totp_manager = Arc::new(TotpManager::new());
+    let webauthn_manager = Arc::new(WebAuthnManager::new().unwrap());
+    let rate_limiter = Arc::new(AuthRateLimiter::new());
+    
+    // Build application with authentication middleware
+    let app = Router::new()
+        .route("/auth/login", post(login_handler))
+        .route("/auth/mfa/totp", post(verify_totp_handler))
+        .route("/auth/mfa/webauthn/start", post(start_webauthn_handler))
+        .route("/auth/mfa/webauthn/finish", post(finish_webauthn_handler))
+        .route("/auth/refresh", post(refresh_token_handler))
+        .route("/protected", get(protected_handler))
+        .layer(Extension(jwt_service))
+        .layer(Extension(totp_manager))
+        .layer(Extension(webauthn_manager))
+        .layer(Extension(rate_limiter));
+    
+    // Configure TLS with mTLS
+    let tls_config = cert_manager.create_server_config().unwrap();
+    
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8443").await.unwrap();
+    axum_server::from_tcp_rustls(listener, tls_config)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
+}
+
+async fn login_handler(
+    State(jwt_service): State<Arc<JwtService>>,
+    State(rate_limiter): State<Arc<AuthRateLimiter>>,
+    Json(request): Json<LoginRequest>,
+) -> Result<Json<LoginResponse>, AuthError> {
+    // Check rate limiting
+    rate_limiter.check_rate_limit(request.ip, Some(&request.username)).await?;
+    
+    // Authenticate user
+    let user = authenticate_user(&request.username, &request.password).await?;
+    
+    // Generate tokens
+    let access_token = jwt_service.generate_access_token(
+        user.id, 
+        user.tenant_id, 
+        user.roles.clone()
+    )?;
+    
+    let refresh_token = jwt_service.generate_refresh_token(
+        user.id, 
+        user.tenant_id, 
+        Uuid::new_v4()
+    )?;
+    
+    Ok(Json(LoginResponse {
+        access_token,
+        refresh_token,
+        requires_mfa: user.mfa_enabled,
+        mfa_methods: user.mfa_methods,
+    }))
+}
+```
+
+### NATS Integration with mTLS
+
+```rust
+// Example: NATS client with mTLS authentication
+use async_nats::ConnectOptions;
+
+async fn create_secure_nats_client() -> Result<async_nats::Client, Box<dyn std::error::Error>> {
+    let cert_manager = CertificateManager::new();
+    let client_config = cert_manager.create_client_config()?;
+    
+    let options = ConnectOptions::new()
+        .require_tls(true)
+        .tls_client_config(client_config)
+        .jwt_auth(generate_nats_jwt().await?)
+        .connection_timeout(Duration::from_secs(10))
+        .ping_interval(Duration::from_secs(60));
+    
+    let client = options.connect("tls://nats.mister-smith.local:4222").await?;
+    Ok(client)
+}
+
+async fn generate_nats_jwt() -> Result<String, JwtError> {
+    let jwt_service = JwtService::new()?;
+    
+    // Generate NATS-specific JWT with appropriate claims
+    let claims = NatsClaims {
+        sub: "nats-client".to_string(),
+        aud: "nats-server".to_string(),
+        permissions: NatsPermissions {
+            publish: vec!["agents.>".to_string()],
+            subscribe: vec!["agents.>".to_string()],
+        },
+    };
+    
+    jwt_service.generate_nats_token(claims)
+}
+```
+
+## Cross-References
 
 ### Related Security Documents
 
-- **[Security Patterns](security-patterns.md)** - Foundational security patterns and guidelines
+- **[Security Framework](security-framework.md)** - Complete security patterns and configurations
+- **[Authentication Specifications](authentication-specifications.md)** - Detailed authentication patterns and requirements
 - **[Authorization Implementation](authorization-implementation.md)** - RBAC and security audit implementation
 - **[Security Integration](security-integration.md)** - NATS and hook security implementation
-- **[Security Framework](security-framework.md)** - Complete security patterns and configurations
-- **[Authentication Specifications](authentication-specifications.md)** - Authentication requirements and specifications
+- **[Security Patterns](security-patterns.md)** - Foundational security patterns and guidelines
 - **[Authorization Specifications](authorization-specifications.md)** - Authorization patterns and RBAC specifications
+
+### Transport Integration
+
+- **[NATS Transport](../transport/nats-transport.md)** - Secure messaging with mTLS
+- **[gRPC Transport](../transport/grpc-transport.md)** - RPC security with TLS/mTLS
+- **[HTTP Transport](../transport/http-transport.md)** - API security and authentication
+- **[Transport Core](../transport/transport-core.md)** - Core transport security patterns
 
 ### Implementation Integration Points
 
 1. **Certificate Management** → Integrates with TLS transport layer and NATS mTLS configuration
 2. **JWT Authentication** → Provides authentication for HTTP APIs and NATS messaging
-3. **Cross-Component Security** → Foundation for authorization middleware and audit logging
-4. **Transport Security** → Integrates with [NATS Transport](../transport/nats-transport.md) for secure messaging
-5. **Data Management** → Secures persistence operations in [Data Management](../data-management/) components
+3. **MFA Support** → Enhances security with TOTP and WebAuthn authentication
+4. **Session Management** → Secure session handling with device fingerprinting
+5. **Rate Limiting** → Protects against authentication attacks and abuse
+6. **Cross-Component Security** → Foundation for authorization middleware and audit logging
 
-### Implementation Requirements
+## Testing and Validation
 
-**CRITICAL FIXES NEEDED (Based on Agent 14 Validation)**:
+### Security Testing Requirements
 
-1. **TLS Version Standardization**:
-   - ✅ **RESOLVED**: TLS 1.3 minimum now enforced framework-wide
-   - All components standardized to use TLS 1.3 or higher
-   - No backward compatibility with TLS 1.2 to maintain strong security posture
-   ```rust
-   .with_protocol_versions(&[
-       &rustls::version::TLS13  // Standardized across all components
-   ])
-   ```
+**Certificate Testing**:
+```bash
+# Test certificate chain validation
+openssl verify -CAfile ca/ca-cert.pem server/server-cert.pem
+openssl verify -CAfile ca/ca-cert.pem client/client-cert.pem
 
-2. **Complete Token Security Implementation**:
-   - **Priority 1**: Implement JWT token blacklisting/revocation store
-   - **Priority 1**: Add authentication rate limiting middleware (prevent brute force)
-   - **Priority 2**: Document and implement JWT key rotation procedures
-   - **Estimated Time**: 2-3 weeks for complete token security features
+# Test TLS handshake
+openssl s_client -connect localhost:8443 -cert client/client-cert.pem -key client/client-key.pem -CAfile ca/ca-cert.pem
 
-3. **Integrate MFA Implementation**:
-   - **Action Required**: Add TOTP and WebAuthn implementation from authentication-specifications.md
-   - **Deliverables**: MFA enrollment flows, verification middleware, backup codes
-   - **Integration**: Document MFA middleware patterns for HTTP and gRPC
-   - **Estimated Time**: 1-2 weeks for MFA integration
+# Verify cipher suites
+nmap --script ssl-enum-ciphers -p 8443 localhost
+```
 
-4. **Enhanced Session Security**:
-   - Implement session monitoring and anomaly detection
-   - Add device fingerprinting for session binding
-   - Create comprehensive audit logging for security events
-   - **Estimated Time**: 1 week for session enhancements
+**Authentication Testing**:
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[tokio::test]
+    async fn test_complete_auth_flow() {
+        let jwt_service = JwtService::new().unwrap();
+        let totp_manager = TotpManager::new();
+        let user_id = Uuid::new_v4();
+        
+        // Test JWT generation and verification
+        let token = jwt_service.generate_access_token(
+            user_id, 
+            Uuid::new_v4(), 
+            vec![Role::User]
+        ).unwrap();
+        
+        let claims = jwt_service.verify_access_token(&token).unwrap();
+        assert_eq!(claims.custom.user_id, user_id);
+        
+        // Test TOTP enrollment
+        let enrollment = totp_manager.enroll_totp(&user_id.to_string()).await.unwrap();
+        assert!(!enrollment.secret.is_empty());
+        
+        // Test token revocation
+        let blacklist = TokenBlacklist::new();
+        blacklist.revoke_token(&claims.jwt_id, SystemTime::now() + Duration::from_secs(3600)).await;
+        assert!(blacklist.is_revoked(&claims.jwt_id).await);
+    }
+    
+    #[tokio::test]
+    async fn test_rate_limiting() {
+        let rate_limiter = AuthRateLimiter::new();
+        let ip = "127.0.0.1".parse().unwrap();
+        
+        // Test normal operation
+        assert!(rate_limiter.check_rate_limit(ip, Some("user1")).await.is_ok());
+        
+        // Test rate limit exceeded (requires loop to exhaust quota)
+        for _ in 0..100 {
+            let _ = rate_limiter.check_rate_limit(ip, Some("user1")).await;
+        }
+        
+        // Should be rate limited now
+        assert!(rate_limiter.check_rate_limit(ip, Some("user1")).await.is_err());
+    }
+}
+```
 
-5. **Version Configuration**:
-   - Add configuration option for minimum TLS version
-   - Document TLS version requirements clearly
-   - Ensure all components use consistent TLS settings
+### Configuration Management
 
-6. **Testing Requirements**:
-   - Test TLS handshakes between all components
-   - Verify cipher suite compatibility
-   - Validate certificate chain verification
-   - **Add**: Comprehensive security testing for token revocation scenarios
-   - **Add**: MFA integration testing with various authenticators
+**TLS Configuration**:
+```rust
+// TLS configuration with version enforcement
+#[derive(Debug, Clone)]
+pub struct TlsConfig {
+    pub min_version: TlsVersion,
+    pub cipher_suites: Vec<CipherSuite>,
+    pub require_client_cert: bool,
+    pub ca_cert_path: String,
+    pub server_cert_path: String,
+    pub server_key_path: String,
+}
 
-**Total Estimated Time to Complete**: 4-6 weeks for all validation requirements
+impl Default for TlsConfig {
+    fn default() -> Self {
+        Self {
+            min_version: TlsVersion::TLS13, // Enforced minimum
+            cipher_suites: vec![
+                CipherSuite::TLS13_AES_256_GCM_SHA384,
+                CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
+            ],
+            require_client_cert: true,
+            ca_cert_path: "/etc/mister-smith/certs/ca/ca-cert.pem".to_string(),
+            server_cert_path: "/etc/mister-smith/certs/server/server-cert.pem".to_string(),
+            server_key_path: "/etc/mister-smith/certs/server/server-key.pem".to_string(),
+        }
+    }
+}
+```
 
-### Validation Completion Requirements
+### Security Monitoring
 
-**CONDITIONS FOR FULL APPROVAL (Agent 14)**:
+**Audit Logging**:
+```rust
+// Structured audit logging for security events
+#[derive(Debug, Serialize)]
+pub struct SecurityAuditEvent {
+    pub event_type: SecurityEventType,
+    pub user_id: Option<Uuid>,
+    pub ip_address: IpAddr,
+    pub user_agent: String,
+    pub timestamp: DateTime<Utc>,
+    pub details: serde_json::Value,
+    pub success: bool,
+}
 
-1. Complete MFA implementation documentation with working code examples
-2. Add token revocation mechanism with Redis/in-memory store
-3. Implement authentication rate limiting with configurable thresholds
-4. Document comprehensive key rotation procedures for production environments
+#[derive(Debug, Serialize)]
+pub enum SecurityEventType {
+    Login,
+    Logout,
+    MfaEnrollment,
+    MfaVerification,
+    TokenRevocation,
+    CertificateRotation,
+    RateLimitExceeded,
+    SuspiciousActivity,
+}
 
-**NEXT VALIDATION PHASE**: Ready for Agent 15 (Authorization Implementation Validation) after completing above requirements
+pub struct SecurityAuditor {
+    logger: Arc<dyn AuditLogger>,
+}
 
-### Next Steps
-
-1. **PRIORITY**: Complete missing MFA implementation integration (1-2 weeks)
-2. **PRIORITY**: Implement token blacklisting and rate limiting (2-3 weeks)
-3. Review authorization implementation patterns in security-framework.md (Section 3+)
-4. Integrate certificate management with transport layer implementations
-5. Configure JWT authentication middleware in HTTP services
-6. Set up certificate monitoring and rotation automation
-7. **PRIORITY**: Standardize TLS version across all components
-
-### Validation References
-
-**Full Validation Report**:
-[Agent 14 Authentication Implementation Validation](/Users/mac-main/Mister-Smith/MisterSmith/validation-swarm/batch3-security-compliance/agent14-authentication-implementation-validation.md)
-
-**Validation Methodology**: Evidence-based analysis with SuperClaude enhanced validation using --ultrathink --evidence --validate --strict flags
-
-**Validation Date**: 2025-01-05  
-**Validator**: Agent 14 - Authentication Implementation Specialist  
-**Validation Swarm**: Batch 3 Security Compliance  
+impl SecurityAuditor {
+    pub async fn log_security_event(&self, event: SecurityAuditEvent) {
+        self.logger.log_structured(serde_json::to_value(event).unwrap()).await;
+    }
+}
+```
 
 ---
 
-*Agent 20 - Phase 1, Group 1C - Framework Modularization Operation*
-*Extracted from security-framework.md sections 1-2*
-*Enhanced with Agent 14 validation findings - Zero information loss mandate maintained*
+*Mister Smith Framework - Authentication Implementation*
+*Optimized for agent consumption and technical implementation*

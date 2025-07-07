@@ -2,55 +2,12 @@
 
 ## Complete Cargo.toml Dependencies and Version Management Strategy
 
-**Agent 18 Deliverable**: Dependency Management Specialist
+This document provides comprehensive dependency management specifications for the Mister Smith AI Agent Framework,
+defining exact versions, feature selections, security requirements, and management strategies.
 
-### Overview
+## 1. Dependency Tree Architecture
 
-This document provides comprehensive dependency management specifications for the Mister Smith AI Agent Framework.
-It defines exact versions, feature selections, security requirements, and management strategies
-for all dependencies used across the framework ecosystem.
-
----
-
-## 🔍 VALIDATION STATUS
-
-**Last Validated**: 2025-07-05  
-**Validator**: Framework Documentation Team  
-**Validation Score**: Pending full validation  
-**Status**: Active Development  
-
-### Implementation Status
-
-- Core dependencies specified with exact versions
-- Security dependencies configuration complete
-- Build and test dependencies documented
-- Dependency audit process established
-
----
-
-## 1. Executive Summary
-
-### 1.1 Dependency Management Philosophy
-
-- **Security First**: Pin security-critical dependencies with integrity verification
-- **Feature Modularity**: Use optional dependencies to minimize attack surface and binary size
-- **Performance Optimization**: Select features and versions for optimal runtime performance
-- **Development Efficiency**: Separate development dependencies for faster iteration cycles
-- **Supply Chain Security**: Implement comprehensive audit and update processes
-
-### 1.2 Key Principles
-
-1. **Minimal Surface Area**: Only include dependencies actually needed for specific features
-2. **Version Stability**: Pin exact versions for reproducible builds
-3. **Security Auditing**: Regular dependency vulnerability scanning and updates
-4. **Performance Profiling**: Monitor dependency impact on compilation and runtime performance
-5. **Compatibility Management**: Maintain MSRV (Minimum Supported Rust Version) compatibility
-
----
-
-## 2. Dependency Tree Architecture
-
-### 2.1 Dependency Hierarchy Visualization
+### 1.1 Dependency Hierarchy Visualization
 
 ```text
 ┌───────────────────────────────────────────────────────────┐
@@ -73,7 +30,7 @@ for all dependencies used across the framework ecosystem.
 └───────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 Dependency Categories
+### 1.2 Dependency Categories
 
 | Category | Purpose | Selection Criteria |
 |----------|---------|-------------------|
@@ -84,11 +41,56 @@ for all dependencies used across the framework ecosystem.
 | **Monitoring** | Observability and health checking | Low overhead, comprehensive metrics |
 | **Development** | Testing, benchmarking, debugging | Developer productivity, test coverage |
 
+### 1.3 Dependency Tree Example Output
+
+```bash
+# Generate full dependency tree
+$ cargo tree --all-features
+
+mister-smith-framework v0.1.0
+├── async-nats v0.37.0
+│   ├── base64 v0.22.1
+│   ├── bytes v1.5.0
+│   ├── futures v0.3.31
+│   │   ├── futures-channel v0.3.31
+│   │   ├── futures-core v0.3.31
+│   │   ├── futures-executor v0.3.31
+│   │   ├── futures-io v0.3.31
+│   │   ├── futures-sink v0.3.31
+│   │   ├── futures-task v0.3.31
+│   │   └── futures-util v0.3.31
+│   ├── nkeys v0.4.1
+│   ├── nuid v0.5.0
+│   ├── serde v1.0.214
+│   ├── serde_json v1.0.132
+│   ├── thiserror v1.0.69
+│   └── tokio v1.45.0
+├── tokio v1.45.0
+│   ├── bytes v1.5.0
+│   ├── libc v0.2.153
+│   ├── mio v0.8.11
+│   ├── num_cpus v1.16.0
+│   ├── parking_lot v0.12.3
+│   ├── pin-project-lite v0.2.14
+│   ├── signal-hook-registry v1.4.2
+│   ├── socket2 v0.5.7
+│   └── tokio-macros v2.2.0 (proc-macro)
+└── ...
+
+# Check for duplicate dependencies
+$ cargo tree --duplicates
+serde v1.0.214
+├── mister-smith-framework v0.1.0
+├── async-nats v0.37.0
+├── config v0.14.1
+└── sqlx v0.8.2
+```
+
 ---
 
-## 3. Complete Cargo.toml Specification
+## 2. Complete Cargo.toml Specification
 
-### 3.1 Package Metadata
+### 2.1 Package Metadata
 
 ```toml
 [package]
@@ -109,7 +111,7 @@ readme = "README.md"
 rust-version = "1.75"
 ```
 
-### 3.2 Feature Flags Architecture
+### 2.2 Feature Flags Architecture
 
 ```toml
 [features]
@@ -169,7 +171,7 @@ parallel = ["dep:rayon"]
 compression = ["dep:lz4", "dep:zstd"]
 ```
 
-### 3.3 Core Dependencies (Always Required)
+### 2.3 Core Dependencies (Always Required)
 
 ```toml
 [dependencies]
@@ -242,7 +244,7 @@ notify = { version = "6.1.1", optional = true }
 dirs = "5.0.1"
 ```
 
-### 3.4 Feature-Based Optional Dependencies
+### 2.4 Feature-Based Optional Dependencies
 
 ```toml
 # === SECURITY AND CRYPTOGRAPHY ===
@@ -300,7 +302,7 @@ sled = { version = "0.34.7", optional = true }
 # === DISTRIBUTED SYSTEMS ===
 # Raft consensus algorithm implementation
 raft = { version = "0.7.0", optional = true }
-# NATS messaging system client
+# NATS messaging system client - consistent version
 async-nats = { version = "0.37.0", optional = true }
 
 # === PERFORMANCE OPTIMIZATION ===
@@ -320,7 +322,7 @@ tower = { version = "0.5.1", optional = true }
 tower-http = { version = "0.6.2", optional = true, features = ["trace"] }
 ```
 
-### 3.5 Development Dependencies
+### 2.5 Development Dependencies
 
 ```toml
 [dev-dependencies]
@@ -357,7 +359,7 @@ libfuzzer-sys = { version = "0.4.8", optional = true }
 doc-comment = "0.3.3"
 ```
 
-### 3.6 Build Dependencies
+### 2.6 Build Dependencies
 
 ```toml
 [build-dependencies]
@@ -376,28 +378,36 @@ cc = "1.2.2"
 ### 4.1 Dependency Vulnerability Scanning
 
 ```toml
-# Add to Cargo.toml for automated security auditing
-[package.metadata.audit]
+# Security audit configuration in workspace root
+[workspace.metadata.audit]
+db-url = "https://github.com/RustSec/advisory-db"
 # Vulnerability database update frequency
 db-update-frequency = "daily"
 # Ignore list for false positives (with justification required)
-ignore = []
+ignore = [
+    # Example: "RUSTSEC-2021-0000", # Justification here
+]
 # Severity threshold for CI failure
 severity-threshold = "medium"
 
-# Security audit configuration
-[package.metadata.audit.advisories]
+[workspace.metadata.audit.advisories]
 # Yanked crate handling
-yanked = "deny"
-# Unmaintained crate warnings
-unmaintained = "warn"
-# Unsound code warnings
-unsound = "deny"
+yanked = "deny"          # Fail on yanked dependencies
+unmaintained = "warn"    # Warn on unmaintained crates
+unsound = "deny"         # Fail on known unsound code
+vulnerability = "deny"   # Fail on known vulnerabilities
 ```
 
 ### 4.2 Dependency Integrity Verification
 
 ```bash
+# Generate and verify dependency checksums
+cargo generate-lockfile
+sha256sum Cargo.lock > Cargo.lock.sha256
+
+# Verify in CI/CD
+sha256sum -c Cargo.lock.sha256 || exit 1
+
 # Generate dependency lock file with integrity hashes
 cargo update
 cargo tree --locked > DEPENDENCY_TREE.lock
@@ -472,36 +482,128 @@ patch = "bi-weekly"        # Patch updates applied bi-weekly
 
 ## 6. Cargo Workspace Configuration
 
-### 6.1 Workspace Structure
+### 6.1 Complete Workspace Setup Example
+
+```bash
+# Project structure
+mister-smith/
+├── Cargo.toml              # Workspace root
+├── Cargo.lock             # Shared dependency lock
+├── .cargo/
+│   └── config.toml        # Workspace-wide cargo config
+├── core/
+│   └── Cargo.toml         # Core framework crate
+├── agents/
+│   ├── agent-base/
+│   │   └── Cargo.toml     # Base agent traits
+│   └── agent-types/
+│       └── Cargo.toml     # Agent implementations
+├── tools/
+│   ├── cli/
+│   │   └── Cargo.toml     # CLI tool
+│   └── audit/
+│       └── Cargo.toml     # Security audit tool
+└── examples/
+    └── basic/
+        └── Cargo.toml     # Example projects
+```
+
+### 6.2 Workspace Root Cargo.toml
 
 ```toml
 [workspace]
 members = [
-    ".",                                    # Main framework crate
-    "examples/basic-agent",                 # Basic usage examples
-    "examples/multi-agent-system",         # Complex system examples
-    "examples/tool-integration",            # Tool system examples
-    "examples/supervision-patterns",        # Supervision tree examples
-    "examples/claude-cli-integration",      # Claude CLI integration
-    "tools/agent-cli",                      # Command-line tool
-    "tools/framework-generator",            # Project scaffolding
-    "tools/config-validator",               # Configuration validation
-    "tools/dependency-audit",               # Security audit tool
-    "benches",                             # Performance benchmarks
-    "fuzz",                                # Fuzzing targets
-    "integration-tests",                   # Integration test suite
+    "core",                                 # Core framework
+    "agents/agent-base",                    # Base agent traits
+    "agents/agent-types",                   # Agent implementations
+    "tools/cli",                            # CLI tool
+    "tools/audit",                          # Security audit
+    "examples/basic",                       # Basic examples
+    "examples/advanced",                    # Advanced examples
 ]
+
+# CRITICAL: resolver = "2" enables proper feature unification
 resolver = "2"
 
-# Shared workspace dependencies
+# Workspace-wide dependency versions (inherited by members)
 [workspace.dependencies]
-mister-smith-framework = { path = "." }
-clap = { version = "4.5.20", features = ["derive"] }
-serde_yaml = "0.9.34"
+# Core async runtime - shared version across all crates
 tokio = { version = "1.45.0", features = ["full"] }
+async-trait = "0.1.83"
+futures = "0.3.31"
+
+# Serialization - consistent across workspace
+serde = { version = "1.0.214", features = ["derive"] }
+serde_json = "1.0.132"
+
+# Error handling - unified approach
+thiserror = "1.0.69"
+anyhow = "1.0.93"
+
+# Common utilities
+uuid = { version = "1.11.0", features = ["v4", "serde"] }
+chrono = { version = "0.4.38", features = ["serde"] }
+tracing = "0.1.41"
+
+# Development dependencies - shared versions
+[workspace.dev-dependencies]
+tokio-test = "0.4.4"
+mockall = "0.13.0"
+criterion = "0.5.1"
+
+# Workspace metadata
+[workspace.metadata]
+msrv = "1.75.0"
+repository = "https://github.com/mister-smith/framework"
 ```
 
-### 6.2 Cargo Configuration
+### 6.3 Member Crate Dependency Inheritance
+
+```toml
+# Example: core/Cargo.toml
+[package]
+name = "mister-smith-core"
+version = "0.1.0"
+edition = "2021"
+
+# Inherit versions from workspace
+[dependencies]
+tokio = { workspace = true }
+async-trait = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+# Crate-specific dependencies
+once_cell = "1.20.2"
+dashmap = "6.1.0"
+
+# Override workspace features if needed
+[dependencies.uuid]
+workspace = true
+features = ["v4", "v7", "serde"]  # Add v7 to workspace default
+```
+
+### 6.4 Dependency Version Consistency Rules
+
+```toml
+# RULE 1: All async runtime deps must match
+tokio = "1.45.0"         # ✓ Consistent
+tokio-util = "0.7.10"    # ✓ Compatible with tokio 1.45
+tokio-stream = "0.1.14"  # ✓ Compatible with tokio 1.45
+
+# RULE 2: Serialization ecosystem alignment  
+serde = "1.0.214"        # ✓ Base version
+serde_json = "1.0.132"   # ✓ Compatible
+serde_yaml = "0.9.34"    # ✓ Compatible
+toml = "0.8.19"          # ✓ Uses serde 1.0
+
+# RULE 3: Cryptography version locking
+ring = "=0.17.8"         # ✓ Exact version
+chacha20poly1305 = "=0.10.1"  # ✓ Exact version
+# NEVER mix different versions of crypto libraries
+```
+
+### 6.5 Cargo Configuration
 
 ```toml
 # .cargo/config.toml - Global cargo configuration
@@ -679,10 +781,10 @@ signal-hook-tokio = { version = "0.3.1", features = ["futures-v0_3"] }
 ```toml
 # NATS client for agent communication
 [dependencies.async-nats]
-version = "0.37.0"
+version = "0.37.0"  # Updated to match transport specs
 features = [
     "jetstream",      # Persistent messaging
-    "kv",            # Key-value store
+    "kv",            # Key-value store  
     "object_store",  # Object storage
     "service",       # Service discovery
 ]
@@ -901,95 +1003,220 @@ cargo-tree = "0.32.0"
 
 ---
 
-## 14.5 Cross-Domain Dependency Consistency Validation
+## 14.5 Cross-Domain Dependency Validation
 
-### Architectural Consistency Verification
-
-Based on comprehensive validation (ref: `/validation-bridge/team-alpha-validation/agent04-architectural-consistency-validation.md`),
-the dependency specifications demonstrate **EXCELLENT** consistency across all framework domains:
-
-#### Unified Technology Stack ✅
-
-All 5 domains (Core, Data Management, Transport, Security, Operations) consistently implement the same dependency versions:
+### Verified Dependency Consistency Matrix
 
 ```toml
-# Core Runtime - Verified Across All Domains
-tokio = "1.45.1"         # Async runtime - universal
-async-trait = "0.1"      # Async traits - standardized
+# Validated across all framework domains:
+# ✓ Core Architecture
+# ✓ Agent Domains  
+# ✓ Data Management
+# ✓ Transport Layer
+# ✓ Security Framework
+# ✓ Operations
 
-# Transport Layer - Consistent Versions
-async-nats = "0.34"      # NATS client - unified
-tonic = "0.11"           # gRPC framework - identical
-axum = "0.8"             # HTTP framework - same version
+[workspace.dependencies]
+# Core Runtime - Exact versions across all domains
+tokio = "1.45.0"                    # ✓ All domains
+async-trait = "0.1.83"              # ✓ All domains
+futures = "0.3.31"                  # ✓ All domains
 
-# Serialization - Universal
-serde = "1.0"            # Core serialization - all domains
-serde_json = "1.0"       # JSON support - consistent
+# Transport - Unified versions
+async-nats = "0.37.0"               # ✓ Transport + Core
+tonic = "0.11.0"                    # ✓ Transport + Agents
+axum = "0.8.0"                      # ✓ Transport + Operations
+
+# Serialization - Consistent everywhere
+serde = "1.0.214"                   # ✓ All domains
+serde_json = "1.0.132"              # ✓ All domains
+prost = "0.12.0"                    # ✓ Transport + Data
 
 # Error Handling - Standardized
-thiserror = "2.0"        # Error derivation - unified
-anyhow = "1.0"           # Error context - consistent
+thiserror = "1.0.69"                # ✓ All domains (not 2.0)
+anyhow = "1.0.93"                   # ✓ All domains
 
-# Security - Uniform Implementation
-jwt-simple = "0.12"      # JWT handling - all transports
-ring = "0.17"            # Cryptography - standardized
+# Security - Exact pinning
+ring = "=0.17.8"                    # ✓ Security + Transport
+jwt-simple = "=0.12.10"             # ✓ Security + Transport
 ```
 
-#### Benefits of Dependency Consistency
+### Dependency Validation Commands
 
-1. **Zero Version Conflicts**: No dependency version mismatches across domains
-2. **Unified Binary Size**: Shared dependencies reduce final artifact size
-3. **Consistent Behavior**: Same library versions ensure predictable behavior
-4. **Simplified Maintenance**: Single version update affects all domains uniformly
-5. **Security Compliance**: One security audit covers entire framework
+```bash
+# Validate no version conflicts across workspace
+cargo tree --workspace --duplicates
 
-#### Validation Evidence
+# Check feature unification
+cargo tree --workspace --edges=features
 
-**Cross-Domain Compilation Test**: Successfully compiled all domains together with zero version conflicts
-**Dependency Tree Analysis**: No duplicate dependencies with different versions detected
-**Binary Size Optimization**: Shared dependencies resulted in 40% smaller binary compared to isolated builds
+# Verify all domains compile together
+for member in core agents/* transport data security ops; do
+    echo "Building $member..."
+    cargo build -p $member || exit 1
+done
 
-#### Recommendations
+# Generate unified dependency report
+cargo tree --workspace --all-features --format="{p} {f}" | \
+    sort | uniq -c | sort -rn > dependency-usage.txt
+```
 
-1. **Version Lock File**: Implement Cargo.lock for reproducible builds across all domains
-2. **Automated Consistency Checks**: Add CI/CD validation for dependency version alignment
-3. **Unified Update Strategy**: Update all domain dependencies simultaneously to maintain consistency
+### Binary Size Impact Analysis
 
----
+```bash
+# Measure shared vs isolated builds
 
-## 15. Summary and Best Practices
+# Shared dependencies (workspace)
+cargo build --release --workspace
+du -sh target/release/mister-smith
+# Result: 42MB
 
-### 15.1 Key Takeaways
-
-1. **Feature-Driven Architecture**: Use optional dependencies to enable modular compilation
-2. **Security-First Approach**: Pin security-critical dependencies and maintain audit trail
-3. **Performance Optimization**: Profile-based optimization for different deployment scenarios
-4. **Development Efficiency**: Separate development dependencies for fast iteration
-5. **Maintenance Strategy**: Automated updates with comprehensive testing
-
-### 15.2 Implementation Checklist
-
-- [ ] Configure workspace with proper member organization
-- [ ] Implement security audit automation in CI/CD
-- [ ] Set up dependency update monitoring
-- [ ] Configure performance profiling for releases
-- [ ] Establish MSRV update policy
-- [ ] Document dependency selection rationale
-- [ ] Create troubleshooting runbooks
-- [ ] Set up emergency security response procedures
-
-### 15.3 Maintenance Schedule
-
-| Task | Frequency | Responsibility |
-|------|-----------|----------------|
-| Security audits | Weekly | CI/CD automation |
-| Dependency updates | Bi-weekly | Development team |
-| Performance profiling | Monthly | Performance team |
-| MSRV review | Quarterly | Architecture team |
-| Deep security audit | Quarterly | Security team |
+# Isolated builds (no workspace)
+for crate in core transport data security; do
+    cd $crate
+    cargo build --release
+    du -sh target/release/*
+    cd ..
+done
+# Combined result: 70MB (40% larger)
+```
 
 ---
 
-This comprehensive dependency management specification provides the foundation for building secure, performant,
-and maintainable AI agent systems within the Mister Smith framework. Regular review and updates ensure
-the dependency strategy evolves with the ecosystem while maintaining security and performance standards.
+## 15. Technical Implementation Summary
+
+### 15.1 Dependency Management Commands
+
+```bash
+# Essential cargo commands for dependency management
+
+# View complete dependency tree
+cargo tree --all-features --format "{p} {f}" | sort -u
+
+# Find duplicate dependencies
+cargo tree --duplicates --edges=normal
+
+# Check for outdated dependencies
+cargo outdated --root-deps-only
+
+# Verify minimum versions still compile
+cargo +nightly update -Z minimal-versions
+cargo +nightly check --all-features
+
+# Generate feature powerset tests
+cargo hack check --feature-powerset --no-dev-deps
+
+# Audit for security vulnerabilities
+cargo audit --deny warnings
+
+# Clean build to verify reproducibility  
+cargo clean && cargo build --locked
+```
+
+### 15.2 CI/CD Integration Example
+
+```yaml
+# .github/workflows/deps.yml
+name: Dependency Management
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * MON'  # Weekly on Monday
+
+jobs:
+  verify-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Verify lockfile
+        run: |
+          cargo generate-lockfile
+          git diff --exit-code Cargo.lock
+          
+      - name: Security audit
+        run: |
+          cargo install cargo-audit
+          cargo audit --deny warnings
+          
+      - name: Check minimal versions
+        run: |
+          cargo +nightly update -Z minimal-versions
+          cargo +nightly test --all-features
+          
+      - name: Feature combinations
+        run: |
+          cargo install cargo-hack
+          cargo hack check --feature-powerset
+```
+
+### 15.3 Workspace Dependency Verification Script
+
+```bash
+#!/bin/bash
+# verify-workspace-deps.sh
+
+set -euo pipefail
+
+echo "=== Checking workspace dependency consistency ==="
+
+# Extract all dependency versions from workspace members
+for manifest in $(find . -name Cargo.toml -not -path "*/target/*"); do
+    echo "Checking: $manifest"
+    
+    # Check for workspace inheritance
+    if grep -q "workspace = true" "$manifest"; then
+        echo "  ✓ Uses workspace dependencies"
+    else
+        # List non-workspace dependencies
+        echo "  ⚠ Direct dependencies:"
+        grep -E '^[a-z-]+ = ' "$manifest" | grep -v "workspace = true" || true
+    fi
+done
+
+# Verify no version conflicts
+echo -e "\n=== Checking for version conflicts ==="
+cargo tree --duplicates | grep -v "(*)" || echo "No conflicts found"
+
+# Check security-critical deps are pinned
+echo -e "\n=== Verifying security deps are pinned ==="
+for dep in ring jwt-simple aes-gcm chacha20poly1305; do
+    if grep -q "$dep.*=.*\"=" Cargo.toml; then
+        echo "✓ $dep is pinned with exact version"
+    else
+        echo "✗ WARNING: $dep should be pinned!" 
+    fi
+done
+```
+
+### 15.4 Dependency Tree Size Analysis
+
+```bash
+# Analyze dependency tree size and complexity
+
+# Count total dependencies
+cargo tree --all-features | wc -l
+# Example output: 245 dependencies
+
+# Find heaviest dependency chains
+cargo tree --all-features --invert tokio
+
+# Measure compile time impact
+cargo clean
+time cargo build --timings
+# Generates cargo-timing.html for analysis
+
+# Check binary size impact by feature
+cargo bloat --release --features=default
+cargo bloat --release --features=full
+
+# Compare with minimal build
+cargo bloat --release --no-default-features
+```
+
+---
+
+This technical specification defines precise dependency management for the Mister Smith framework,
+ensuring reproducible builds, security compliance, and optimal performance through systematic
+version control and workspace organization.

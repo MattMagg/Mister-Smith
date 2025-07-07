@@ -1,39 +1,43 @@
 # Message Schema Definitions
 
-## Validation Status
-
-**Document Version**: 1.0.0  
-**Validation Date**: 2025-07-05  
-**Validation Score**: 98/100  
-**Status**: VALIDATED WITH EXCELLENCE ✅  
-**Validator**: Agent 9 - Message Schemas Specialist
-
-### Validation Summary
-
-- **Completeness**: Comprehensive JSON Schema definitions for all message types
-- **Validation Framework**: Robust multi-tier validation with performance optimization
-- **Serialization Support**: Multi-format support (JSON, Protocol Buffers, MessagePack)
-- **Version Management**: Sophisticated compatibility matrix and migration support
-- **Security**: Advanced security considerations and input validation
-- **Performance**: Excellent optimization strategies
-
-### Enhancement Areas Addressed
-
-- ✅ Schema registry API implementation (Section 16)
-- ✅ Message batching specifications (Section 17)
-- ✅ Rate limiting and throttling (Section 18)
-- ✅ Error recovery patterns (Section 19)
-- ✅ Custom validation extensions (Section 7.4)
-
 ## Agent Framework Message Type System
-
-> **Integration Foundation**: This document defines comprehensive message schemas that integrate with transport layer specifications and agent orchestration patterns
-
-## Executive Summary
 
 This document provides complete JSON Schema definitions for all message types in the Mister Smith AI Agent Framework.
 It establishes message versioning, validation rules, serialization formats, routing schemes, and transformation patterns
 to enable type-safe, performant agent communication.
+
+## Table of Contents
+
+1. [Foundation Schemas](#1-foundation-schemas)
+   - [Base Message Envelope](#11-base-message-envelope)
+   - [Common Type Definitions](#12-common-type-definitions)
+2. [Agent Communication Messages](#2-agent-communication-messages)
+   - [Agent Command Message](#21-agent-command-message)
+   - [Agent Status Update Message](#22-agent-status-update-message)
+   - [Agent Registration Message](#23-agent-registration-message)
+3. [Task Management Messages](#3-task-management-messages)
+   - [Task Assignment Message](#31-task-assignment-message)
+   - [Task Result Message](#32-task-result-message)
+   - [Task Progress Update Message](#33-task-progress-update-message)
+4. [Workflow Orchestration Messages](#4-workflow-orchestration-messages)
+   - [Workflow Coordination Message](#41-workflow-coordination-message)
+   - [Workflow State Synchronization Message](#42-workflow-state-synchronization-message)
+5. [Claude CLI Integration Messages](#5-claude-cli-integration-messages)
+   - [Hook Event Message](#51-hook-event-message)
+   - [Hook Response Message](#52-hook-response-message)
+6. [System Operation Messages](#6-system-operation-messages)
+   - [System Alert Message](#61-system-alert-message)
+   - [System Health Check Message](#62-system-health-check-message)
+7. [Validation Framework](#7-validation-framework)
+8. [Serialization Specifications](#8-serialization-specifications)
+9. [Message Routing and Addressing](#9-message-routing-and-addressing)
+
+## Integration References
+
+This message schema specification integrates with:
+- [Core Message Schemas](./core-message-schemas.md) - Essential message patterns
+- [Transport Layer](../transport/) - NATS and gRPC implementations
+- [Agent Orchestration](../core-architecture/) - Agent lifecycle and supervision
 
 ## 1. Foundation Schemas
 
@@ -1691,6 +1695,9 @@ Validation performance optimizations and caching strategies:
 
 ```rust
 // Example validation configuration in Rust
+use std::collections::HashMap;
+use lru::LruCache;
+
 #[derive(Debug, Clone)]
 pub struct ValidationConfig {
     pub level: ValidationLevel,
@@ -1706,6 +1713,10 @@ pub enum ValidationLevel {
     Standard,  // Balanced validation
     Permissive // Minimal validation
 }
+
+// Type aliases for external dependencies
+pub type CompiledSchema = Box<dyn Send + Sync>;
+pub type ValidationResult = Result<(), String>;
 
 // Fast-path validation for high-frequency message types
 pub struct FastPathValidator {
@@ -1769,6 +1780,23 @@ Framework for extending validation with domain-specific rules:
 use async_trait::async_trait;
 use serde_json::Value;
 
+// Error types for validation
+#[derive(Debug, Clone)]
+pub struct ValidationError {
+    pub message: String,
+}
+
+impl ValidationError {
+    pub fn custom(message: &str) -> Self {
+        Self { message: message.to_string() }
+    }
+}
+
+// Trait for error transformation
+pub trait ErrorTransformer: Send + Sync {
+    fn transform_error(&self, error: ValidationError) -> ValidationError;
+}
+
 #[async_trait]
 pub trait CustomValidator: Send + Sync {
     fn name(&self) -> &str;
@@ -1790,7 +1818,7 @@ impl CustomValidator for AgentCapabilityValidator {
     
     async fn validate(&self, message: &Value) -> Result<(), ValidationError> {
         // Custom validation logic for agent capabilities
-        if let Some(capabilities) = message.get("payload").and_then(|p| p.get("capabilities")) {
+        if let Some(_capabilities) = message.get("payload").and_then(|p| p.get("capabilities")) {
             // Validate capability combinations, dependencies, etc.
             Ok(())
         } else {
@@ -1806,6 +1834,7 @@ pub struct ValidationRecovery {
     pub error_transformers: Vec<Box<dyn ErrorTransformer>>,
 }
 
+#[derive(Debug, Clone)]
 pub enum RetryStrategy {
     None,
     FixedDelay { attempts: u32, delay_ms: u64 },
@@ -2423,10 +2452,26 @@ pub enum Message {
 Runtime validation with performance optimization:
 
 ```rust
-use jsonschema::{JSONSchema, ValidationError};
+use jsonschema::JSONSchema;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
+
+// Local error type for message validation
+#[derive(Debug, Clone)]
+pub struct MessageValidationError {
+    pub field: String,
+    pub message: String,
+}
+
+impl MessageValidationError {
+    pub fn new(field: &str, message: &str) -> Self {
+        Self {
+            field: field.to_string(),
+            message: message.to_string(),
+        }
+    }
+}
 
 pub struct MessageValidator {
     schemas: HashMap<String, Arc<JSONSchema>>,
@@ -2434,25 +2479,62 @@ pub struct MessageValidator {
 }
 
 impl MessageValidator {
-    pub fn validate_message(&self, message: &Value) -> Result<(), Vec<ValidationError>> {
+    pub fn new(validation_level: ValidationLevel) -> Self {
+        Self {
+            schemas: HashMap::new(),
+            validation_level,
+        }
+    }
+
+    pub fn validate_message(&self, message: &Value) -> Result<(), Vec<MessageValidationError>> {
         let message_type = message.get("message_type")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| vec![ValidationError::custom("missing message_type")])?;
+            .ok_or_else(|| vec![MessageValidationError::new("message_type", "missing message_type")])?;
             
         let schema = self.schemas.get(message_type)
-            .ok_or_else(|| vec![ValidationError::custom("unknown message_type")])?;
+            .ok_or_else(|| vec![MessageValidationError::new("message_type", "unknown message_type")])?;
             
         match self.validation_level {
-            ValidationLevel::Strict => schema.validate(message).collect(),
+            ValidationLevel::Strict => {
+                let errors: Vec<_> = schema.validate(message)
+                    .map(|err| MessageValidationError::new(&err.instance_path.to_string(), &err.to_string()))
+                    .collect();
+                if errors.is_empty() {
+                    Ok(())
+                } else {
+                    Err(errors)
+                }
+            },
             ValidationLevel::Standard => self.validate_essential_fields(message),
             ValidationLevel::Permissive => self.validate_minimal(message),
         }
     }
     
-    fn validate_essential_fields(&self, message: &Value) -> Result<(), Vec<ValidationError>> {
-        // Optimized validation for production use
-        // Only validate critical fields for performance
-        Ok(())
+    fn validate_essential_fields(&self, message: &Value) -> Result<(), Vec<MessageValidationError>> {
+        let mut errors = Vec::new();
+        
+        // Validate required fields
+        if message.get("message_id").is_none() {
+            errors.push(MessageValidationError::new("message_id", "required field missing"));
+        }
+        if message.get("timestamp").is_none() {
+            errors.push(MessageValidationError::new("timestamp", "required field missing"));
+        }
+        
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
+    }
+    
+    fn validate_minimal(&self, message: &Value) -> Result<(), Vec<MessageValidationError>> {
+        // Minimal validation - just check message_type exists
+        if message.get("message_type").is_none() {
+            Err(vec![MessageValidationError::new("message_type", "required field missing")])
+        } else {
+            Ok(())
+        }
     }
 }
 ```
@@ -2641,20 +2723,51 @@ binary_formats:
 High-performance validation strategies:
 
 ```rust
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+use std::collections::HashMap;
+use lru::LruCache;
+use serde_json::Value;
+
+// Validation statistics
+#[derive(Debug, Default)]
+pub struct ValidationStats {
+    pub cache_hits: u64,
+    pub cache_misses: u64,
+    pub validations: u64,
+}
+
+// Validation result type
+#[derive(Debug, Clone)]
+pub enum FastValidationResult {
+    Valid,
+    Invalid(Vec<String>),
+}
+
 // Fast-path validation for critical message types
 pub struct FastPathValidator {
     // Pre-compiled validation rules for common cases
-    essential_validators: HashMap<String, Box<dyn Fn(&Value) -> bool>>,
+    essential_validators: HashMap<String, Box<dyn Fn(&Value) -> bool + Send + Sync>>,
     
     // LRU cache for validation results
-    validation_cache: LruCache<u64, ValidationResult>,
+    validation_cache: LruCache<u64, FastValidationResult>,
     
     // Statistics for optimization
     validation_stats: ValidationStats,
 }
 
 impl FastPathValidator {
-    pub fn validate_fast(&mut self, message: &Value) -> ValidationResult {
+    pub fn new() -> Self {
+        Self {
+            essential_validators: HashMap::new(),
+            validation_cache: LruCache::new(1000),
+            validation_stats: ValidationStats::default(),
+        }
+    }
+
+    pub fn validate_fast(&mut self, message: &Value) -> FastValidationResult {
+        self.validation_stats.validations += 1;
+        
         // Fast hash-based cache lookup
         let cache_key = self.hash_message(message);
         if let Some(cached_result) = self.validation_cache.get(&cache_key) {
@@ -2662,20 +2775,44 @@ impl FastPathValidator {
             return cached_result.clone();
         }
         
+        self.validation_stats.cache_misses += 1;
+        
+        // Get message type for validation
+        let message_type = message.get("message_type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown");
+        
         // Fast-path validation for known message types
         if let Some(validator) = self.essential_validators.get(message_type) {
             let result = if validator(message) {
-                ValidationResult::Valid
+                FastValidationResult::Valid
             } else {
-                ValidationResult::Invalid(vec!["fast validation failed".into()])
+                FastValidationResult::Invalid(vec!["fast validation failed".into()])
             };
             
             self.validation_cache.put(cache_key, result.clone());
             return result;
         }
         
-        // Fall back to full schema validation
-        self.validate_full_schema(message)
+        // Fall back to basic validation
+        self.validate_basic(message)
+    }
+    
+    fn hash_message(&self, message: &Value) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        message.to_string().hash(&mut hasher);
+        hasher.finish()
+    }
+    
+    fn validate_basic(&mut self, message: &Value) -> FastValidationResult {
+        // Basic validation - check required fields exist
+        if message.get("message_id").is_none() ||
+           message.get("timestamp").is_none() ||
+           message.get("message_type").is_none() {
+            FastValidationResult::Invalid(vec!["missing required fields".into()])
+        } else {
+            FastValidationResult::Valid
+        }
     }
 }
 ```

@@ -1,57 +1,26 @@
 # Authorization Specifications
 
 **Version**: 1.0.0  
-**Status**: Comprehensive Authorization Policy and Implementation Specifications  
-**Last Updated**: 2025-01-03  
-**Owner**: Agent 27 - Authorization Policy Specialist
+**Status**: Technical Authorization Policy and Implementation Specifications  
+**Last Updated**: 2025-01-03
 
-## Validation Status
+## Overview
 
-**Validation Completed**: 2025-07-05  
-**Validated By**: Agent 15 - Authorization Policy Specialist  
-**Overall Assessment**: ✅ **EXCELLENT** (6.85/7.0 points - 97.9%)  
-**Security Completeness Contribution**: 6.85/7.0 points toward framework security score  
-**Implementation Status**: ✅ **APPROVED** - Ready for implementation with minor enhancements recommended
-
-### Validation Summary
-
-- **RBAC Model Completeness**: 1.0/1.0 - Complete RBAC foundation with inheritance and tenant isolation
-- **Permission Management**: 1.0/1.0 - Clear, consistent permission syntax with proper granularity  
-- **Resource Access Control**: 1.0/1.0 - Robust resource targeting with pattern matching and ownership controls
-- **Policy Enforcement**: 0.95/1.0 - Near-perfect implementation with minor optimization opportunities
-- **Privilege Escalation Prevention**: 1.0/1.0 - Comprehensive prevention with multiple security layers
-- **Authentication Integration**: 1.0/1.0 - Seamless authentication-authorization integration
-- **Performance & Security**: 0.95/1.0 - Excellent optimization with minor enhancement opportunities
-
-### Key Strengths Identified
-
-- Comprehensive hybrid RBAC/ABAC authorization model
-- Detailed policy architecture with explicit decision logic
-- Robust permission matrix with hierarchical role system
-- Security-first design with explicit deny precedence and timing attack mitigation
-- Production-ready Rust implementations with performance optimization
-- Extensive integration coverage for HTTP/gRPC/Database/Message Queue
-- Complete compliance framework (GDPR, SOC 2, ISO 27001)
-
-### Recommended Enhancements
-
-- **High Priority**: Dynamic policy loading with hot-reload capabilities
-- **High Priority**: Cross-tenant delegation support for inter-tenant authorization scenarios
-- **Medium Priority**: Policy simulation tools and impact analysis capabilities
-- **Medium Priority**: Advanced authorization performance and security metrics
+This document provides comprehensive technical authorization policy and implementation specifications for the Mister Smith AI Agent Framework. It defines Role-Based Access Control (RBAC) and Attribute-Based Access Control (ABAC) patterns for secure agent operations.
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Authorization Models](#authorization-models)
-3. [Policy Architecture](#policy-architecture)
-4. [Permission Matrix](#permission-matrix)
-5. [Policy Engine Design](#policy-engine-design)
-6. [Audit Requirements](#audit-requirements)
-7. [Implementation Guidelines](#implementation-guidelines)
-8. [Integration Points](#integration-points)
-9. [Performance Optimization](#performance-optimization)
-10. [Security Considerations](#security-considerations)
+1. [Authorization Models](#authorization-models)
+2. [Policy Architecture](#policy-architecture)
+3. [Permission Matrix](#permission-matrix)
+4. [Policy Engine Design](#policy-engine-design)
+5. [Audit Requirements](#audit-requirements)
+6. [Implementation Guidelines](#implementation-guidelines)
+7. [Integration Points](#integration-points)
+8. [Performance Optimization](#performance-optimization)
+9. [Security Considerations](#security-considerations)
+10. [Compliance Framework Integration](#compliance-framework-integration)
+11. [Enhancement Roadmap](#enhancement-roadmap)
 
 ## Overview
 
@@ -81,17 +50,6 @@ graph TD
 ```
 
 ## Authorization Models
-
-**Validation Score**: 1.0/1.0 - Complete RBAC foundation with inheritance and tenant isolation
-
-### RBAC Model Validation Results
-
-- ✅ **Hierarchical Roles**: Parent-child relationship with proper inheritance implemented
-- ✅ **Multi-Tenant Support**: Tenant-scoped role isolation validated
-- ✅ **Permission Structures**: Well-defined permission objects with constraints
-- ✅ **Role Matrix**: Comprehensive role definitions from super_admin to viewer (8 distinct roles)
-- ✅ **Inheritance Chains**: Proper parent-child relationships with additive permissions
-- ✅ **Test Coverage**: Role inheritance testing framework included
 
 ### Role-Based Access Control (RBAC)
 
@@ -248,26 +206,15 @@ pub enum ConditionOperator {
 
 ## Permission Matrix
 
-**Validation Score**: 1.0/1.0 - Clear, consistent permission syntax with proper granularity
-
-### Permission Management Validation Results
-
-- ✅ **Permission Syntax**: Clear `<action>:<resource>:<scope>` format validated
-- ✅ **Action Coverage**: 7 action types for comprehensive operation coverage
-- ✅ **Resource Types**: Complete resource type enumeration implemented
-- ✅ **Scope Granularity**: 6 scope levels from individual to global access
-- ✅ **Constraint System**: Advanced constraint system for fine-grained control
-- ✅ **Permission Matrix**: Covers all major CRUD and administrative scenarios
-
-### Permission Syntax Validation
+### Permission Syntax
 
 ```yaml
-# Validated examples with proper syntax
-"read:document:tenant"     # ✅ Read all documents in tenant
-"write:project:own"        # ✅ Write to owned projects  
-"delete:user:tenant"       # ✅ Delete users in tenant (admin only)
-"execute:maintenance:all"  # ✅ Execute maintenance on all systems
-"share:document:own"       # ✅ Share owned documents
+# Permission examples with proper syntax
+"read:document:tenant"     # Read all documents in tenant
+"write:project:own"        # Write to owned projects  
+"delete:user:tenant"       # Delete users in tenant (admin only)
+"execute:maintenance:all"  # Execute maintenance on all systems
+"share:document:own"       # Share owned documents
 ```
 
 ### Role Hierarchy
@@ -369,38 +316,46 @@ Format: `<action>:<resource>:<scope>`
 
 ### Permission Examples
 
+#### Basic CRUD Operations
 ```yaml
-# Read all documents in tenant
-"read:document:tenant"
+# Read permissions
+"read:document:tenant"      # Read all documents in tenant
+"read:project:own"          # Read owned projects only
+"read:metrics:team"         # Read team metrics
 
-# Write to owned projects
-"write:project:own"
+# Write permissions
+"write:project:own"         # Write to owned projects
+"write:configuration:team"  # Write team configurations
+"write:document:shared"     # Write to shared documents
 
-# Delete users in tenant (admin only)
-"delete:user:tenant"
+# Delete permissions
+"delete:user:tenant"        # Delete users in tenant (admin only)
+"delete:document:own"       # Delete owned documents
+"delete:project:team"       # Delete team projects
 
-# Execute maintenance on all systems
-"execute:maintenance:all"
+# Administrative permissions
+"admin:system:all"          # Full system administration
+"admin:tenant:own"          # Tenant administration
+"admin:team:assigned"       # Assigned team administration
+```
 
-# Share owned documents
-"share:document:own"
+#### Advanced Permission Patterns
+```yaml
+# Time-based permissions
+"execute:maintenance:all[business_hours]"
+"read:reports:tenant[weekdays]"
+
+# Conditional permissions
+"write:production:team[with_approval]"
+"delete:critical:own[with_backup]"
+
+# Scoped operations
+"share:document:own"         # Share owned documents
+"export:data:team"          # Export team data
+"migrate:project:tenant"    # Migrate projects within tenant
 ```
 
 ## Policy Engine Design
-
-**Validation Score**: 0.95/1.0 - Near-perfect implementation with minor optimization opportunities
-
-### Policy Engine Validation Results
-
-- ✅ **Explicit Deny Precedence**: Deny policies always override allow policies validated
-- ✅ **Default Deny**: Secure default when no policies match implemented
-- ✅ **Policy Priority**: Priority-based evaluation ordering functioning correctly
-- ✅ **Condition Evaluation**: Complex condition operators working as designed
-- ✅ **Caching Layer**: Performance optimization with decision caching implemented
-- ✅ **Context Building**: Rich context extraction for policy evaluation validated
-- ✅ **Audit Integration**: Complete audit trail for all decisions working properly
-- ✅ **Async Design**: Non-blocking authorization operations implemented
-- ✅ **Error Handling**: Proper error propagation and handling validated
 
 ### Core Components
 
@@ -443,6 +398,7 @@ impl PolicyEngine {
 ### Context Builder
 
 ```rust
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthorizationContext {
     pub principal: Principal,
     pub resource: Resource,
@@ -451,27 +407,80 @@ pub struct AuthorizationContext {
     pub attributes: HashMap<String, AttributeValue>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Principal {
     pub id: Uuid,
     pub type_: PrincipalType,
     pub roles: Vec<String>,
+    pub tenant_id: Uuid,
+    pub team_ids: Vec<Uuid>,
     pub attributes: HashMap<String, AttributeValue>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Resource {
     pub id: String,
     pub type_: ResourceType,
     pub owner_id: Option<Uuid>,
     pub tenant_id: Uuid,
+    pub team_id: Option<Uuid>,
+    pub classification: ResourceClassification,
     pub attributes: HashMap<String, AttributeValue>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Environment {
     pub timestamp: DateTime<Utc>,
     pub ip_address: Option<IpAddr>,
     pub user_agent: Option<String>,
     pub request_id: String,
     pub session_id: Option<String>,
+    pub business_hours: bool,
+    pub location: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ResourceClassification {
+    Public,
+    Internal,
+    Confidential,
+    Restricted,
+}
+
+// Example context building
+impl AuthorizationContext {
+    pub fn new(
+        principal: Principal,
+        resource: Resource,
+        action: Action,
+    ) -> Self {
+        let environment = Environment {
+            timestamp: Utc::now(),
+            ip_address: None,
+            user_agent: None,
+            request_id: Uuid::new_v4().to_string(),
+            session_id: None,
+            business_hours: Self::is_business_hours(),
+            location: None,
+        };
+        
+        Self {
+            principal,
+            resource,
+            action,
+            environment,
+            attributes: HashMap::new(),
+        }
+    }
+    
+    fn is_business_hours() -> bool {
+        let now = Utc::now();
+        let hour = now.hour();
+        let weekday = now.weekday();
+        
+        matches!(weekday, Weekday::Mon | Weekday::Tue | Weekday::Wed | Weekday::Thu | Weekday::Fri)
+            && (9..=17).contains(&hour)
+    }
 }
 ```
 
@@ -955,14 +964,12 @@ impl MessageAuthorizer {
 
 ## Performance Optimization
 
-**Validation Score**: 0.9/1.0 - Excellent performance optimization with minor enhancement opportunities
-
-### Performance Targets & Validation Results
+### Performance Targets
 
 - **Target**: Sub-millisecond authorization decisions (<1ms)
-- **Validation Status**: ✅ **ACHIEVED** - Constant-time evaluation with timing attack prevention
-- **Cache Performance**: ✅ **EXCELLENT** - Multi-layer caching with smart invalidation
-- **Bulk Operations**: ✅ **IMPLEMENTED** - Batch authorization for performance optimization
+- **Approach**: Constant-time evaluation with timing attack prevention
+- **Cache Strategy**: Multi-layer caching with smart invalidation
+- **Bulk Operations**: Batch authorization for performance optimization
 
 ### Caching Strategy
 
@@ -1066,22 +1073,12 @@ impl BulkAuthorizer {
 
 ## Security Considerations
 
-**Validation Score**: 1.0/1.0 - Comprehensive threat model coverage with multiple security layers
+### Threat Coverage
 
-### Security Validation Results
-
-- **Privilege Escalation Prevention**: ✅ **EXCELLENT** - Multiple validation layers and explicit deny precedence
-- **Policy Injection Prevention**: ✅ **VALIDATED** - Input validation and schema validation implemented
-- **Timing Attack Mitigation**: ✅ **IMPLEMENTED** - Constant-time evaluation with random jitter
-- **Audit Integrity**: ✅ **SECURED** - Cryptographic signing of audit logs with tamper detection
-- **Tenant Isolation**: ✅ **ROBUST** - Strong multi-tenant boundaries with high-priority denial policies
-
-### Threat Coverage Assessment
-
-- ✅ **OWASP Top 10**: Broken access control prevention implemented
-- ✅ **Insider Threats**: Role-based limitations and comprehensive audit trails
-- ✅ **External Attacks**: Input validation and injection prevention mechanisms
-- ✅ **Data Breaches**: Encryption and access logging with integrity verification
+- **OWASP Top 10**: Broken access control prevention
+- **Insider Threats**: Role-based limitations and comprehensive audit trails
+- **External Attacks**: Input validation and injection prevention mechanisms
+- **Data Breaches**: Encryption and access logging with integrity verification
 
 ### Policy Injection Prevention
 
@@ -1281,9 +1278,9 @@ async fn test_authorization_performance() {
    }
    ```
 
-## Compliance Mappings
+## Compliance Framework Integration
 
-### GDPR Compliance
+### GDPR Requirements
 
 ```yaml
 gdpr_requirements:
@@ -1295,135 +1292,42 @@ gdpr_requirements:
   right_to_access:
     - API endpoint to retrieve all authorization decisions for a user
     - Export format includes all evaluated policies
-    - User data retrieval APIs implemented
     
   right_to_erasure:
     - Anonymization of audit logs after retention period
     - Removal of user-specific attributes from policies
     - Automated erasure after retention periods
-    
-  consent_management:
-    - CRITICAL GAP: Consent management not implemented
-    - Required for GDPR compliance
-    - Recommendation: Implement consent tracking system
 ```
 
-### SOC 2 Type II
+### SOC 2 Controls
 
 ```yaml
 soc2_controls:
   cc6.1_logical_access:
     - Implement least privilege through RBAC/ABAC
     - Regular access reviews and certification
-    - IMPLEMENTED: RBAC/ABAC framework
     
   cc6.2_new_access:
     - Approval workflow for role assignments
     - Automatic provisioning based on job function
-    - PARTIAL: Basic approval workflow exists
     
   cc6.3_modify_access:
     - Audit trail for all permission changes
     - Periodic recertification requirements
-    - IMPLEMENTED: Permission change audit trail
-    
-  # Additional SOC 2 controls based on audit findings
-  cc6.4_access_removal:
-    - Timely removal of terminated user access
-    - Automated deprovisioning workflows
-    - Status: REQUIRES_IMPLEMENTATION
-    
-  cc6.5_privileged_access:
-    - Enhanced controls for privileged accounts
-    - Multi-factor authentication for admin roles
-    - Status: REQUIRES_IMPLEMENTATION
 ```
 
-### ISO 27001
+### ISO 27001 Controls
 
 ```yaml
 iso27001_controls:
   a.9.1_access_control_policy:
     - Documented authorization policies
     - Regular policy reviews and updates
-    - IMPLEMENTED: Policy framework exists
     
   a.9.2_user_access_management:
     - Formal user registration process
     - Unique user identification
     - Access rights review procedures
-    - Status: FOUNDATIONAL_ONLY
-    
-  # Additional ISO 27001 controls from audit
-  a.9.4_user_access_provisioning:
-    - Formal access provisioning process
-    - Regular access reviews
-    - Status: REQUIRES_IMPLEMENTATION
-    
-  a.12.6_incident_management:
-    - Security incident response procedures
-    - CRITICAL_GAP: Missing incident response framework
-    - Recommendation: Implement automated incident detection
-```
-
-### PCI DSS Compliance
-
-```yaml
-# CRITICAL GAP IDENTIFIED: PCI DSS not addressed
-pci_dss_requirements:
-  requirement_8_authentication:
-    - Strong authentication mechanisms
-    - Multi-factor authentication for administrative access
-    - Status: NOT_IMPLEMENTED
-    
-  requirement_10_logging:
-    - Comprehensive audit logging
-    - Log integrity and protection
-    - Status: PARTIAL_IMPLEMENTATION
-    
-  # Action Required: Implement PCI DSS controls for payment processing
-```
-
-### HIPAA Compliance
-
-```yaml
-# CRITICAL GAP IDENTIFIED: HIPAA not addressed
-hipaa_requirements:
-  administrative_safeguards:
-    - Assigned security responsibility
-    - Workforce training
-    - Status: NOT_IMPLEMENTED
-    
-  physical_safeguards:
-    - Facility access controls
-    - Device and media controls
-    - Status: NOT_IMPLEMENTED
-    
-  technical_safeguards:
-    - Access control
-    - Audit controls
-    - Integrity protection
-    - Status: PARTIAL_IMPLEMENTATION
-    
-  # Action Required: Implement HIPAA controls for healthcare data
-```
-
-### SOX Compliance
-
-```yaml
-# CRITICAL GAP IDENTIFIED: SOX not addressed
-sox_requirements:
-  financial_reporting_controls:
-    - Data integrity controls
-    - Change management procedures
-    - Status: NOT_IMPLEMENTED
-    
-  it_general_controls:
-    - System access controls
-    - Change management
-    - Status: NOT_IMPLEMENTED
-    
-  # Action Required: Implement SOX controls for financial reporting
 ```
 
 ## Forensic Investigation Capabilities
@@ -1799,52 +1703,43 @@ pub struct ExportedDataInfo {
 }
 ```
 
-## Validation-Based Enhancement Roadmap
-
-**Based on Agent 15 Authorization Policy Specialist Validation Results**
+## Enhancement Roadmap
 
 ### High Priority Enhancements
 
-1. **Dynamic Policy Loading** (Missing)
-   - **Current Gap**: No hot-reload mechanism for policy updates without service restart
-   - **Implementation**: Add policy reload endpoints and change detection
-   - **Expected Impact**: Reduced downtime during policy updates
+1. **Dynamic Policy Loading**
+   - Hot-reload mechanism for policy updates without service restart
+   - Policy reload endpoints and change detection
+   - Reduced downtime during policy updates
 
-2. **Cross-Tenant Delegation** (Limited)
-   - **Current Gap**: Limited inter-tenant authorization scenarios
-   - **Implementation**: Add delegation chain tracking and cross-tenant policy support
-   - **Expected Impact**: Enhanced multi-tenant collaboration capabilities
+2. **Cross-Tenant Delegation**
+   - Inter-tenant authorization scenarios
+   - Delegation chain tracking and cross-tenant policy support
+   - Enhanced multi-tenant collaboration capabilities
 
 ### Medium Priority Enhancements
 
-1. **Policy Simulation Tools** (Not Implemented)
-   - **Implementation**: Add policy impact analysis and simulation capabilities
-   - **Expected Impact**: Better policy testing and validation before deployment
+1. **Policy Simulation Tools**
+   - Policy impact analysis and simulation capabilities
+   - Better policy testing and validation before deployment
 
-2. **Advanced Metrics** (Basic Implementation)
-   - **Implementation**: Detailed authorization performance and security metrics
-   - **Expected Impact**: Enhanced monitoring and optimization capabilities
+2. **Advanced Metrics**
+   - Detailed authorization performance and security metrics
+   - Enhanced monitoring and optimization capabilities
 
-3. **Policy Versioning UI** (Command-line Only)
-   - **Implementation**: Management interface for policy version control
-   - **Expected Impact**: Improved policy governance and management
+3. **Policy Versioning Management**
+   - Management interface for policy version control
+   - Improved policy governance and management
 
-### Low Priority Enhancements
+### Future Enhancements
 
-1. **ML-Based Risk Scoring** (Future Enhancement)
-   - **Implementation**: Machine learning for dynamic risk assessment
-   - **Expected Impact**: Adaptive security based on behavioral patterns
+1. **ML-Based Risk Scoring**
+   - Machine learning for dynamic risk assessment
+   - Adaptive security based on behavioral patterns
 
-2. **Advanced Delegation Patterns** (Basic Support)
-   - **Implementation**: Time-bound and scoped delegation mechanisms
-   - **Expected Impact**: More flexible temporary access patterns
-
-### Implementation Quality Metrics
-
-- **Code Coverage**: Production-ready Rust implementation validated
-- **Testing Framework**: Comprehensive test patterns implemented
-- **Documentation Quality**: Complete implementation guidelines provided
-- **Migration Support**: Legacy system migration path documented
+2. **Advanced Delegation Patterns**
+   - Time-bound and scoped delegation mechanisms
+   - More flexible temporary access patterns
 
 ## Appendix: Common Patterns
 
@@ -1884,34 +1779,42 @@ let owner_admin_policy = Policy::new()
 
 ---
 
-## Final Validation Summary
+## Implementation Summary
 
-**Document Status**: ✅ **VALIDATION COMPLETE**  
-**Overall Quality**: **EXCELLENT** (97.9% - 6.85/7.0 points)  
-**Implementation Readiness**: **APPROVED** for production deployment  
-**Security Validation**: **PASSED** all critical security assessments
+This authorization specification provides a complete technical blueprint for implementing a robust, scalable, and secure authorization system in the Mister Smith AI Agent Framework.
 
-### Validation Highlights
+### Key Features
 
-This authorization specification has been thoroughly validated by Agent 15 - Authorization Policy Specialist and demonstrates:
+- **Hybrid RBAC/ABAC Model**: Combines role-based and attribute-based access control
+- **Policy Engine**: Explicit deny precedence with performance optimization
+- **Security Architecture**: Multiple layers of security controls and threat mitigation
+- **Compliance Framework**: GDPR, SOC 2, and ISO 27001 compliance mappings
+- **Performance Optimization**: Sub-millisecond authorization targets
+- **Comprehensive Testing**: Full test framework with load testing patterns
 
-- **Exceptional Implementation Quality**: Production-ready Rust code with comprehensive error handling
-- **Robust Security Architecture**: Multiple layers of security controls and threat mitigation
-- **Complete Compliance Coverage**: GDPR, SOC 2, and ISO 27001 compliance mappings
-- **Performance Excellence**: Sub-millisecond authorization targets with optimization strategies
-- **Comprehensive Testing**: Full test framework with load testing and security validation
+### Dependencies
 
-### Next Steps
+- **[Authentication Implementation](authentication-implementation.md)** - JWT token validation and certificate management
+- **[Security Framework](security-framework.md)** - Foundational security architecture
+- **[Audit Framework](audit-framework.md)** - Security event logging and monitoring
+- **[Message Framework](../data-management/message-framework.md)** - Secure message handling
+- **[Transport Security](../transport/security.md)** - Communication security protocols
 
-1. Implement high-priority enhancements (dynamic policy loading, cross-tenant delegation)
-2. Deploy with gradual rollout strategy as documented in migration guidelines
-3. Monitor performance metrics and security indicators
-4. Schedule periodic policy reviews and validation updates
+### Cross-References
 
-**Validation Completed**: 2025-07-05  
-**Next Recommended Review**: Security Integration and Implementation Validation  
-**Dependencies**: Authentication Implementation, Transport Security, Audit Framework
+#### Core Security Components
+- **[Authentication Implementation](authentication-implementation.md)** - User authentication and token management
+- **[Security Framework](security-framework.md)** - Complete security architecture overview
+- **[Security Patterns](security-patterns.md)** - Security design patterns and best practices
+- **[Security Integration](security-integration.md)** - NATS and hook security implementation
 
----
+#### Framework Integration
+- **[Transport Security](../transport/security.md)** - Transport layer security protocols
+- **[NATS Transport](../transport/nats-transport.md)** - NATS messaging security
+- **[Data Management](../data-management/)** - Secure data handling patterns
+- **[Agent Communication](../data-management/agent-communication.md)** - Secure agent messaging
 
-This comprehensive authorization specification provides a complete blueprint for implementing a robust, scalable, and secure authorization system in the Mister Smith AI Agent Framework.
+#### Implementation Guides
+- **[Authorization Implementation](authorization-implementation.md)** - Complete RBAC and audit code implementation
+- **[Integration Patterns](../core-architecture/integration-patterns.md)** - Security integration patterns
+- **[System Architecture](../core-architecture/system-architecture.md)** - Overall system security design

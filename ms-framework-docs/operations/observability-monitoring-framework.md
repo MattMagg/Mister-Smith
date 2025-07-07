@@ -1,42 +1,53 @@
 ---
-title: Observability & Monitoring Framework - Revised
-type: note
-permalink: revision-swarm/operations/observability-monitoring-framework-revised
+title: Observability & Monitoring Framework
+type: technical-specification
+permalink: operations/observability-monitoring-framework
 ---
 
-## Observability & Monitoring Framework - Revised
+# Observability & Monitoring Framework
 
-## Multi-Agent Systems Monitoring Patterns
+## Technical Specifications for Multi-Agent Systems
 
-### Validation Status
+This document provides implementation patterns and technical specifications for observability and monitoring in the MisterSmith framework.
 
-**Document Status**: ✅ PRODUCTION READY  
-**Validation Score**: 5/5 Points (100% - Full Production Readiness)  
-**Last Validated**: 2025-07-05  
-**Validated By**: Agent 20 - MS Framework Validation Swarm  
-**Document Length**: 3,094 lines of comprehensive production-grade observability
+### Technical Scope
 
-#### Validation Summary
+**Implementation Patterns**:
+- OpenTelemetry instrumentation patterns for multi-agent tracing
+- Metrics collection and aggregation strategies
+- Structured logging with correlation IDs
+- Distributed tracing across agent boundaries
+- Performance monitoring and alerting
 
-- **Monitoring Stack Completeness**: 5/5 - Complete OpenTelemetry, Prometheus, Jaeger, Grafana, ELK stack
-- **Metrics Collection**: EXCELLENT - Agent-specific metrics with proper Prometheus schemas
-- **Logging Infrastructure**: EXCELLENT - Production-grade structured logging with trace correlation
-- **Alerting Systems**: EXCELLENT - Comprehensive MS Framework specific alerts and routing
-- **Tool Integration**: EXCELLENT - Seamless integration across entire observability ecosystem
+**Technology Stack**:
+- **Telemetry**: OpenTelemetry (traces, metrics, logs)
+- **Metrics Storage**: Prometheus with custom exporters
+- **Trace Storage**: Jaeger for distributed tracing
+- **Log Aggregation**: ELK Stack (Elasticsearch, Logstash, Kibana)
+- **Visualization**: Grafana dashboards and alerts
+- **Transport**: OTLP (OpenTelemetry Protocol) over gRPC/HTTP
 
-#### Minor Enhancement Recommendations
+### Cross-References
 
-1. **Security**: Add mTLS configuration examples for production environments
-2. **Compliance**: Include data retention compliance patterns (GDPR, SOX)
-3. **Cost Optimization**: Add cost monitoring and optimization guidelines
-4. **Disaster Recovery**: Include backup and recovery procedures
+**Core Architecture**:
+- **[System Integration](../core-architecture/system-integration.md)** - Component integration patterns
+- **[Supervision Trees](../core-architecture/supervision-trees.md)** - Agent supervision and error handling
+- **[Tokio Runtime](../core-architecture/tokio-runtime.md)** - Async runtime configuration
+- **[Component Architecture](../core-architecture/component-architecture.md)** - Agent component structure
 
-#### Advanced Feature Opportunities
+**Operations**:
+- **[Deployment Configuration](../operations/deployment-configuration.md)** - Infrastructure setup and deployment patterns
+- **[Process Management](../operations/process-management.md)** - Agent lifecycle and supervision patterns
+- **[Container Orchestration](../operations/container-orchestration.md)** - Docker and Kubernetes deployment
 
-- ML-based anomaly detection integration patterns
-- Reactive auto-scaling based on observability metrics
-- Cross-region observability and correlation patterns
-- Automated compliance reporting capabilities
+**Data Management**:
+- **[Agent Communication](../data-management/agent-communication.md)** - Message patterns and protocols
+- **[Message Schemas](../data-management/message-schemas.md)** - Data structure specifications
+- **[Agent Lifecycle](../data-management/agent-lifecycle.md)** - State management patterns
+
+**Transport & Security**:
+- **[NATS Integration](../transport/nats-integration.md)** - Message transport configuration
+- **[Authentication](../security/authentication.md)** - Agent authentication patterns
 
 ### 1. Architecture Overview
 
@@ -544,7 +555,7 @@ PATTERN AdaptiveSampling:
         system_load_level
         error_presence
         latency_threshold
-        business_importance
+        trace_priority
     
     SAMPLING_LOGIC:
         IF critical_operation: ALWAYS_SAMPLE
@@ -3023,12 +3034,12 @@ PATTERN ComprehensiveAgentMonitoring:
     }
 ```
 
-### 17. Production-Ready Deployment Configuration
+### 17. Deployment Configuration Specifications
 
 #### 17.1 Complete Docker Compose Observability Stack
 
 ```yaml
-PATTERN ProductionObservabilityStack:
+PATTERN ObservabilityStack:
     version: '3.8'
     
     services:
@@ -3151,10 +3162,10 @@ PATTERN ProductionObservabilityStack:
         driver: bridge
 ```
 
-#### 17.2 Production Monitoring Best Practices
+#### 17.2 Monitoring Implementation Guidelines
 
 ```yaml
-PATTERN ProductionBestPractices:
+PATTERN MonitoringGuidelines:
     monitoring_principles:
       - instrument_critical_paths_only
       - use_consistent_naming_conventions
@@ -3194,7 +3205,7 @@ PATTERN ProductionBestPractices:
         - channels: ["slack_warnings", "email"]
 ```
 
-### 18. Security Enhancements (Production Hardening)
+### 18. Security Configuration Specifications
 
 #### 18.1 mTLS Configuration for Production
 
@@ -3420,7 +3431,47 @@ PATTERN DisasterRecovery:
 
 ---
 
-This comprehensive framework provides production-ready observability patterns for multi-agent systems, covering all aspects from instrumentation
-through visualization and alerting. The implementation patterns ensure efficient monitoring without significant performance overhead while providing
-deep insights into system behavior and performance. Security enhancements, compliance patterns, cost optimization, and disaster recovery procedures
-ensure enterprise-grade operational readiness.
+## Implementation Summary
+
+This framework provides technical patterns for observability and monitoring in multi-agent systems. Implementation follows these key principles:
+
+**Performance Considerations**:
+- Minimal overhead instrumentation (< 5% performance impact)
+- Efficient sampling strategies for high-throughput scenarios
+- Async export patterns to prevent blocking operations
+- Resource-aware metric collection
+
+**Integration Points**:
+- Agent lifecycle hooks for automatic instrumentation
+- Message transport integration for distributed tracing
+- Supervision tree integration for error correlation
+- Configuration management for dynamic observability settings
+
+**Deployment Requirements**:
+- OpenTelemetry Collector for centralized processing
+- Prometheus for metrics storage and querying
+- Jaeger for trace storage and analysis
+- Grafana for visualization and alerting
+
+The patterns in this document enable comprehensive observability without compromising system performance or complexity.
+
+## Quick Reference
+
+### Key Patterns
+- **AgentInstrumentation**: Initialize telemetry context and configure exporters
+- **ObservabilityPipeline**: Data flow from agent to visualization
+- **DistributedTracing**: Cross-agent trace correlation and context propagation
+- **MetricsCollection**: Agent-specific and system-wide metrics
+- **StructuredLogging**: Correlated logs with trace context
+
+### Essential Integrations
+- **OpenTelemetry SDK**: `opentelemetry = "0.20"` for Rust agents
+- **OTLP Export**: gRPC endpoint on port 4317 for trace/metrics export
+- **Prometheus**: `/metrics` endpoint for scraping agent metrics
+- **Context Propagation**: HTTP/NATS headers for distributed tracing
+
+### Configuration Files
+- `otel-collector-config.yaml`: Central collector configuration
+- `prometheus.yml`: Metrics scraping configuration
+- `grafana/dashboards/`: Dashboard definitions for visualization
+- `alertmanager.yml`: Alert routing and notification rules

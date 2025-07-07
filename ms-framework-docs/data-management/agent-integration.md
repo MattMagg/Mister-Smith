@@ -10,18 +10,9 @@ tags:
 
 ## Resource Management, Tool-Bus, Extensions & Data Persistence
 
-> **📊 VALIDATION STATUS: PRODUCTION READY**
+> **Technical Specifications**: Agent integration patterns with persistence error handling integration
 >
-> | Criterion | Score | Status |
-> |-----------|-------|---------|
-> | Resource Management | 5/5 | ✅ Complete |
-> | Tool-Bus Integration | 5/5 | ✅ Comprehensive |
-> | Extension Mechanisms | 5/5 | ✅ Well-Architected |
-> | Database Integration | 5/5 | ✅ Enterprise-Grade |
-> | Serialization Framework | 5/5 | ✅ Robust |
-> | **TOTAL SCORE** | **15/15** | **✅ DEPLOYMENT APPROVED** |
->
-> *Validated: 2025-07-05 | Document Lines: 3,842 | Implementation Status: 100%*
+> **Cross-References**: Links to [persistence-operations.md](./persistence-operations.md) for unified error handling patterns
 > **Cross-References**:
 >
 > - See `agent-lifecycle.md` for basic agent architecture and supervision patterns (sections 1-3)
@@ -37,10 +28,10 @@ tags:
 
 ## Executive Summary
 
-This document defines advanced integration patterns for agent systems including resource-bounded spawning,
-tool-bus integration, extension mechanisms, Claude-CLI hook system integration, database schemas,
-and message serialization protocols. These patterns provide the integration layer for scalable,
-extensible agent systems.
+This document defines integration patterns for agent systems including resource-bounded spawning with error handling,
+tool-bus integration with failure recovery, extension mechanisms, Claude-CLI hook system integration,
+and state synchronization. These patterns integrate with persistence operations (see [persistence-operations.md](./persistence-operations.md))
+to provide robust agent-to-system integration with comprehensive error handling.
 
 ## 10. Spawn and Resource Management Patterns
 
@@ -91,17 +82,64 @@ async fn handle_task(task: Task) {
     }
 }
 
-// ✅ GOOD: Resource-bounded spawning
+// ✅ GOOD: Resource-bounded spawning with proper error handling
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::time::timeout;
+
+#[derive(Debug, thiserror::Error)]
+pub enum SpawnError {
+    #[error("Agent limit reached: {current}/{max}")]
+    AgentLimitReached { current: usize, max: usize },
+    #[error("Agent spawn failed: {0}")]
+    SpawnFailed(String),
+    #[error("Spawn timeout after {timeout:?}")]
+    Timeout { timeout: Duration },
+    #[error("Persistence error during spawn: {0}")]
+    PersistenceError(String), // Integration with persistence-operations.md errors
+}
+
 struct SpawnController {
     max_agents: usize,
     active: Arc<AtomicUsize>,
-    
-    async fn spawn_bounded(&self, role: AgentRole) -> Result<Agent> {
-        if self.active.load(Ordering::SeqCst) >= self.max_agents {
-            return Err("Agent limit reached");
+    spawn_timeout: Duration,
+}
+
+impl SpawnController {
+    async fn spawn_bounded(&self, role: AgentRole) -> Result<BoundedAgent, SpawnError> {
+        // Atomically check and increment to prevent race conditions
+        let current = self.active.fetch_add(1, Ordering::SeqCst);
+        if current >= self.max_agents {
+            // Rollback the increment
+            self.active.fetch_sub(1, Ordering::SeqCst);
+            return Err(SpawnError::AgentLimitReached { 
+                current, 
+                max: self.max_agents 
+            });
         }
-        // Spawn with cleanup on drop
-        Ok(BoundedAgent::new(role, self.active.clone()))
+
+        // Spawn with timeout to prevent hanging
+        let agent_future = BoundedAgent::new(role, self.active.clone());
+        let agent_result = timeout(self.spawn_timeout, agent_future).await;
+        
+        match agent_result {
+            Ok(Ok(agent)) => {
+                // Actually spawn the agent task
+                let agent_handle = tokio::spawn(agent.run());
+                Ok(BoundedAgent::with_handle(agent, agent_handle, self.active.clone()))
+            }
+            Ok(Err(e)) => {
+                // Rollback counter on agent creation failure
+                self.active.fetch_sub(1, Ordering::SeqCst);
+                Err(SpawnError::SpawnFailed(e.to_string()))
+            }
+            Err(_) => {
+                // Rollback counter on timeout
+                self.active.fetch_sub(1, Ordering::SeqCst);
+                Err(SpawnError::Timeout { timeout: self.spawn_timeout })
+            }
+        }
     }
 }
 ```
@@ -170,26 +208,86 @@ impl ClaudeTaskOutputParser {
         }
     }
 
-    // Route task output to appropriate NATS subjects
+    // Route task output to appropriate NATS subjects with validation and retry
     async fn route_task_output(&self, task_info: TaskInfo, line: &str) -> Result<(), RoutingError> {
-        let subject = match task_info {
-            TaskInfo::AgentId(id) => format!("agents.{}.output", id),
-            TaskInfo::Description(desc) => format!("tasks.{}.output", desc.replace(" ", "_")),
+        // Validate and sanitize subject components
+        let subject = match &task_info {
+            TaskInfo::AgentId(id) => {
+                if *id > 1000000 { // Reasonable upper bound
+                    return Err(RoutingError::InvalidAgentId(*id));
+                }
+                format!("agents.{}.output", id)
+            },
+            TaskInfo::Description(desc) => {
+                // Sanitize description for NATS subject compatibility
+                let sanitized = desc
+                    .chars()
+                    .filter(|c| c.is_alphanumeric() || *c == '-' || *c == '_')
+                    .collect::<String>();
+                if sanitized.is_empty() {
+                    return Err(RoutingError::InvalidDescription(desc.clone()));
+                }
+                format!("tasks.{}.output", sanitized)
+            }
         };
 
+        // Validate line length to prevent excessive message sizes
+        if line.len() > 65536 { // 64KB limit
+            return Err(RoutingError::MessageTooLarge(line.len()));
+        }
+
         let event = TaskOutputEvent {
-            task_info,
+            task_info: task_info.clone(),
             output_line: line.to_string(),
             timestamp: Utc::now(),
         };
 
-        self.nats_client.publish(subject, serde_json::to_vec(&event)?).await?;
+        // Serialize with error handling
+        let payload = serde_json::to_vec(&event)
+            .map_err(|e| RoutingError::SerializationFailed(e.to_string()))?;
+
+        // Publish with retry on transient failures
+        self.publish_with_retry(&subject, payload).await?;
         self.metrics.increment_routed_messages();
 
         Ok(())
     }
+
+    async fn publish_with_retry(&self, subject: &str, payload: Vec<u8>) -> Result<(), RoutingError> {
+        const MAX_RETRIES: usize = 3;
+        const BASE_DELAY: Duration = Duration::from_millis(100);
+        
+        for attempt in 0..MAX_RETRIES {
+            match self.nats_client.publish(subject, payload.clone()).await {
+                Ok(_) => return Ok(()),
+                Err(e) if attempt == MAX_RETRIES - 1 => {
+                    return Err(RoutingError::PublishFailed(e.to_string()));
+                }
+                Err(_) => {
+                    let delay = BASE_DELAY * 2_u32.pow(attempt as u32);
+                    tokio::time::sleep(delay).await;
+                }
+            }
+        }
+        unreachable!()
+    }
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum RoutingError {
+    #[error("Invalid agent ID: {0} exceeds maximum")]
+    InvalidAgentId(u32),
+    #[error("Invalid description: '{0}' contains invalid characters")]
+    InvalidDescription(String),
+    #[error("Message too large: {0} bytes exceeds 64KB limit")]
+    MessageTooLarge(usize),
+    #[error("Serialization failed: {0}")]
+    SerializationFailed(String),
+    #[error("Publish failed after retries: {0}")]
+    PublishFailed(String),
+}
+
+#[derive(Clone, Debug)]
 enum TaskInfo {
     AgentId(u32),
     Description(String),
@@ -207,7 +305,11 @@ struct TaskOutputEvent {
 ```rust
 // Multi-agent coordination using Claude-CLI Task tool
 impl AgentOrchestrator {
-    async fn coordinate_parallel_claude_tasks(&mut self, tasks: Vec<TaskRequest>) -> Result<Vec<TaskResult>, CoordinationError> {
+    async fn coordinate_parallel_claude_tasks(
+        &mut self, 
+        tasks: Vec<TaskRequest>,
+        timeout: Duration
+    ) -> Result<Vec<TaskResult>, CoordinationError> {
         // Build parallel task prompt for Claude-CLI
         let parallel_prompt = self.build_parallel_task_prompt(&tasks)?;
 
@@ -218,10 +320,22 @@ impl AgentOrchestrator {
             coordination_mode: CoordinationMode::Parallel,
         }).await?;
 
-        // Monitor parallel task execution
-        let task_results = self.monitor_parallel_execution(claude_agent_id, tasks.len()).await?;
+        // Monitor with timeout and proper cleanup
+        let result = tokio::time::timeout(
+            timeout,
+            self.monitor_parallel_execution(claude_agent_id, tasks.len())
+        ).await;
 
-        Ok(task_results)
+        // Ensure cleanup regardless of success/failure
+        if let Err(cleanup_err) = self.cleanup_claude_agent(claude_agent_id).await {
+            tracing::warn!("Failed to cleanup Claude agent {}: {}", claude_agent_id, cleanup_err);
+        }
+
+        match result {
+            Ok(Ok(task_results)) => Ok(task_results),
+            Ok(Err(e)) => Err(e),
+            Err(_) => Err(CoordinationError::Timeout { timeout })
+        }
     }
 
     fn build_parallel_task_prompt(&self, tasks: &[TaskRequest]) -> Result<String, PromptError> {
@@ -1740,17 +1854,167 @@ impl SyncConnectionPool {
 }
 ```
 
+## 17. Unified Agent-Persistence Integration Patterns
+
+### 17.1 Agent Spawn with Persistence Error Handling
+
+Integration between agent spawning and persistence operations for robust error recovery:
+
+```rust
+use crate::persistence::{PersistenceError, RecoveryContext};
+
+#[derive(Debug, thiserror::Error)]
+pub enum IntegratedError {
+    #[error("Agent spawn failed: {0}")]
+    SpawnError(#[from] SpawnError),
+    #[error("Persistence error: {0}")]
+    PersistenceError(#[from] PersistenceError),
+    #[error("Combined agent-persistence failure: spawn={spawn}, persistence={persistence}")]
+    CombinedFailure { spawn: String, persistence: String },
+}
+
+struct IntegratedAgentManager {
+    spawn_controller: SpawnController,
+    persistence_layer: PersistenceLayer,
+}
+
+impl IntegratedAgentManager {
+    async fn spawn_agent_with_persistence(
+        &self,
+        role: AgentRole,
+        initial_state: AgentState,
+    ) -> Result<BoundedAgent, IntegratedError> {
+        let mut recovery_context = RecoveryContext {
+            retry_count: 0,
+            max_retries: 3,
+            system_load: self.get_system_load(),
+            cache_available: self.persistence_layer.cache_available(),
+            time_since_last_success: Duration::from_secs(0),
+        };
+
+        loop {
+            // Try to persist initial state first
+            match self.persistence_layer.store_agent_state(&initial_state).await {
+                Ok(_) => {
+                    // Persistence successful, now spawn agent
+                    match self.spawn_controller.spawn_bounded(role.clone()).await {
+                        Ok(agent) => return Ok(agent),
+                        Err(spawn_err) => {
+                            // Cleanup persisted state on spawn failure
+                            if let Err(cleanup_err) = self.persistence_layer
+                                .cleanup_agent_state(&initial_state.agent_id).await {
+                                tracing::warn!("Failed to cleanup agent state: {}", cleanup_err);
+                            }
+                            return Err(IntegratedError::SpawnError(spawn_err));
+                        }
+                    }
+                }
+                Err(persistence_err) => {
+                    // Determine recovery action based on persistence error
+                    let recovery_action = self.classify_persistence_error(
+                        &persistence_err, 
+                        &recovery_context
+                    );
+
+                    match recovery_action {
+                        RecoveryAction::RetryWithBackoff => {
+                            if recovery_context.retry_count >= recovery_context.max_retries {
+                                return Err(IntegratedError::PersistenceError(persistence_err));
+                            }
+                            recovery_context.retry_count += 1;
+                            let delay = Duration::from_millis(100 * 2_u64.pow(recovery_context.retry_count as u32));
+                            tokio::time::sleep(delay).await;
+                            continue;
+                        }
+                        RecoveryAction::FallbackToCache => {
+                            // Try cache-based approach
+                            return self.spawn_agent_with_cache_fallback(role, initial_state).await;
+                        }
+                        RecoveryAction::GracefulDegradation => {
+                            // Spawn agent without full persistence
+                            return self.spawn_agent_degraded_mode(role).await;
+                        }
+                        RecoveryAction::EscalateToOperator => {
+                            return Err(IntegratedError::PersistenceError(persistence_err));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    async fn spawn_agent_with_cache_fallback(
+        &self,
+        role: AgentRole,
+        initial_state: AgentState,
+    ) -> Result<BoundedAgent, IntegratedError> {
+        // Store in cache instead of persistent storage
+        self.persistence_layer.cache_agent_state(&initial_state).await?;
+        
+        // Spawn with cache-based persistence
+        let agent = self.spawn_controller.spawn_bounded(role).await?;
+        
+        // Schedule background sync to persistent storage
+        tokio::spawn(self.background_sync_to_persistent_storage(initial_state));
+        
+        Ok(agent)
+    }
+
+    async fn spawn_agent_degraded_mode(
+        &self,
+        role: AgentRole,
+    ) -> Result<BoundedAgent, IntegratedError> {
+        // Spawn agent with minimal state tracking
+        let degraded_role = role.with_degraded_persistence();
+        self.spawn_controller.spawn_bounded(degraded_role).await
+            .map_err(IntegratedError::SpawnError)
+    }
+}
+```
+
+### 17.2 Cross-System Error Propagation
+
+Unified error handling that spans both agent operations and persistence:
+
+```rust
+async fn handle_agent_persistence_failure(
+    agent_id: &str,
+    error: IntegratedError,
+    context: &SystemContext,
+) -> RecoveryAction {
+    match error {
+        IntegratedError::SpawnError(SpawnError::AgentLimitReached { .. }) => {
+            // Persistence is fine, but can't spawn more agents
+            RecoveryAction::QueueForLater
+        }
+        IntegratedError::PersistenceError(PersistenceError::ConsistencyLagCritical) => {
+            // Stop spawning until persistence catches up
+            RecoveryAction::TemporarySpawnFreeze
+        }
+        IntegratedError::CombinedFailure { .. } => {
+            // Both systems failing - escalate immediately
+            RecoveryAction::SystemEmergencyMode
+        }
+        _ => {
+            // Apply standard recovery logic from persistence-operations.md
+            context.persistence_recovery.classify_error_and_determine_recovery(error, context)
+        }
+    }
+}
+```
+
 ## Summary
 
 This document provides comprehensive agent integration patterns including:
 
-1. **Spawn patterns** - Role-based spawning with resource bounds
-2. **Tool-bus integration** - Shared tool registry and agent-as-tool patterns
+1. **Spawn patterns** - Role-based spawning with resource bounds and persistence integration
+2. **Tool-bus integration** - Shared tool registry and agent-as-tool patterns  
 3. **Extension mechanisms** - Middleware and event emitter patterns
 4. **Claude-CLI hooks** - Hook system integration with NATS messaging
 5. **Database schemas** - Complete data persistence layer specifications
 6. **Message serialization** - Multiple format support with version compatibility
 7. **State synchronization** - Distributed state management with CRDT support
+8. **Unified error handling** - Integration with persistence-operations.md for comprehensive recovery
 
 ### Key Integration Principles
 

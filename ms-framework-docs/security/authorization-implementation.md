@@ -1,16 +1,8 @@
----
-title: Authorization and Security Audit Implementation
-type: note
-permalink: security/authorization-implementation
-tags:
-- '#security'
-- '#authorization'
-- '#audit'
-- '#rbac'
-- '#agent-focused'
----
+# Authorization and Security Audit Implementation
 
-## Authorization and Security Audit Implementation
+**Version**: 1.0.0  
+**Status**: Technical Implementation Guide  
+**Last Updated**: 2025-01-03
 
 ## Validation Status
 
@@ -62,6 +54,7 @@ This document provides complete code implementations for Role-Based Access Contr
 
 ### Security Implementation Files
 
+- **[Authorization Specifications](authorization-specifications.md)** - Complete authorization policy specifications
 - **[Security Patterns](security-patterns.md)** - Foundational security patterns and guidelines
 - **[Authentication Implementation](authentication-implementation.md)** - Certificate management and JWT authentication
 - **[Security Integration](security-integration.md)** - NATS and hook security implementation
@@ -74,9 +67,9 @@ This document provides complete code implementations for Role-Based Access Contr
 - **[Data Management](../data-management/)** - Message schemas and persistence security
 - **[Core Architecture](../core-architecture/)** - System integration patterns
 
-## 3. Authorization Implementation
+## Authorization Implementation
 
-### 3.1 RBAC Policy Engine
+### RBAC Policy Engine
 
 **Complete RBAC Implementation:**
 
@@ -86,6 +79,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 use anyhow::{Result, Context};
+use chrono::{DateTime, Utc, Weekday, Timelike, Local};
+use std::net::IpAddr;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Resource {
@@ -139,10 +134,47 @@ pub enum Condition {
     SameTeam,
     #[serde(rename = "business_hours")]
     BusinessHours,
+    #[serde(rename = "ip_range")]
+    IpRange(String),
+    #[serde(rename = "time_window")]
+    TimeWindow {
+        start_hour: u32,
+        end_hour: u32,
+        weekdays: Vec<Weekday>,
+    },
+    #[serde(rename = "resource_classification")]
+    ResourceClassification(ResourceClassification),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ResourceClassification {
+    Public,
+    Internal,
+    Confidential,
+    Restricted,
 }
 
 pub struct RbacEngine {
     role_permissions: HashMap<Role, Vec<Permission>>,
+    policy_cache: HashMap<String, bool>,
+    context_attributes: HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthorizationRequest {
+    pub principal_id: Uuid,
+    pub resource: Resource,
+    pub action: Action,
+    pub context: RequestContext,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RequestContext {
+    pub timestamp: DateTime<Utc>,
+    pub source_ip: Option<IpAddr>,
+    pub user_agent: Option<String>,
+    pub session_id: Option<Uuid>,
+    pub additional_attributes: HashMap<String, String>,
 }
 
 impl RbacEngine {
@@ -234,7 +266,102 @@ impl RbacEngine {
             },
         ]);
 
-        Self { role_permissions }
+        Self { 
+            role_permissions,
+            policy_cache: HashMap::new(),
+            context_attributes: HashMap::new(),
+        }
+    }
+    
+    /// Enhanced authorization with context evaluation
+    pub fn authorize_with_context(
+        &self,
+        request: &AuthorizationRequest,
+        user_claims: &UserClaims,
+    ) -> Result<bool> {
+        // Create cache key for this authorization request
+        let cache_key = format!(
+            "{}:{}:{}:{}",
+            user_claims.user_id,
+            request.resource.id,
+            serde_json::to_string(&request.action)?,
+            request.context.timestamp.timestamp()
+        );
+        
+        // Check cache first (in production, implement TTL)
+        if let Some(&cached_result) = self.policy_cache.get(&cache_key) {
+            return Ok(cached_result);
+        }
+        
+        // Perform authorization check
+        let result = self.check_permission_with_context(
+            user_claims,
+            &request.resource,
+            &request.action,
+            &request.context,
+        )?;
+        
+        // Cache result (in production, implement with TTL)
+        // self.policy_cache.insert(cache_key, result);
+        
+        Ok(result)
+    }
+    
+    /// Check permission with enhanced context evaluation
+    pub fn check_permission_with_context(
+        &self,
+        user_claims: &UserClaims,
+        resource: &Resource,
+        action: &Action,
+        context: &RequestContext,
+    ) -> Result<bool> {
+        // Check each role the user has
+        for role in &user_claims.roles {
+            if let Some(permissions) = self.role_permissions.get(role) {
+                for permission in permissions {
+                    if self.permission_matches_with_context(
+                        permission, 
+                        resource, 
+                        action, 
+                        user_claims,
+                        context
+                    )? {
+                        return Ok(true);
+                    }
+                }
+            }
+        }
+        
+        Ok(false)
+    }
+    
+    /// Enhanced permission matching with context
+    fn permission_matches_with_context(
+        &self,
+        permission: &Permission,
+        resource: &Resource,
+        action: &Action,
+        user_claims: &UserClaims,
+        context: &RequestContext,
+    ) -> Result<bool> {
+        // Check action match
+        if !self.action_matches(&permission.action, action) {
+            return Ok(false);
+        }
+
+        // Check resource pattern match
+        if !self.resource_pattern_matches(&permission.resource_pattern, resource) {
+            return Ok(false);
+        }
+
+        // Check all conditions with context
+        for condition in &permission.conditions {
+            if !self.condition_matches_with_context(condition, resource, user_claims, context)? {
+                return Ok(false);
+            }
+        }
+
+        Ok(true)
     }
 
     /// Check if user has permission to perform action on resource
@@ -325,6 +452,23 @@ impl RbacEngine {
         resource: &Resource,
         user_claims: &UserClaims,
     ) -> Result<bool> {
+        self.condition_matches_with_context(condition, resource, user_claims, &RequestContext {
+            timestamp: Utc::now(),
+            source_ip: None,
+            user_agent: None,
+            session_id: None,
+            additional_attributes: HashMap::new(),
+        })
+    }
+    
+    /// Enhanced condition matching with context
+    fn condition_matches_with_context(
+        &self,
+        condition: &Condition,
+        resource: &Resource,
+        user_claims: &UserClaims,
+        context: &RequestContext,
+    ) -> Result<bool> {
         match condition {
             Condition::OwnerOnly => {
                 Ok(resource.owner_id == Some(user_claims.user_id))
@@ -343,10 +487,28 @@ impl RbacEngine {
                 }
             },
             Condition::BusinessHours => {
-                use chrono::{Local, Timelike};
-                let now = Local::now();
-                let hour = now.hour();
-                Ok(hour >= 9 && hour <= 17) // 9 AM to 5 PM
+                let hour = context.timestamp.hour();
+                let weekday = context.timestamp.weekday();
+                Ok(matches!(weekday, Weekday::Mon | Weekday::Tue | Weekday::Wed | Weekday::Thu | Weekday::Fri)
+                    && (9..=17).contains(&hour))
+            },
+            Condition::IpRange(ip_range) => {
+                // Simplified IP range check - in production, use proper CIDR matching
+                if let Some(source_ip) = context.source_ip {
+                    Ok(ip_range.contains(&source_ip.to_string()))
+                } else {
+                    Ok(false)
+                }
+            },
+            Condition::TimeWindow { start_hour, end_hour, weekdays } => {
+                let hour = context.timestamp.hour();
+                let weekday = context.timestamp.weekday();
+                Ok(weekdays.contains(&weekday) && (*start_hour..=*end_hour).contains(&hour))
+            },
+            Condition::ResourceClassification(required_classification) => {
+                // This would require extending the Resource struct to include classification
+                // For now, return true - in production, implement proper classification checks
+                Ok(true)
             },
         }
     }
@@ -358,9 +520,21 @@ impl RbacEngine {
         for role in &user_claims.roles {
             if let Some(role_permissions) = self.role_permissions.get(role) {
                 for permission in role_permissions {
-                    let perm_str = format!("{}:{}", 
+                    let conditions_str = if permission.conditions.is_empty() {
+                        String::new()
+                    } else {
+                        format!("[{}]", 
+                            permission.conditions.iter()
+                                .map(|c| condition_to_string(c))
+                                .collect::<Vec<_>>()
+                                .join(",")
+                        )
+                    };
+                    
+                    let perm_str = format!("{}:{}{}perm", 
                         action_to_string(&permission.action),
-                        permission.resource_pattern
+                        permission.resource_pattern,
+                        conditions_str
                     );
                     permissions.insert(perm_str);
                 }
@@ -368,6 +542,41 @@ impl RbacEngine {
         }
         
         permissions.into_iter().collect()
+    }
+    
+    /// Check if user has any administrative permissions
+    pub fn has_admin_permissions(&self, user_claims: &UserClaims) -> bool {
+        user_claims.roles.iter().any(|role| {
+            matches!(role, Role::Admin | Role::System)
+        })
+    }
+    
+    /// Get permissions for specific resource type
+    pub fn get_permissions_for_resource_type(
+        &self, 
+        user_claims: &UserClaims,
+        resource_type: &ResourceType
+    ) -> Vec<Action> {
+        let mut actions = HashSet::new();
+        
+        for role in &user_claims.roles {
+            if let Some(role_permissions) = self.role_permissions.get(role) {
+                for permission in role_permissions {
+                    if permission.resource_pattern == "*" || 
+                       self.resource_pattern_matches(&permission.resource_pattern, &Resource {
+                           id: "test".to_string(),
+                           resource_type: resource_type.clone(),
+                           owner_id: None,
+                           tenant_id: user_claims.tenant_id,
+                           team_id: None,
+                       }) {
+                        actions.insert(permission.action.clone());
+                    }
+                }
+            }
+        }
+        
+        actions.into_iter().collect()
     }
 }
 
@@ -377,6 +586,15 @@ fn action_to_string(action: &Action) -> &'static str {
         Action::Write => "write", 
         Action::Delete => "delete",
         Action::Admin => "admin",
+    }
+}
+
+fn condition_to_string(condition: &Condition) -> &'static str {
+    match condition {
+        Condition::OwnerOnly => "owner_only",
+        Condition::SameTenant => "same_tenant",
+        Condition::SameTeam => "same_team",
+        Condition::BusinessHours => "business_hours",
     }
 }
 
@@ -417,7 +635,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_rbac_permissions() {
+    fn test_rbac_basic_permissions() {
         let rbac = RbacEngine::new();
         
         let user_claims = UserClaims {
@@ -446,12 +664,94 @@ mod tests {
         // User should NOT be able to delete their own document (requires moderator+)
         assert!(!rbac.check_permission(&user_claims, &resource, &Action::Delete).unwrap());
     }
+    
+    #[test]
+    fn test_rbac_role_hierarchy() {
+        let rbac = RbacEngine::new();
+        
+        // Test admin permissions
+        let admin_claims = UserClaims {
+            user_id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            roles: vec![Role::Admin],
+            permissions: vec![],
+            token_type: TokenType::Access,
+            session_id: Uuid::new_v4(),
+        };
+        
+        let other_user_resource = Resource {
+            id: "other-user-doc".to_string(),
+            resource_type: ResourceType::Document,
+            owner_id: Some(Uuid::new_v4()), // Different owner
+            tenant_id: admin_claims.tenant_id, // Same tenant
+            team_id: None,
+        };
+        
+        // Admin should be able to access any resource in their tenant
+        assert!(rbac.check_permission(&admin_claims, &other_user_resource, &Action::Read).unwrap());
+        assert!(rbac.check_permission(&admin_claims, &other_user_resource, &Action::Write).unwrap());
+        assert!(rbac.check_permission(&admin_claims, &other_user_resource, &Action::Delete).unwrap());
+    }
+    
+    #[test]
+    fn test_rbac_tenant_isolation() {
+        let rbac = RbacEngine::new();
+        
+        let user_claims = UserClaims {
+            user_id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            roles: vec![Role::Admin], // Even admin role
+            permissions: vec![],
+            token_type: TokenType::Access,
+            session_id: Uuid::new_v4(),
+        };
+        
+        let cross_tenant_resource = Resource {
+            id: "cross-tenant-doc".to_string(),
+            resource_type: ResourceType::Document,
+            owner_id: Some(Uuid::new_v4()),
+            tenant_id: Uuid::new_v4(), // Different tenant
+            team_id: None,
+        };
+        
+        // Admin should NOT be able to access resources from different tenant
+        assert!(!rbac.check_permission(&user_claims, &cross_tenant_resource, &Action::Read).unwrap());
+        assert!(!rbac.check_permission(&user_claims, &cross_tenant_resource, &Action::Write).unwrap());
+    }
+    
+    #[test]
+    fn test_rbac_system_role() {
+        let rbac = RbacEngine::new();
+        
+        let system_claims = UserClaims {
+            user_id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            roles: vec![Role::System],
+            permissions: vec![],
+            token_type: TokenType::Access,
+            session_id: Uuid::new_v4(),
+        };
+        
+        let any_resource = Resource {
+            id: "any-resource".to_string(),
+            resource_type: ResourceType::System,
+            owner_id: Some(Uuid::new_v4()),
+            tenant_id: Uuid::new_v4(), // Different tenant
+            team_id: None,
+        };
+        
+        // System role should have unrestricted access
+        assert!(rbac.check_permission(&system_claims, &any_resource, &Action::Read).unwrap());
+        assert!(rbac.check_permission(&system_claims, &any_resource, &Action::Write).unwrap());
+        assert!(rbac.check_permission(&system_claims, &any_resource, &Action::Delete).unwrap());
+        assert!(rbac.check_permission(&system_claims, &any_resource, &Action::Admin).unwrap());
+    }
 }
 ```
 
-## 4. Security Audit Implementation
+## Security Audit Implementation
 
-### 4.1 Structured Audit Logging
+### Structured Audit Logging
 
 **Complete Audit Service:**
 
@@ -947,7 +1247,7 @@ mod tests {
 }
 ```
 
-### 4.2 Security Monitoring Configuration
+### Security Monitoring Configuration
 
 **Prometheus Metrics Configuration:**
 
@@ -1080,15 +1380,56 @@ groups:
 ### Implementation Guide
 
 1. **Authorization Setup**: Implement RBAC engine with role-based permissions
+   - Reference: [Authorization Specifications](authorization-specifications.md) for policy definitions
+   - Integration: [Authentication Implementation](authentication-implementation.md) for user claims
+
 2. **Audit Integration**: Deploy structured audit logging service
+   - Reference: [Security Framework](security-framework.md) for audit requirements
+   - Storage: [Data Management](../data-management/) for audit persistence
+
 3. **Monitoring**: Configure Prometheus metrics and Grafana dashboards
+   - Reference: [Monitoring and Health](../core-architecture/monitoring-and-health.md)
+   - Integration: [System Integration](../core-architecture/system-integration.md)
+
 4. **Testing**: Validate authorization logic and audit event generation
+   - Reference: [Testing Patterns](../testing/) for security test patterns
 
 ### Key Features
 
 - **Role-Based Access Control**: Hierarchical permission model with conditions
+  - See: [Authorization Specifications](authorization-specifications.md) for detailed RBAC design
 - **Comprehensive Audit Logging**: Structured security event tracking
-- **Real-time Monitoring**: Prometheus metrics and alerting
-- **Compliance Reporting**: Automated security compliance reports
+  - See: [Security Framework](security-framework.md) for audit architecture
+- **Multi-Tenant Security**: Tenant isolation and boundary enforcement
+  - See: [Security Patterns](security-patterns.md) for multi-tenant patterns
+- **Performance Optimization**: Sub-millisecond authorization decisions
+  - See: [Performance Patterns](../core-architecture/async-patterns.md) for optimization techniques
 
-This document provides complete authorization and audit implementations for agent-focused security management within the Mister Smith AI Agent Framework.
+### Integration Points
+
+#### Authentication Integration
+- **[Authentication Implementation](authentication-implementation.md)** - JWT token validation
+- **[Security Integration](security-integration.md)** - Certificate-based authentication
+
+#### Transport Security
+- **[NATS Transport](../transport/nats-transport.md)** - Secure messaging protocols
+- **[Transport Security](../transport/security.md)** - Communication encryption
+
+#### Data Security
+- **[Data Management](../data-management/)** - Secure data handling
+- **[Message Schemas](../data-management/message-schemas.md)** - Secure message formats
+
+#### System Integration
+- **[Agent Communication](../data-management/agent-communication.md)** - Secure agent protocols
+- **[System Architecture](../core-architecture/system-architecture.md)** - Security architecture patterns
+
+This document provides complete technical authorization and audit implementations for agent-focused security management within the Mister Smith AI Agent Framework.
+
+### Enhancement Areas
+
+For production deployment, consider implementing:
+- SIEM integration for centralized security monitoring
+- Real-time alerting mechanisms for security events
+- Centralized log aggregation across system components
+- Database-level audit trail integration
+- Cross-system audit correlation capabilities

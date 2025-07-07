@@ -12,8 +12,32 @@ tags:
 
 **Quick Links**: [Async Patterns](async-patterns.md) | [Supervision Trees](supervision-trees.md) | [Component Architecture](component-architecture.md)
 
+## Table of Contents
+
+1. [Core Runtime Configuration](#1-tokio-runtime-architecture)
+   - [1.1 Core Runtime Configuration](#11-core-runtime-configuration)
+   - [1.2 Runtime Lifecycle Management](#12-runtime-lifecycle-management)
+2. [Performance Tuning and Optimization](#2-performance-tuning-and-optimization)
+   - [2.1 Runtime Performance Metrics](#21-runtime-performance-metrics)
+   - [2.2 Performance Tuning Examples](#22-performance-tuning-examples)
+3. [Multi-threaded Runtime Patterns](#3-multi-threaded-runtime-patterns)
+   - [3.1 Work Stealing and Task Distribution](#31-work-stealing-and-task-distribution)
+   - [3.2 Task Scheduling Strategies](#32-task-scheduling-strategies)
+4. [Best Practices and Common Pitfalls](#4-best-practices-and-common-pitfalls)
+   - [4.1 Runtime Configuration Best Practices](#41-runtime-configuration-best-practices)
+   - [4.2 Common Pitfalls and Solutions](#42-common-pitfalls-and-solutions)
+
+## Overview
+
 Implementation-ready Rust specifications for the Mister Smith AI Agent Framework's Tokio runtime system.
 This module provides concrete implementations for runtime configuration and lifecycle management using Tokio's async runtime.
+
+### Key Features
+
+- **Performance-Optimized Configurations**: Pre-configured runtime settings for different workload types
+- **Advanced Threading Patterns**: Work-stealing, task distribution, and scheduling strategies
+- **Comprehensive Monitoring**: Built-in metrics collection and performance monitoring
+- **Best Practices Guide**: Common pitfalls and their solutions for production deployments
 
 ## Dependencies
 
@@ -24,7 +48,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tokio = { version = "1.45.1", features = ["full"] }
+tokio = { version = "1.38", features = ["full"] }
 futures = "0.3"
 async-trait = "0.1"
 serde = { version = "1.0", features = ["derive"] }
@@ -164,11 +188,16 @@ use std::time::Duration;
 use tokio::runtime::Runtime;
 use serde::{Serialize, Deserialize};
 
-// Runtime constants
+// Runtime constants with performance considerations
 pub const DEFAULT_WORKER_THREADS: usize = num_cpus::get();
 pub const DEFAULT_MAX_BLOCKING_THREADS: usize = 512;
 pub const DEFAULT_THREAD_KEEP_ALIVE: Duration = Duration::from_secs(60);
 pub const DEFAULT_THREAD_STACK_SIZE: usize = 2 * 1024 * 1024; // 2MB
+
+// Performance-tuned configurations for different workloads
+pub const HIGH_THROUGHPUT_WORKERS: usize = num_cpus::get() * 2;
+pub const CPU_BOUND_WORKERS: usize = num_cpus::get();
+pub const IO_BOUND_WORKERS: usize = num_cpus::get() * 4;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RuntimeConfig {
@@ -196,6 +225,39 @@ impl Default for RuntimeConfig {
 }
 
 impl RuntimeConfig {
+    /// Optimized configuration for CPU-bound workloads
+    pub fn cpu_bound() -> Self {
+        Self {
+            worker_threads: Some(CPU_BOUND_WORKERS),
+            max_blocking_threads: 128,
+            thread_keep_alive: Duration::from_secs(10),
+            thread_stack_size: Some(4 * 1024 * 1024), // 4MB for compute-heavy tasks
+            ..Default::default()
+        }
+    }
+    
+    /// Optimized configuration for I/O-bound workloads
+    pub fn io_bound() -> Self {
+        Self {
+            worker_threads: Some(IO_BOUND_WORKERS),
+            max_blocking_threads: 1024,
+            thread_keep_alive: Duration::from_secs(120),
+            thread_stack_size: Some(1 * 1024 * 1024), // 1MB for lightweight tasks
+            ..Default::default()
+        }
+    }
+    
+    /// High-throughput configuration for mixed workloads
+    pub fn high_throughput() -> Self {
+        Self {
+            worker_threads: Some(HIGH_THROUGHPUT_WORKERS),
+            max_blocking_threads: 768,
+            thread_keep_alive: Duration::from_secs(60),
+            thread_stack_size: Some(DEFAULT_THREAD_STACK_SIZE),
+            ..Default::default()
+        }
+    }
+    
     pub fn build_runtime(&self) -> Result<Runtime, RuntimeError> {
         let mut builder = tokio::runtime::Builder::new_multi_thread();
         
@@ -370,6 +432,548 @@ impl RuntimeManager {
         &self.runtime
     }
 }
+```
+
+## 2. Performance Tuning and Optimization
+
+### 2.1 Runtime Performance Metrics
+
+```rust
+// src/core/runtime/metrics.rs
+use std::sync::Arc;
+use metrics::{counter, gauge, histogram};
+use tokio::runtime::RuntimeMetrics;
+
+#[derive(Debug, Clone)]
+pub struct RuntimePerformanceMonitor {
+    runtime_handle: tokio::runtime::Handle,
+}
+
+impl RuntimePerformanceMonitor {
+    pub fn new(handle: tokio::runtime::Handle) -> Self {
+        Self { runtime_handle: handle }
+    }
+    
+    pub fn collect_metrics(&self) {
+        let metrics = self.runtime_handle.metrics();
+        
+        // Worker thread metrics
+        gauge!("runtime.workers.count", metrics.num_workers() as f64);
+        gauge!("runtime.workers.blocking_count", metrics.num_blocking_threads() as f64);
+        gauge!("runtime.workers.idle_count", metrics.num_idle_blocking_threads() as f64);
+        
+        // Task metrics
+        counter!("runtime.tasks.spawned_total", metrics.spawned_tasks_count());
+        gauge!("runtime.tasks.active", metrics.active_tasks_count() as f64);
+        
+        // Queue metrics
+        gauge!("runtime.queue.local_size", metrics.local_queue_capacity() as f64);
+        gauge!("runtime.queue.global_size", metrics.global_queue_depth() as f64);
+        gauge!("runtime.queue.injection_size", metrics.injection_queue_depth() as f64);
+        
+        // Blocking metrics
+        histogram!("runtime.blocking.queue_depth", metrics.blocking_queue_depth() as f64);
+        
+        // Park/unpark metrics
+        counter!("runtime.park.count", metrics.park_count());
+        counter!("runtime.park.no_work_count", metrics.noop_count());
+        
+        // Steal operations
+        counter!("runtime.steal.operations", metrics.steal_operations());
+        
+        // Budget metrics
+        counter!("runtime.budget.forced_yield", metrics.budget_forced_yield_count());
+    }
+}
+```
+
+### 2.2 Performance Tuning Examples
+
+```rust
+// src/core/runtime/tuning.rs
+use crate::core::runtime::{RuntimeConfig, RuntimeManager};
+use std::sync::Arc;
+use std::time::Duration;
+
+/// Performance-tuned runtime configurations for specific use cases
+pub struct RuntimeTuning;
+
+impl RuntimeTuning {
+    /// Optimized for handling thousands of concurrent WebSocket connections
+    pub fn websocket_server_config() -> RuntimeConfig {
+        RuntimeConfig {
+            worker_threads: Some(num_cpus::get() * 2),
+            max_blocking_threads: 2048,
+            thread_keep_alive: Duration::from_secs(180),
+            thread_stack_size: Some(512 * 1024), // 512KB - small stack for many connections
+            enable_all: true,
+            enable_time: true,
+            enable_io: true,
+        }
+    }
+    
+    /// Optimized for data processing pipelines
+    pub fn data_pipeline_config() -> RuntimeConfig {
+        RuntimeConfig {
+            worker_threads: Some(num_cpus::get()),
+            max_blocking_threads: 256,
+            thread_keep_alive: Duration::from_secs(30),
+            thread_stack_size: Some(8 * 1024 * 1024), // 8MB - large stack for complex processing
+            enable_all: true,
+            enable_time: true,
+            enable_io: true,
+        }
+    }
+    
+    /// Optimized for mixed agent workloads
+    pub fn agent_system_config() -> RuntimeConfig {
+        RuntimeConfig {
+            worker_threads: Some((num_cpus::get() as f64 * 1.5) as usize),
+            max_blocking_threads: 512,
+            thread_keep_alive: Duration::from_secs(60),
+            thread_stack_size: Some(2 * 1024 * 1024), // 2MB - balanced for mixed workloads
+            enable_all: true,
+            enable_time: true,
+            enable_io: true,
+        }
+    }
+    
+    /// Adaptive runtime that adjusts based on load
+    pub async fn adaptive_runtime_example() -> Result<(), Box<dyn std::error::Error>> {
+        let initial_config = RuntimeConfig::default();
+        let mut manager = RuntimeManager::initialize(initial_config)?;
+        
+        // Monitor and adjust runtime parameters based on metrics
+        let runtime_handle = manager.runtime().handle().clone();
+        let monitor = Arc::new(RuntimePerformanceMonitor::new(runtime_handle.clone()));
+        
+        // Spawn monitoring task
+        runtime_handle.spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_secs(10));
+            loop {
+                interval.tick().await;
+                monitor.collect_metrics();
+                
+                // Adaptive logic based on metrics
+                let metrics = runtime_handle.metrics();
+                let queue_depth = metrics.injection_queue_depth();
+                
+                if queue_depth > 1000 {
+                    tracing::warn!("High queue depth detected: {}", queue_depth);
+                    // In a real system, you might trigger scaling actions here
+                }
+            }
+        });
+        
+        manager.start_system().await?;
+        Ok(())
+    }
+}
+```
+
+## 3. Multi-threaded Runtime Patterns
+
+### 3.1 Work Stealing and Task Distribution
+
+```rust
+// src/core/runtime/patterns.rs
+use tokio::task::{JoinHandle, yield_now};
+use std::sync::Arc;
+use std::time::Duration;
+
+/// Demonstrates work-stealing behavior in multi-threaded runtime
+pub struct WorkStealingPatterns;
+
+impl WorkStealingPatterns {
+    /// Spawn tasks across all worker threads efficiently
+    pub fn distributed_spawn_pattern<F, T>(
+        task_count: usize,
+        task_factory: F,
+    ) -> Vec<JoinHandle<T>>
+    where
+        F: Fn(usize) -> T + Send + Sync + 'static,
+        T: Send + 'static,
+    {
+        let factory = Arc::new(task_factory);
+        
+        (0..task_count)
+            .map(|idx| {
+                let factory = Arc::clone(&factory);
+                tokio::spawn(async move {
+                    // Yield immediately to encourage distribution across threads
+                    yield_now().await;
+                    factory(idx)
+                })
+            })
+            .collect()
+    }
+    
+    /// CPU-bound work distribution pattern
+    pub async fn cpu_bound_distribution_pattern() {
+        let num_tasks = num_cpus::get() * 2;
+        let tasks: Vec<_> = (0..num_tasks)
+            .map(|task_id| {
+                tokio::task::spawn_blocking(move || {
+                    // Simulate CPU-bound work
+                    let mut sum = 0u64;
+                    for i in 0..10_000_000 {
+                        sum = sum.wrapping_add(i);
+                    }
+                    (task_id, sum)
+                })
+            })
+            .collect();
+        
+        // Wait for all tasks to complete
+        for task in tasks {
+            let (task_id, result) = task.await.unwrap();
+            tracing::debug!("Task {} completed with result: {}", task_id, result);
+        }
+    }
+    
+    /// Mixed I/O and CPU workload pattern
+    pub async fn mixed_workload_pattern() {
+        let io_tasks = 100;
+        let cpu_tasks = num_cpus::get();
+        
+        // Spawn I/O-bound tasks
+        let io_handles: Vec<_> = (0..io_tasks)
+            .map(|id| {
+                tokio::spawn(async move {
+                    // Simulate I/O operation
+                    tokio::time::sleep(Duration::from_millis(100)).await;
+                    format!("IO Task {} completed", id)
+                })
+            })
+            .collect();
+        
+        // Spawn CPU-bound tasks on blocking thread pool
+        let cpu_handles: Vec<_> = (0..cpu_tasks)
+            .map(|id| {
+                tokio::task::spawn_blocking(move || {
+                    // Simulate CPU-intensive work
+                    std::thread::sleep(Duration::from_millis(50));
+                    format!("CPU Task {} completed", id)
+                })
+            })
+            .collect();
+        
+        // Await all tasks
+        for handle in io_handles {
+            tracing::debug!("{}", handle.await.unwrap());
+        }
+        
+        for handle in cpu_handles {
+            tracing::debug!("{}", handle.await.unwrap());
+        }
+    }
+}
+```
+
+### 3.2 Task Scheduling Strategies
+
+```rust
+// src/core/runtime/scheduling.rs
+use tokio::sync::{Semaphore, mpsc};
+use std::sync::Arc;
+
+/// Advanced task scheduling patterns for optimal performance
+pub struct TaskScheduler {
+    /// Limit concurrent executions
+    concurrency_limiter: Arc<Semaphore>,
+    /// Priority queue for tasks
+    priority_queue: mpsc::Sender<PrioritizedTask>,
+}
+
+#[derive(Debug)]
+struct PrioritizedTask {
+    priority: u8,
+    task: Box<dyn FnOnce() + Send>,
+}
+
+impl TaskScheduler {
+    pub fn new(max_concurrent: usize) -> (Self, JoinHandle<()>) {
+        let concurrency_limiter = Arc::new(Semaphore::new(max_concurrent));
+        let (tx, mut rx) = mpsc::channel::<PrioritizedTask>(1000);
+        
+        let limiter = Arc::clone(&concurrency_limiter);
+        let executor = tokio::spawn(async move {
+            while let Some(task) = rx.recv().await {
+                let permit = limiter.acquire().await.unwrap();
+                tokio::spawn(async move {
+                    (task.task)();
+                    drop(permit); // Release semaphore
+                });
+            }
+        });
+        
+        (Self {
+            concurrency_limiter,
+            priority_queue: tx,
+        }, executor)
+    }
+    
+    /// Batch processing pattern for improved throughput
+    pub async fn batch_processing_pattern<T, F>(
+        items: Vec<T>,
+        batch_size: usize,
+        processor: F,
+    ) where
+        T: Send + 'static,
+        F: Fn(Vec<T>) -> Vec<T> + Send + Sync + 'static,
+    {
+        let processor = Arc::new(processor);
+        let mut handles = Vec::new();
+        
+        for batch in items.chunks(batch_size) {
+            let batch = batch.to_vec();
+            let processor = Arc::clone(&processor);
+            
+            let handle = tokio::spawn(async move {
+                // Process batch in blocking thread to avoid blocking runtime
+                tokio::task::spawn_blocking(move || processor(batch))
+                    .await
+                    .unwrap()
+            });
+            
+            handles.push(handle);
+        }
+        
+        // Collect results
+        for handle in handles {
+            let _results = handle.await.unwrap();
+        }
+    }
+    
+    /// Fan-out/fan-in pattern for parallel processing
+    pub async fn fanout_fanin_pattern<T, R, F>(
+        input: Vec<T>,
+        worker_count: usize,
+        processor: F,
+    ) -> Vec<R>
+    where
+        T: Send + 'static,
+        R: Send + 'static,
+        F: Fn(T) -> R + Send + Sync + 'static,
+    {
+        let (tx, mut rx) = mpsc::channel(100);
+        let processor = Arc::new(processor);
+        
+        // Create a shared queue for work distribution
+        let work_queue = Arc::new(tokio::sync::Mutex::new(input.into_iter()));
+        
+        // Create worker tasks
+        let workers: Vec<_> = (0..worker_count)
+            .map(|_| {
+                let queue = Arc::clone(&work_queue);
+                let processor = Arc::clone(&processor);
+                
+                tokio::spawn(async move {
+                    let mut results = Vec::new();
+                    loop {
+                        let item = {
+                            let mut queue = queue.lock().await;
+                            queue.next()
+                        };
+                        
+                        match item {
+                            Some(item) => results.push(processor(item)),
+                            None => break,
+                        }
+                    }
+                    results
+                })
+            })
+            .collect();
+        
+        // Collect results from all workers
+        let mut all_results = Vec::new();
+        for worker in workers {
+            all_results.extend(worker.await.unwrap());
+        }
+        
+        all_results
+    }
+}
+```
+
+## 4. Best Practices and Common Pitfalls
+
+### 4.1 Runtime Configuration Best Practices
+
+```rust
+// src/core/runtime/best_practices.rs
+
+/// Best practices for runtime configuration
+pub struct RuntimeBestPractices;
+
+impl RuntimeBestPractices {
+    /// Choose appropriate worker thread count based on workload
+    pub fn optimal_worker_threads(workload_type: WorkloadType) -> usize {
+        match workload_type {
+            WorkloadType::CpuBound => num_cpus::get(),
+            WorkloadType::IoBound => num_cpus::get() * 4,
+            WorkloadType::Mixed => (num_cpus::get() as f64 * 1.5) as usize,
+            WorkloadType::LatencySensitive => num_cpus::get() * 2,
+        }
+    }
+    
+    /// Avoid common blocking pitfalls
+    pub async fn avoid_blocking_runtime() {
+        // BAD: Blocking the runtime thread
+        // std::thread::sleep(Duration::from_secs(1));
+        
+        // GOOD: Use async sleep
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        
+        // BAD: CPU-intensive work on runtime thread
+        // let result = expensive_computation();
+        
+        // GOOD: Move to blocking thread pool
+        let result = tokio::task::spawn_blocking(|| {
+            expensive_computation()
+        }).await.unwrap();
+    }
+    
+    /// Proper resource cleanup patterns
+    pub async fn resource_cleanup_pattern() {
+        // Use RAII and Drop implementations
+        struct RuntimeResource {
+            handle: tokio::runtime::Handle,
+        }
+        
+        impl Drop for RuntimeResource {
+            fn drop(&mut self) {
+                // Cleanup logic here
+                tracing::debug!("Cleaning up runtime resource");
+            }
+        }
+        
+        // Resources are automatically cleaned up when going out of scope
+        {
+            let _resource = RuntimeResource {
+                handle: tokio::runtime::Handle::current(),
+            };
+            // Use resource
+        } // Automatic cleanup here
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum WorkloadType {
+    CpuBound,
+    IoBound,
+    Mixed,
+    LatencySensitive,
+}
+
+fn expensive_computation() -> u64 {
+    // Placeholder for expensive computation
+    42
+}
+```
+
+### 4.2 Common Pitfalls and Solutions
+
+```rust
+// src/core/runtime/pitfalls.rs
+
+/// Common runtime pitfalls and their solutions
+pub struct RuntimePitfalls;
+
+impl RuntimePitfalls {
+    /// Pitfall: Creating multiple runtimes unnecessarily
+    pub fn single_runtime_pattern() {
+        // BAD: Creating runtime for each operation
+        // for _ in 0..10 {
+        //     let rt = tokio::runtime::Runtime::new().unwrap();
+        //     rt.block_on(async { /* work */ });
+        // }
+        
+        // GOOD: Reuse a single runtime
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        for _ in 0..10 {
+            rt.block_on(async { /* work */ });
+        }
+    }
+    
+    /// Pitfall: Blocking runtime threads with synchronous I/O
+    pub async fn async_io_pattern() {
+        // BAD: Using std::fs in async context
+        // let contents = std::fs::read_to_string("file.txt").unwrap();
+        
+        // GOOD: Use tokio::fs for async I/O
+        let contents = tokio::fs::read_to_string("file.txt").await.unwrap();
+        
+        // GOOD: Or move blocking I/O to blocking thread pool
+        let contents = tokio::task::spawn_blocking(|| {
+            std::fs::read_to_string("file.txt")
+        }).await.unwrap().unwrap();
+    }
+    
+    /// Pitfall: Unbounded task spawning
+    pub async fn bounded_concurrency_pattern() {
+        // BAD: Spawning unlimited tasks
+        // for i in 0..1_000_000 {
+        //     tokio::spawn(async move { process(i).await });
+        // }
+        
+        // GOOD: Use semaphore to limit concurrency
+        let semaphore = Arc::new(Semaphore::new(100));
+        let mut handles = vec![];
+        
+        for i in 0..1_000_000 {
+            let permit = semaphore.clone().acquire_owned().await.unwrap();
+            let handle = tokio::spawn(async move {
+                let _permit = permit; // Hold permit until task completes
+                process(i).await
+            });
+            handles.push(handle);
+        }
+        
+        // Wait for all tasks
+        for handle in handles {
+            handle.await.unwrap();
+        }
+    }
+    
+    /// Pitfall: Not handling panics in spawned tasks
+    pub async fn panic_handling_pattern() {
+        // BAD: Unhandled panics in spawned tasks
+        // tokio::spawn(async {
+        //     panic!("Task panicked!");
+        // });
+        
+        // GOOD: Handle panics gracefully
+        let handle = tokio::spawn(async {
+            // Task that might panic
+            risky_operation().await
+        });
+        
+        match handle.await {
+            Ok(result) => tracing::info!("Task completed: {:?}", result),
+            Err(e) if e.is_panic() => {
+                tracing::error!("Task panicked: {:?}", e);
+                // Handle panic recovery
+            }
+            Err(e) => tracing::error!("Task failed: {:?}", e),
+        }
+    }
+}
+
+async fn process(_i: usize) {
+    // Placeholder for processing logic
+    tokio::time::sleep(Duration::from_millis(10)).await;
+}
+
+async fn risky_operation() -> Result<(), Box<dyn std::error::Error>> {
+    // Placeholder for operation that might fail
+    Ok(())
+}
+
+use tokio::sync::Semaphore;
+use std::sync::Arc;
+use std::time::Duration;
 ```
 
 ## External Dependencies

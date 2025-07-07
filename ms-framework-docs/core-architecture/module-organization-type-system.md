@@ -28,7 +28,69 @@ It enables autonomous developers to understand exact project structure, type rel
 
 ---
 
+## Table of Contents
+
+1. [Complete src/ Directory Structure](#1-complete-src-directory-structure)
+2. [Core Trait Definitions](#2-core-trait-definitions)  
+3. [Advanced Type Patterns](#3-advanced-type-patterns)
+4. [Module Implementation Examples](#4-module-implementation-examples)
+5. [Dependency Injection Architecture](#5-dependency-injection-architecture)
+6. [Module Integration Patterns](#6-module-integration-patterns)
+7. [Type System Best Practices](#7-type-system-best-practices)
+
+---
+
 ## 1. Complete src/ Directory Structure
+
+### Module Organization Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     MisterSmith Module Architecture                  │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Core Infrastructure Layer                                           │
+│  ┌────────────────┬─────────────────┬────────────────────┐         │
+│  │ runtime/       │ async_patterns/ │ errors/           │         │
+│  │ - Manager      │ - TaskExecutor  │ - SystemError     │         │
+│  │ - Config       │ - StreamProc    │ - Recovery        │         │
+│  │ - Lifecycle    │ - CircuitBreaker│ - Result types    │         │
+│  └────────────────┴─────────────────┴────────────────────┘         │
+│                                                                      │
+│  Agent & Actor Layer                                                 │
+│  ┌────────────────┬─────────────────┬────────────────────┐         │
+│  │ actor/         │ agents/         │ supervision/      │         │
+│  │ - ActorSystem  │ - RoleSpawner   │ - SupervisionTree │         │
+│  │ - ActorRef     │ - AgentRole     │ - Supervisor      │         │
+│  │ - Mailbox      │ - Team coords   │ - FailureDetector │         │
+│  └────────────────┴─────────────────┴────────────────────┘         │
+│                                                                      │
+│  Communication & Events                                              │
+│  ┌────────────────┬─────────────────┬────────────────────┐         │
+│  │ events/        │ transport/      │ tools/            │         │
+│  │ - EventBus     │ - MessageBridge │ - ToolBus         │         │
+│  │ - EventHandler │ - Routing       │ - AgentTool       │         │
+│  │ - EventStore   │ - Serialization │ - Permissions     │         │
+│  └────────────────┴─────────────────┴────────────────────┘         │
+│                                                                      │
+│  System Services                                                     │
+│  ┌────────────────┬─────────────────┬────────────────────┐         │
+│  │ config/        │ resources/      │ monitoring/       │         │
+│  │ - ConfigMgr    │ - ResourceMgr   │ - HealthCheck     │         │
+│  │ - Watchers     │ - ConnPool      │ - Metrics         │         │
+│  │ - Types        │ - MemoryMgr     │ - Diagnostics     │         │
+│  └────────────────┴─────────────────┴────────────────────┘         │
+│                                                                      │
+│  Cross-Cutting Concerns                                              │
+│  ┌────────────────┬─────────────────┬────────────────────┐         │
+│  │ security/      │ tests/          │ system.rs         │         │
+│  │ - Auth         │ - Integration   │ - SystemCore      │         │
+│  │ - Permissions  │ - Mocks         │ - Orchestration   │         │
+│  │ - Encryption   │ - Fixtures      │ - Bootstrap       │         │
+│  └────────────────┴─────────────────┴────────────────────┘         │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
 ### 1.1 Root Module Hierarchy
 
@@ -664,9 +726,214 @@ impl<M: Message + Send + Sync + 'static> ActorRef<M> {
 
 ---
 
-## 4. Dependency Injection Architecture
+## 4. Module Implementation Examples
 
-### 4.1 Service Registry with Type Safety
+### 4.1 Runtime Module Example
+
+```rust
+// src/runtime/manager.rs
+use tokio::runtime::{Builder, Runtime};
+use std::sync::Arc;
+
+/// RuntimeManager handles the Tokio runtime lifecycle
+pub struct RuntimeManager {
+    runtime: Arc<Runtime>,
+    config: RuntimeConfig,
+    metrics: RuntimeMetrics,
+}
+
+impl RuntimeManager {
+    /// Create a new runtime manager with configuration
+    pub fn new(config: RuntimeConfig) -> Result<Self, RuntimeError> {
+        let runtime = Builder::new_multi_thread()
+            .worker_threads(config.worker_threads.unwrap_or_else(num_cpus::get))
+            .thread_name("mister-smith-worker")
+            .thread_stack_size(config.stack_size_bytes)
+            .enable_all()
+            .on_thread_start(|| {
+                // Initialize thread-local storage
+                tracing::debug!("Worker thread started");
+            })
+            .on_thread_stop(|| {
+                // Cleanup thread-local storage
+                tracing::debug!("Worker thread stopped");
+            })
+            .build()
+            .map_err(RuntimeError::BuildFailed)?;
+        
+        Ok(Self {
+            runtime: Arc::new(runtime),
+            config,
+            metrics: RuntimeMetrics::default(),
+        })
+    }
+    
+    /// Spawn a future on the runtime
+    pub fn spawn<F>(&self, future: F) -> JoinHandle<F::Output>
+    where
+        F: Future + Send + 'static,
+        F::Output: Send + 'static,
+    {
+        self.metrics.increment_spawned_tasks();
+        self.runtime.spawn(future)
+    }
+    
+    /// Block on a future
+    pub fn block_on<F>(&self, future: F) -> F::Output
+    where
+        F: Future,
+    {
+        self.runtime.block_on(future)
+    }
+}
+```
+
+### 4.2 Actor Module Example
+
+```rust
+// src/actor/system.rs
+use super::{Actor, ActorRef, Mailbox, SupervisionStrategy};
+
+/// ActorSystem manages actor lifecycle and message routing
+pub struct ActorSystem {
+    actors: DashMap<ActorId, ActorContainer>,
+    router: MessageRouter,
+    supervision_tree: SupervisionTree,
+    event_bus: EventBus,
+}
+
+impl ActorSystem {
+    /// Spawn a new actor in the system
+    pub async fn spawn_actor<A>(&self, actor: A) -> Result<ActorRef<A::Message>, ActorError>
+    where
+        A: Actor + 'static,
+    {
+        let actor_id = actor.actor_id();
+        let mailbox = Mailbox::new(self.config.mailbox_capacity);
+        let actor_ref = ActorRef::new(actor_id.clone(), mailbox.sender());
+        
+        // Create actor container
+        let container = ActorContainer {
+            actor: Box::new(actor),
+            mailbox,
+            state: ActorState::Starting,
+            supervision_strategy: self.default_supervision_strategy(),
+        };
+        
+        // Register with supervision tree
+        self.supervision_tree.register_child(actor_id.clone()).await?;
+        
+        // Store actor
+        self.actors.insert(actor_id.clone(), container);
+        
+        // Start actor processing loop
+        self.start_actor_loop(actor_id).await?;
+        
+        Ok(actor_ref)
+    }
+    
+    /// Internal actor message processing loop
+    async fn start_actor_loop(&self, actor_id: ActorId) -> Result<(), ActorError> {
+        let container = self.actors.get(&actor_id)
+            .ok_or(ActorError::NotFound(actor_id.clone()))?;
+        
+        tokio::spawn(async move {
+            while let Some(message) = container.mailbox.recv().await {
+                match container.actor.handle_message(message, &mut container.state).await {
+                    Ok(result) => {
+                        // Process result
+                        self.handle_actor_result(actor_id.clone(), result).await;
+                    }
+                    Err(error) => {
+                        // Handle error according to supervision strategy
+                        self.handle_actor_error(actor_id.clone(), error).await;
+                    }
+                }
+            }
+        });
+        
+        Ok(())
+    }
+}
+```
+
+### 4.3 Event Module Example
+
+```rust
+// src/events/bus.rs
+use tokio::sync::{broadcast, RwLock};
+
+/// EventBus provides pub/sub messaging for system events
+pub struct EventBus {
+    subscribers: Arc<RwLock<HashMap<EventType, Vec<Box<dyn EventHandler>>>>>,
+    broadcast_channel: broadcast::Sender<SystemEvent>,
+    event_store: Option<EventStore>,
+}
+
+impl EventBus {
+    /// Publish an event to all subscribers
+    pub async fn publish<E>(&self, event: E) -> Result<(), EventError>
+    where
+        E: Event + Clone + 'static,
+    {
+        let event_type = event.event_type();
+        let system_event = SystemEvent::from(event);
+        
+        // Store event if persistence is enabled
+        if let Some(store) = &self.event_store {
+            store.append(system_event.clone()).await?;
+        }
+        
+        // Broadcast to all listeners
+        let _ = self.broadcast_channel.send(system_event.clone());
+        
+        // Call specific handlers
+        let subscribers = self.subscribers.read().await;
+        if let Some(handlers) = subscribers.get(&event_type) {
+            for handler in handlers {
+                // Execute handlers concurrently
+                tokio::spawn({
+                    let handler = handler.clone();
+                    let event = system_event.clone();
+                    async move {
+                        if let Err(e) = handler.handle_event(event).await {
+                            tracing::error!("Event handler error: {}", e);
+                        }
+                    }
+                });
+            }
+        }
+        
+        Ok(())
+    }
+    
+    /// Subscribe to events of a specific type
+    pub async fn subscribe<H>(&self, handler: H) -> Result<SubscriptionId, EventError>
+    where
+        H: EventHandler + 'static,
+    {
+        let event_types = handler.event_types();
+        let handler_id = handler.handler_id();
+        let boxed_handler = Box::new(handler);
+        
+        let mut subscribers = self.subscribers.write().await;
+        for event_type in event_types {
+            subscribers
+                .entry(event_type)
+                .or_insert_with(Vec::new)
+                .push(boxed_handler.clone());
+        }
+        
+        Ok(SubscriptionId::new(handler_id))
+    }
+}
+```
+
+---
+
+## 5. Dependency Injection Architecture
+
+### 5.1 Service Registry with Type Safety
 
 ```rust
 /// Central service registry with type-safe dependency injection

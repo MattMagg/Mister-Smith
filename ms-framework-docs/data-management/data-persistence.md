@@ -10,35 +10,12 @@ tags:
 
 ## Foundation Patterns Guide
 
-> **📊 VALIDATION STATUS: PRODUCTION READY**
->
-> | Criterion | Score | Status |
-> |-----------|-------|---------|
-> | Persistence Strategy | 5/5 | ✅ Excellent |
-> | Transaction Management | 5/5 | ✅ Exceptional |
-> | Data Consistency | 5/5 | ✅ Comprehensive |
-> | Backup & Recovery | 5/5 | ✅ Enterprise-Grade |
-> | Performance Optimization | 5/5 | ✅ Advanced |
-> | **TOTAL SCORE** | **15/15** | **✅ DEPLOYMENT APPROVED** |
->
-> *Validated: 2025-07-05 | Document Lines: 3,470 | Implementation Status: 100%*
-> **Canonical Reference**: See `tech-framework.md` for authoritative technology stack specifications
-
 ## Executive Summary
 
 This document defines foundational data persistence and memory management patterns using PostgreSQL 15 with SQLx 0.7
 as the primary data layer, complemented by JetStream KV for distributed state management. The architecture implements
 a dual-store approach with short-term state in NATS JetStream KV and long-term state in PostgreSQL, achieving high
-throughput while maintaining durability. Focus is on teachable patterns and basic architectural principles.
-
-> **Implementation Status**: ✅ **FULLY PRODUCTION READY** (Validation Score: 15/15)
->
-> - Comprehensive dual-store architecture validated
-> - Enterprise-grade backup and recovery procedures
-> - Advanced transaction management implemented
-> - All core persistence patterns defined and tested
->
-> **Note**: This document has been validated by the MS Framework Validation Swarm (2025-07-05) and deemed 100% implementation ready with zero critical gaps identified.
+throughput while maintaining durability.
 
 ## 1. Basic Storage Architecture
 
@@ -90,10 +67,6 @@ CLASS DataRouter {
 ```
 
 ### 1.3 Hybrid Storage Pattern
-
-> **Validation Finding**: ✅ This dual-store architecture has been validated as providing "optimal performance
-> characteristics while maintaining ACID guarantees where needed" with intelligent routing, lazy hydration, and
-> configurable flush mechanisms.
 
 ```rust
 -- Dual-store implementation for agent state
@@ -497,30 +470,63 @@ CLASS EnterpriseConnectionManager {
     PRIVATE connection_monitor: ConnectionHealthMonitor
     PRIVATE pool_metrics: PoolMetricsCollector
     
-    STRUCT PostgresPoolConfig {
-        -- Connection pool sizing (based on SQLx and Deadpool patterns)
-        max_connections: Integer = 10
-        min_connections: Integer = 2
-        acquire_timeout: Duration = Duration.seconds(30)
-        idle_timeout: Duration = Duration.minutes(10)
-        max_lifetime: Duration = Duration.hours(2)
+    // SQLx PostgreSQL pool configuration
+    pub async fn create_postgres_pool(database_url: &str) -> Result<PgPool, sqlx::Error> {
+        use sqlx::postgres::PgPoolOptions;
+        use std::time::Duration;
         
-        -- SQLx-specific configurations
-        statement_cache_capacity: Integer = 100
-        test_before_acquire: Boolean = true
+        let pool = PgPoolOptions::new()
+            .max_connections(10)
+            .min_connections(2)
+            .acquire_timeout(Duration::from_secs(30))
+            .idle_timeout(Duration::from_secs(600))  // 10 minutes
+            .max_lifetime(Duration::from_secs(7200)) // 2 hours
+            .test_before_acquire(true)
+            .after_connect(|conn, _meta| Box::pin(async move {
+                // Set application name for connection tracking
+                conn.execute("SET application_name = 'ms_framework_agent'").await?;
+                
+                // Configure session settings
+                conn.execute("SET statement_timeout = '30s'").await?;
+                conn.execute("SET idle_in_transaction_session_timeout = '60s'").await?;
+                
+                // Enable extended query protocol optimizations
+                conn.execute("SET plan_cache_mode = 'auto'").await?;
+                
+                Ok(())
+            }))
+            .connect(database_url)
+            .await?;
         
-        -- Session-level configurations  
-        application_name: String = "agent_system"
-        statement_timeout: Duration = Duration.seconds(30)
-        idle_in_transaction_timeout: Duration = Duration.seconds(60)
-        
-        -- Performance optimizations
-        after_connect_hooks: List<SessionConfigHook>
-        connection_recycling_method: RecyclingMethod = FAST
-        
-        -- Monitoring and alerting
-        slow_query_threshold: Duration = Duration.millis(100)
-        connection_leak_detection: Boolean = true
+        Ok(pool)
+    }
+    
+    // Environment-specific pool configurations
+    pub async fn create_development_pool(database_url: &str) -> Result<PgPool, sqlx::Error> {
+        PgPoolOptions::new()
+            .max_connections(5)
+            .min_connections(1)
+            .acquire_timeout(Duration::from_secs(10))
+            .connect(database_url)
+            .await
+    }
+    
+    pub async fn create_production_pool(database_url: &str) -> Result<PgPool, sqlx::Error> {
+        PgPoolOptions::new()
+            .max_connections(20)
+            .min_connections(5)
+            .acquire_timeout(Duration::from_secs(30))
+            .idle_timeout(Duration::from_secs(300))
+            .max_lifetime(Duration::from_secs(3600))
+            .test_before_acquire(true)
+            .after_connect(|conn, _meta| Box::pin(async move {
+                conn.execute("SET application_name = 'ms_framework_prod'").await?;
+                conn.execute("SET statement_timeout = '30s'").await?;
+                conn.execute("SET synchronous_commit = 'on'").await?;
+                Ok(())
+            }))
+            .connect(database_url)
+            .await
     }
     
     STRUCT JetStreamKVPoolConfig {
@@ -636,65 +642,121 @@ CLASS AdvancedTransactionManager {
         agent_id: String
     }
     
-    FUNCTION execute_with_isolation(
-        context: TransactionContext,
-        operations: List<DatabaseOperation>
-    ) -> TransactionResult {
+    // SQLx transaction execution with proper error handling
+    pub async fn execute_with_isolation<T, F>(
+        pool: &PgPool,
+        isolation_level: IsolationLevel,
+        f: F,
+    ) -> Result<T, sqlx::Error>
+    where
+        F: for<'c> FnOnce(&mut sqlx::Transaction<'c, sqlx::Postgres>) -> BoxFuture<'c, Result<T, sqlx::Error>>,
+    {
+        let mut conn = pool.acquire().await?;
         
-        -- Select appropriate isolation level based on operation type
-        isolation = determine_isolation_level(context, operations)
+        // Begin transaction with specified isolation level
+        let transaction = conn.transaction().await?;
         
-        connection = acquire_connection_for_transaction(context)
-        transaction = connection.begin_transaction(isolation)
-        
-        -- Configure transaction settings
-        configure_transaction_settings(transaction, context)
-        
-        TRY {
-            -- Execute operations within transaction boundary
-            FOR operation IN operations {
-                result = operation.execute(transaction)
-                
-                -- Check for conflicts and adjust strategy
-                IF result.has_conflict() THEN
-                    conflict_resolution = handle_transaction_conflict(
-                        result.conflict_type, 
-                        context
-                    )
-                    IF conflict_resolution == ABORT_AND_RETRY THEN
-                        transaction.rollback()
-                        RETURN retry_with_backoff(context, operations)
-                    END IF
-                END IF
+        match f(&mut transaction).await {
+            Ok(result) => {
+                transaction.commit().await?;
+                Ok(result)
             }
+            Err(e) => {
+                // Transaction is automatically rolled back on drop
+                Err(e)
+            }
+        }
+    }
+    
+    // Agent state update with optimistic concurrency control
+    pub async fn update_agent_state(
+        pool: &PgPool,
+        agent_id: Uuid,
+        key: &str,
+        value: serde_json::Value,
+        expected_version: Option<i64>,
+    ) -> Result<i64, sqlx::Error> {
+        let mut tx = pool.begin().await?;
+        
+        // Check current version if optimistic locking is required
+        if let Some(expected) = expected_version {
+            let current_version: Option<i64> = sqlx::query_scalar!(
+                "SELECT version FROM agents.state WHERE agent_id = $1 AND state_key = $2",
+                agent_id,
+                key
+            )
+            .fetch_optional(&mut *tx)
+            .await?;
             
-            -- Pre-commit validation
-            validation_result = validate_transaction_constraints(transaction, context)
-            IF NOT validation_result.is_valid THEN
-                transaction.rollback()
-                RETURN TransactionResult.VALIDATION_FAILED(validation_result.errors)
-            END IF
-            
-            transaction.commit()
-            RETURN TransactionResult.SUCCESS
-            
-        } CATCH (error) {
-            transaction.rollback()
-            
-            -- Classify error and determine retry strategy
-            error_classification = classify_transaction_error(error)
-            
-            SWITCH error_classification {
-                CASE SERIALIZATION_FAILURE:
-                    RETURN retry_with_exponential_backoff(context, operations)
-                CASE DEADLOCK_DETECTED:
-                    RETURN retry_with_jitter(context, operations)
-                CASE CONSTRAINT_VIOLATION:
-                    RETURN TransactionResult.PERMANENT_FAILURE(error)
-                CASE CONNECTION_FAILURE:
-                    RETURN retry_with_new_connection(context, operations)
-                DEFAULT:
-                    RETURN TransactionResult.UNKNOWN_FAILURE(error)
+            if current_version != Some(expected) {
+                return Err(sqlx::Error::RowNotFound);
+            }
+        }
+        
+        // Update with version increment
+        let new_version = sqlx::query_scalar!(
+            r#"
+            INSERT INTO agents.state (agent_id, state_key, state_value, version)
+            VALUES ($1, $2, $3, 1)
+            ON CONFLICT (agent_id, state_key)
+            DO UPDATE SET 
+                state_value = EXCLUDED.state_value,
+                version = agents.state.version + 1,
+                updated_at = NOW()
+            RETURNING version
+            "#,
+            agent_id,
+            key,
+            value
+        )
+        .fetch_one(&mut *tx)
+        .await?;
+        
+        tx.commit().await?;
+        Ok(new_version)
+    }
+    
+    // Error handling with retry logic
+    pub async fn execute_with_retry<T, F>(
+        pool: &PgPool,
+        operation: F,
+        max_retries: u32,
+    ) -> Result<T, sqlx::Error>
+    where
+        F: Fn() -> BoxFuture<'static, Result<T, sqlx::Error>>,
+    {
+        let mut attempt = 0;
+        
+        loop {
+            match operation().await {
+                Ok(result) => return Ok(result),
+                Err(e) => {
+                    attempt += 1;
+                    
+                    // Check if error is retryable
+                    let should_retry = match &e {
+                        sqlx::Error::Database(db_err) => {
+                            // PostgreSQL specific error codes
+                            match db_err.code().as_deref() {
+                                Some("40001") => true, // Serialization failure
+                                Some("40P01") => true, // Deadlock detected
+                                _ => false,
+                            }
+                        }
+                        sqlx::Error::Io(_) => true, // Connection issues
+                        _ => false,
+                    };
+                    
+                    if !should_retry || attempt >= max_retries {
+                        return Err(e);
+                    }
+                    
+                    // Exponential backoff with jitter
+                    let delay = std::time::Duration::from_millis(
+                        100 * (2_u64.pow(attempt - 1)) + fastrand::u64(0..=100)
+                    );
+                    tokio::time::sleep(delay).await;
+                }
             }
         }
     }
@@ -3562,21 +3624,7 @@ This document now provides a comprehensive, production-ready data persistence an
 The framework balances high performance with durability while maintaining eventual consistency within tight time bounds,
 providing a solid foundation for the Mister Smith AI Agent Framework's data management needs.
 
-### Validation Summary
->
-> **Overall Validation Score: 15/15 Points** ✅
->
-> - **Persistence Strategy Completeness**: 5/5
-> - **Transaction Management**: 5/5  
-> - **Data Consistency**: 5/5
-> - **Backup & Recovery**: 5/5
-> - **Performance Optimization**: 5/5
->
-> **Deployment Confidence**: **HIGH** - Zero critical gaps identified with comprehensive error handling, production-tested patterns, and scalability considerations fully addressed.
+## Integration Points
 
-**Agent 6 Database Schema & Migration Specialist - Mission Complete**
-
-Integration points with Agent 5's transport patterns are maintained through the NATS JetStream specifications
+Integration points with transport patterns are maintained through the NATS JetStream specifications
 and PostgreSQL trigger-based event publishing, ensuring seamless data flow between the persistence and transport layers.
-
-> **Validation conducted by**: MS Framework Validation Swarm - Agent 10: Data Persistence Validation Specialist (2025-07-05)

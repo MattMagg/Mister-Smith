@@ -2,57 +2,32 @@
 
 [← Back to Core Architecture](./CLAUDE.md) | [Integration Patterns →](./integration-patterns.md) | [Implementation Guide →](./integration-implementation.md)
 
-**Agent**: 19 - Core Architecture Integration Specialist  
-**Mission**: Establish concrete integration contracts and core architecture patterns  
-**Target**: Address core architecture and cross-component compatibility gaps from Phase 1 analysis  
-
----
-
 ## Executive Summary
 
 This document provides the foundational integration contracts and core architecture specifications for the Mister Smith framework.
-Building upon Agent 14's cross-document validation (which revealed critical gaps in trait compatibility and component contracts),
-this specification establishes the concrete integration foundation required for seamless component interaction.
+It establishes concrete interfaces and patterns for seamless component integration.
 
-**Key Focus Areas:**
+### Key Components
 
-- Unified integration contracts library (`mister-smith-contracts`)
-- Core architecture patterns for component integration
-- Cross-component compatibility specifications
-- Concrete trait definitions and adapter patterns
-- Transport interface unification and protocol bridging
-- Configuration management standardization
+- **Contracts Library**: Unified `mister-smith-contracts` crate with shared interfaces
+- **Agent Contract**: Core agent lifecycle and integration patterns
+- **Transport Interface**: Protocol-agnostic messaging with bridging support
+- **Security Contracts**: Cross-transport security standardization
+- **Configuration Management**: Hierarchical configuration with multiple providers
 
-**Target Achievement**: Elevate component integration from 65-71% to 85-94% compatibility across all critical interfaces.
+### Quick Navigation
 
-**Quick Navigation**: Jump directly to [Agent Contracts](#21-core-agent-integration-contract),
-[Transport Interface](#22-unified-transport-interface),
-or [Configuration Management](#24-configuration-management-integration) for specific implementations.
+- [Agent Contracts](#21-core-agent-integration-contract) - Core agent integration interface
+- [Transport Interface](#22-unified-transport-interface) - Unified transport abstraction
+- [Security Contracts](#23-transport-security-integration-contracts) - mTLS and certificate management
+- [Configuration Management](#24-configuration-management-integration) - Hierarchical configuration system
 
-**Related Documents:**
+### Related Documents
 
-- [Error, Event, and Dependency Injection Patterns](./integration-patterns.md) - Advanced integration patterns building on these contracts
-- [Testing, Roadmap, and Metrics](integration-implementation.md) - Implementation guidance and testing framework
-- [System Integration](system-integration.md) - Broader system integration strategies
-- [Component Architecture](component-architecture.md) - Foundational system design principles
-
----
-
-## 🔍 VALIDATION STATUS
-
-**Last Validated**: 2025-07-05  
-**Validator**: Framework Documentation Team  
-**Validation Score**: Pending full validation  
-**Status**: Active Development  
-
-### Implementation Status
-
-- Integration contracts library specification complete
-- Core architecture patterns established
-- Cross-component compatibility defined
-- Transport unification framework documented
-
----
+- [Integration Patterns](./integration-patterns.md) - Advanced patterns for error handling, events, and DI
+- [Component Architecture](./component-architecture.md) - Foundational system design principles
+- [System Integration](./system-integration.md) - System-level integration strategies
+- [Implementation Guide](./integration-implementation.md) - Testing and implementation guidance
 
 ## Table of Contents
 
@@ -95,14 +70,14 @@ pub use mister_smith_contracts::testing::{
 
 ### 1.2 Component Integration Matrix
 
-| Component Pair | Before | After | Integration Pattern | Reference |
-|----------------|--------|-------|---------------------|-----------|
-| Core ↔ Transport | 69% | 92% | Unified messaging contracts + protocol bridging | [Transport Interface](#22-unified-transport-interface) |
-| Data ↔ Orchestration | 69% | 90% | Event-driven state management + schema mapping | [Agent Contract](#21-core-agent-integration-contract) |
-| Security ↔ All Components | 71% | 94% | Cross-cutting authentication + authorization patterns | [Configuration Management](#24-configuration-management-integration) |
-| Observability ↔ All | 71% | 88% | Unified tracing + metrics collection contracts | [Error, Event, and Dependency Injection Patterns](./integration-patterns.md) |
-| Deployment ↔ All | 63% | 85% | Configuration standardization + health check contracts | [Configuration Management](#24-configuration-management-integration) |
-| Claude CLI ↔ Framework | 58% | 87% | Process isolation + security bridge patterns | [System Integration](system-integration.md) |
+| Component Pair | Integration Pattern | Key Features | Reference |
+|----------------|---------------------|--------------|-----------|
+| Core ↔ Transport | Unified messaging contracts with protocol bridging | Multi-protocol support, automatic translation | [Transport Interface](#22-unified-transport-interface) |
+| Data ↔ Orchestration | Event-driven state management | Schema validation, transformation tracking | [Agent Contract](#21-core-agent-integration-contract) |
+| Security ↔ All Components | Cross-cutting security patterns | mTLS enforcement, certificate lifecycle | [Security Contracts](#23-transport-security-integration-contracts) |
+| Observability ↔ All | Unified tracing and metrics | OpenTelemetry integration, correlation tracking | [Integration Patterns](./integration-patterns.md) |
+| Configuration ↔ All | Hierarchical configuration | Multi-provider support, hot reloading | [Configuration Management](#24-configuration-management-integration) |
+| CLI ↔ Framework | Process isolation with security | Secure command execution, event streaming | [System Integration](./system-integration.md) |
 
 ---
 
@@ -110,11 +85,7 @@ pub use mister_smith_contracts::testing::{
 
 ### 2.1 Core Agent Integration Contract
 
-**Addresses**: Agent lifecycle management compatibility (Agent 14: 65% trait compatibility)
-
-**Implementation**: This contract is provided by the [Shared Contracts Library](#11-shared-contracts-library) as part of the core integration foundation.
-
-**See Also**: [Component Architecture](component-architecture.md#agent-lifecycle) for foundational agent design patterns
+The core agent contract provides a unified interface for all agent implementations, ensuring consistent lifecycle management and integration patterns.
 
 ```rust
 use async_trait::async_trait;
@@ -222,14 +193,7 @@ where
 
 ### 2.2 Unified Transport Interface
 
-**Addresses**: Transport protocol differences (Agent 11: 70% compatibility, Agent 14: Transport layer issues) | Data Flow Integrity (Agent 12: Message routing and transformation validation)
-
-**Implementation**: This unified interface is part of the [Shared Contracts Library](#11-shared-contracts-library) and provides protocol bridging capabilities with comprehensive data flow validation.
-
-**See Also**:
-
-- [System Integration](system-integration.md#transport-layer) for system-wide transport strategies
-- [Integration Patterns](./integration-patterns.md#4-event-system-integration-patterns) for event-driven communication patterns
+The transport interface provides protocol-agnostic messaging with automatic bridging between different transport implementations. It includes built-in data flow validation and transformation tracking.
 
 ```rust
 #[async_trait]
@@ -531,11 +495,89 @@ impl Transport for WebSocketTransport {
 }
 ```
 
+#### Transport Bridging Example
+
+Here's a practical example of bridging NATS and WebSocket transports:
+
+```rust
+// Example: Creating a unified transport layer
+pub async fn create_unified_transport() -> Result<Box<dyn Transport>, TransportError> {
+    // Create individual transports
+    let nats = NatsTransport::new(NatsConfig {
+        servers: vec!["nats://localhost:4222".to_string()],
+        auth: AuthConfig::Token("secret".to_string()),
+    }).await?;
+    
+    let websocket = WebSocketTransport::new(WebSocketConfig {
+        bind_address: "0.0.0.0:8080".to_string(),
+        tls_config: Some(TlsConfig {
+            cert_path: "/etc/certs/server.crt".to_string(),
+            key_path: "/etc/certs/server.key".to_string(),
+        }),
+    }).await?;
+    
+    // Create protocol bridge with routing rules
+    let mut bridge = ProtocolBridge::new(nats, websocket)
+        .with_message_translator(MessageTranslator::new());
+    
+    // Add routing rules
+    bridge.add_routing_rule(RoutingRule {
+        pattern: RoutingPattern::Topic("agents.*".to_string()),
+        transport_choice: TransportChoice::Primary, // Use NATS for agent communication
+        priority: 100,
+    });
+    
+    bridge.add_routing_rule(RoutingRule {
+        pattern: RoutingPattern::AgentType(AgentType::User),
+        transport_choice: TransportChoice::Secondary, // Use WebSocket for user agents
+        priority: 90,
+    });
+    
+    bridge.add_routing_rule(RoutingRule {
+        pattern: RoutingPattern::Broadcast,
+        transport_choice: TransportChoice::Both, // Broadcast to both transports
+        priority: 80,
+    });
+    
+    Ok(Box::new(bridge))
+}
+
+// Example: Using the unified transport
+pub async fn agent_communication_example(transport: &dyn Transport) -> Result<(), TransportError> {
+    // Subscribe to agent events
+    let mut subscription = transport.subscribe(&SubscriptionPattern::Wildcard {
+        pattern: "agents.*.status".to_string(),
+    }).await?;
+    
+    // Send a message to a specific agent
+    transport.send(
+        &Destination::Direct { agent_id: AgentId::new() },
+        Message {
+            content: "Start processing".to_string(),
+            metadata: HashMap::new(),
+        },
+    ).await?;
+    
+    // Handle incoming messages
+    while let Some(message) = subscription.next().await {
+        match message {
+            Ok(msg) => {
+                // Process message with automatic protocol translation
+                println!("Received: {:?}", msg);
+            }
+            Err(e) => {
+                eprintln!("Transport error: {}", e);
+            }
+        }
+    }
+    
+    Ok(())
+}
+```
+
 ### 2.3 Transport Security Integration Contracts
 
-**Addresses**: Cross-component mTLS implementation consistency (Agent 17: 87/100 validation score with critical recommendations)
-
-**Implementation**: These security contracts enforce consistent mTLS implementation across all transport protocols and ensure certificate lifecycle management consistency.
+These security contracts enforce consistent mTLS implementation across all transport protocols and ensure certificate lifecycle management consistency.
 
 ```rust
 use async_trait::async_trait;
@@ -761,15 +803,7 @@ pub enum SecurityError {
 
 ### 2.4 Configuration Management Integration
 
-**Addresses**: Configuration format conflicts (Agent 14: 45-55% consistency, Agent 11: 80% compatibility) | Data Consistency Validation (Agent 12: Cross-component configuration integrity)
-
-**Implementation**: The hierarchical configuration system is implemented through the [Shared Contracts Library](#11-shared-contracts-library)
-with support for multiple providers and comprehensive data flow validation.
-
-**See Also**:
-
-- [Implementation Config](implementation-config.md) for detailed configuration management patterns
-- [System Integration](system-integration.md#configuration-management) for deployment-level configuration strategies
+The hierarchical configuration system provides a unified approach to configuration management with support for multiple providers, hot reloading, and comprehensive validation.
 
 ```rust
 #[async_trait]
@@ -1073,36 +1107,160 @@ impl ConfigMapper {
 }
 ```
 
+#### Configuration Management Example
+
+Here's a practical example of using the hierarchical configuration system:
+
+```rust
+// Example: Setting up configuration for a production environment
+pub async fn setup_production_config() -> Result<HierarchicalConfig, ConfigError> {
+    let config = HierarchicalConfig::builder()
+        // Environment variables have highest priority
+        .add_environment_variables()
+        
+        // Production-specific configuration
+        .add_file("config/production.toml")?
+        
+        // Base configuration with defaults
+        .add_file("config/base.toml")?
+        
+        // Kubernetes secrets for sensitive data
+        .add_kubernetes_secrets("mister-smith-prod")
+        
+        // Consul for dynamic configuration
+        .add_consul(ConsulConfig {
+            address: "consul.service.consul:8500".to_string(),
+            prefix: "mister-smith/prod".to_string(),
+            watch: true,
+        })
+        
+        .build();
+    
+    Ok(config)
+}
+
+// Example: Using configuration with validation and hot reloading
+pub async fn configure_agent_service(
+    config_provider: &HierarchicalConfig,
+) -> Result<AgentServiceConfig, ConfigError> {
+    // Define configuration schema
+    let schema = ConfigSchema {
+        required_fields: vec![
+            "agent.pool_size".to_string(),
+            "agent.timeout_seconds".to_string(),
+            "transport.servers".to_string(),
+        ],
+        field_types: HashMap::from([
+            ("agent.pool_size".to_string(), FieldType::Integer { min: 1, max: 100 }),
+            ("agent.timeout_seconds".to_string(), FieldType::Integer { min: 1, max: 300 }),
+            ("transport.servers".to_string(), FieldType::StringArray),
+        ]),
+    };
+    
+    // Validate schema
+    config_provider.validate_schema(&schema)?;
+    
+    // Load configuration with fallback
+    let pool_size = config_provider.resolve_with_fallback::<usize>(&[
+        ConfigKey::new("agent", "pool", "size").with_environment("production"),
+        ConfigKey::new("agent", "pool", "size"),
+        ConfigKey::new("defaults", "agent", "pool_size"),
+    ]).await?;
+    
+    // Watch for configuration changes
+    let mut watcher = config_provider.watch(
+        &ConfigKey::new("agent", "features", "enabled")
+    ).await?;
+    
+    tokio::spawn(async move {
+        while let Some(change) = watcher.next().await {
+            match change {
+                ConfigChange::Updated { key, old_value, new_value } => {
+                    println!("Config updated: {} from {:?} to {:?}", 
+                            key.path(), old_value, new_value);
+                    // Trigger feature flag update
+                }
+                ConfigChange::Deleted { key } => {
+                    println!("Config deleted: {}", key.path());
+                    // Use default value
+                }
+            }
+        }
+    });
+    
+    // Load complete configuration
+    let agent_config = AgentServiceConfig {
+        pool_size,
+        timeout: Duration::from_secs(
+            config_provider.get(&ConfigKey::new("agent", "timeouts", "default")).await?
+        ),
+        transport_servers: config_provider.get(&ConfigKey::new("transport", "nats", "servers")).await?,
+        features: config_provider.get(&ConfigKey::new("agent", "features", "enabled")).await?,
+    };
+    
+    Ok(agent_config)
+}
+
+// Example: Environment-specific configuration mapping
+pub async fn load_environment_config(
+    config_provider: &dyn ConfigProvider,
+    environment: &str,
+) -> Result<EnvironmentConfig, ConfigError> {
+    let mapper = ConfigMapper::new();
+    
+    // Add environment-specific mappings
+    mapper.add_mapping("database", ConfigMapping {
+        source_key: ConfigKey::new("database", environment, "connection"),
+        target_key: ConfigKey::new("app", "database", "url"),
+        transformer: Some(Box::new(ConnectionStringTransformer)),
+        validation: Some(Box::new(DatabaseUrlValidator)),
+    });
+    
+    mapper.add_mapping("cache", ConfigMapping {
+        source_key: ConfigKey::new("cache", environment, "redis"),
+        target_key: ConfigKey::new("app", "cache", "connection"),
+        transformer: None,
+        validation: Some(Box::new(RedisConnectionValidator)),
+    });
+    
+    // Load and map configuration
+    let db_config = mapper.map_config::<DatabaseConfig>(config_provider, "database").await?;
+    let cache_config = mapper.map_config::<CacheConfig>(config_provider, "cache").await?;
+    
+    Ok(EnvironmentConfig {
+        database: db_config,
+        cache: cache_config,
+        environment: environment.to_string(),
+    })
+}
+```
+
 ---
 
-## Conclusion
+## Summary
 
-This document establishes the core integration contracts and architecture patterns that form the foundation
-of the Mister Smith framework's component integration strategy. By providing unified trait definitions,
-protocol bridging capabilities, and configuration standardization,
-we create a solid base for seamless component interaction.
+This document defines the core integration contracts that enable seamless component interaction within the Mister Smith framework.
 
-**Key Achievements:**
+### Key Contracts
 
-- Unified Agent trait with comprehensive lifecycle management
-- Transport abstraction supporting multiple protocols with bridging
-- Hierarchical configuration system with provider flexibility
-- Adapter patterns for integrating existing implementations
+- **Agent Contract**: Unified interface for agent lifecycle, health checks, and supervision integration
+- **Transport Interface**: Protocol-agnostic messaging with automatic bridging and data flow validation
+- **Security Contracts**: Standardized mTLS implementation with certificate lifecycle management
+- **Configuration System**: Hierarchical configuration with multi-provider support and hot reloading
 
-**Next Steps:**
+### Implementation Notes
 
-- Review [Error, Event, and Dependency Injection Patterns](./integration-patterns.md) for advanced integration patterns and event systems
-- See [Testing, Roadmap, and Metrics](integration-implementation.md) for implementation guidance and validation frameworks
-- Examine [System Integration](system-integration.md) for deployment and operational integration strategies
-- Reference [Component Architecture](component-architecture.md) for foundational design principles and patterns
+- All contracts are implemented in the `mister-smith-contracts` crate
+- Protocol bridging supports NATS, WebSocket, gRPC, and HTTP transports
+- Security contracts enforce TLS 1.3 and standardized certificate paths
+- Configuration system supports environment variables, files, Consul, and Kubernetes secrets
+
+### Next Steps
+
+- [Integration Patterns](./integration-patterns.md) - Advanced patterns for error handling, events, and DI
+- [Component Architecture](./component-architecture.md) - Foundational design principles
+- [System Integration](./system-integration.md) - System-level integration strategies
 
 ---
 
-[← Back to Core Architecture](./CLAUDE.md) | [Integration Patterns →](./integration-patterns.md) | [Implementation Guide →](./integration-implementation.md)
-
----
-
-*Integration Contracts and Core Architecture v1.0*  
-*Agent 19 - Core Architecture Integration Specialist*  
-*Generated: 2025-07-03*  
-*Target: Establish foundational integration contracts for 85-94% component compatibility*
+[← Core Architecture](./CLAUDE.md) | [Integration Patterns →](./integration-patterns.md) | [Implementation Guide →](./integration-implementation.md)

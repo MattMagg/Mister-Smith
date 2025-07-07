@@ -1,48 +1,47 @@
----
-title: System Integration Patterns & Implementation
-type: implementation
-permalink: core-architecture/system-integration
-tags:
-- '#integration #implementation #patterns #extensions #messaging #event-sourcing #saga'
----
+# System Integration Patterns & Implementation
 
-## System Integration Patterns & Implementation
+**Document Type**: Technical Specification
+**Component**: Core Architecture - Integration Layer
+**Version**: 1.0.0
+**Status**: Active Development
 
-*Extracted from system-architecture.md - Sections 5-7*
+## Purpose
 
-This document provides comprehensive integration patterns, implementation guidelines, and extension mechanisms for the Mister Smith AI Agent Framework.
-It covers advanced message routing, state persistence patterns, implementation best practices, and extension points for customization.
+Technical specification for system integration patterns, message routing, state management, and extension mechanisms in the Mister Smith framework.
 
-## Table of Contents
+## Structure
 
-- 1. Integration Patterns
-  - 1.1 Enhanced Message Routing & Addressing
-  - 1.2 Health Check and Monitoring
-  - 1.3 Shared Tool Registry Pattern
-  - 1.4 State Persistence & Recovery
-  - 1.5 Async Message Flow Patterns
-- 1. Implementation Guidelines
-  - 1.1 Error Handling Strategy
-  - 1.2 Testing Framework
-  - 1.3 Critical Anti-Patterns to Avoid
-- 1. Extension Mechanisms
-  - 7.1 Middleware Pattern
-  - 7.2 Event Emitter Pattern
-  - 7.3 Custom Routing Strategies
+```yaml
+integration_patterns:
+  - enhanced_message_routing
+  - health_monitoring
+  - tool_registry
+  - state_persistence
+  - async_message_flows
+  
+implementation_guidelines:
+  - error_handling
+  - testing_framework
+  - anti_patterns
+  
+extension_mechanisms:
+  - middleware_pattern
+  - event_emitter
+  - custom_routing
+```
 
-## 🔍 VALIDATION STATUS
+## Validation Metadata
 
-**Last Validated**: 2025-07-05  
-**Validator**: Framework Documentation Team  
-**Validation Score**: Pending full validation  
-**Status**: Active Development  
-
-### Implementation Status
-
-- Message routing patterns established
-- Health monitoring framework defined
-- State persistence patterns documented
-- Extension mechanisms specified
+```yaml
+validation:
+  last_updated: 2025-07-05
+  status: active_development
+  coverage:
+    message_routing: complete
+    health_monitoring: complete
+    state_persistence: complete
+    extension_mechanisms: complete
+```
 
 ## 5. Integration Patterns
 
@@ -78,9 +77,9 @@ ENUM MessageAddress {
     ControlResume(target: String)
 }
 
-IMPL MessageAddress {
-    FUNCTION to_subject(&self) -> String {
-        MATCH self {
+impl MessageAddress {
+    pub fn to_subject(&self) -> String {
+        match self {
             AgentSpawn(supervisor, agent_type, agent_id) => 
                 format!("agents.{}.spawn.{}.{}", supervisor, agent_type, agent_id),
             TaskAssign(agent_id, task_type, task_id) => 
@@ -91,9 +90,9 @@ IMPL MessageAddress {
         }
     }
     
-    FUNCTION from_subject(subject: &str) -> Result<Self> {
-        parts = subject.split('.').collect::<Vec<_>>()
-        MATCH parts.as_slice() {
+    pub fn from_subject(subject: &str) -> Result<Self, AddressingError> {
+        let parts = subject.split('.').collect::<Vec<_>>();
+        match parts.as_slice() {
             ["agents", supervisor, "spawn", agent_type, agent_id] => 
                 Ok(AgentSpawn(supervisor.to_string(), agent_type.to_string(), agent_id.to_string())),
             ["tasks", agent_id, "assign", task_type, task_id] => 
@@ -103,7 +102,7 @@ IMPL MessageAddress {
         }
     }
     
-    FUNCTION supports_wildcard(&self) -> bool {
+    pub fn supports_wildcard(&self) -> bool {
         // Enable subscription patterns like "agents.*.spawn.*.*"
         true
     }
@@ -114,7 +113,7 @@ IMPL MessageAddress {
 
 ```rust
 // AsyncAPI-inspired message schema with data flow integrity validation (Agent 12)
-STRUCT MessageSchema {
+pub struct MessageSchema {
     message_type: String,
     version: String,
     required_headers: Vec<String>,
@@ -127,27 +126,27 @@ STRUCT MessageSchema {
     performance_thresholds: PerformanceThresholds
 }
 
-STRUCT TransformationRule {
+pub struct TransformationRule {
     source_field: String,
     target_field: String,
     transformation_type: TransformationType,
     validation_function: Box<dyn Fn(&Value) -> Result<Value>>
 }
 
-STRUCT ConsistencyConstraint {
+pub struct ConsistencyConstraint {
     constraint_type: ConstraintType,
     fields: Vec<String>,
     validation_expression: String,
     error_message: String
 }
 
-STRUCT PerformanceThresholds {
+pub struct PerformanceThresholds {
     max_processing_time: Duration,  // < 1ms for routing (Agent 12)
     max_message_size: usize,
     max_transformation_depth: u32
 }
 
-STRUCT MessageValidator {
+pub struct MessageValidator {
     schemas: HashMap<String, MessageSchema>,
     validation_cache: Arc<RwLock<HashMap<String, ValidationResult>>>,
     // Data flow integrity components (Agent 12)
@@ -158,30 +157,30 @@ STRUCT MessageValidator {
 }
 
 // Data Flow Validator implementation (Agent 12: 95/100 completeness)
-STRUCT DataFlowValidator {
+pub struct DataFlowValidator {
     flow_rules: HashMap<String, FlowValidationRule>,
     state_tracker: StateTransitionTracker,
     correlation_manager: CorrelationManager
 }
 
-IMPL DataFlowValidator {
-    ASYNC FUNCTION validate_message_flow(&self, message: &Message, context: &FlowContext) -> Result<FlowValidation> {
+impl DataFlowValidator {
+    pub async fn validate_message_flow(&self, message: &Message, context: &FlowContext) -> Result<FlowValidation, ValidationError> {
         // Validate message path through components
-        path_validation = self.validate_component_path(&message.routing_path)?;
+        let path_validation = self.validate_component_path(&message.routing_path)?;
         
         // Validate state transitions
-        state_validation = self.state_tracker.validate_transition(
+        let state_validation = self.state_tracker.validate_transition(
             &context.previous_state,
             &context.current_state,
             &message
         )?;
         
         // Validate correlation chain
-        correlation_validation = self.correlation_manager.validate_correlation_chain(
+        let correlation_validation = self.correlation_manager.validate_correlation_chain(
             &message.correlation_id
         ).await?;
         
-        RETURN Ok(FlowValidation {
+        Ok(FlowValidation {
             path_valid: path_validation.is_valid,
             state_valid: state_validation.is_valid,
             correlation_valid: correlation_validation.is_valid,
@@ -190,68 +189,68 @@ IMPL DataFlowValidator {
     }
 }
 
-IMPL MessageValidator {
-    ASYNC FUNCTION validate_message(&self, message: &Message) -> ValidationResult {
+impl MessageValidator {
+    pub async fn validate_message(&self, message: &Message) -> Result<ValidationResult, ValidationError> {
         // Check cache first
-        cache_key = format!("{}-{}", message.message_type, message.checksum())
-        IF LET Some(cached_result) = self.validation_cache.read().await.get(&cache_key) {
-            RETURN cached_result.clone()
+        let cache_key = format!("{}-{}", message.message_type, message.checksum());
+        if let Some(cached_result) = self.validation_cache.read().await.get(&cache_key) {
+            return Ok(cached_result.clone());
         }
         
-        schema = self.schemas.get(&message.message_type)
-            .ok_or(ValidationError::UnknownMessageType)?
+        let schema = self.schemas.get(&message.message_type)
+            .ok_or(ValidationError::UnknownMessageType)?;
         
         // Validate headers
-        FOR required_header IN &schema.required_headers {
-            IF !message.headers.contains_key(required_header) {
-                RETURN ValidationResult::Failed(ValidationError::MissingHeader(required_header.clone()))
+        for required_header in &schema.required_headers {
+            if !message.headers.contains_key(required_header) {
+                return Ok(ValidationResult::Failed(ValidationError::MissingHeader(required_header.clone())));
             }
         }
         
         // Validate payload against JSON schema
-        validation_result = schema.payload_schema.validate(&message.payload)?
+        let validation_result = schema.payload_schema.validate(&message.payload)?;
         
         // Data flow integrity validation (Agent 12)
-        flow_context = FlowContext::from_message(&message)
-        flow_validation = self.flow_validator.validate_message_flow(&message, &flow_context).await?
+        let flow_context = FlowContext::from_message(&message);
+        let flow_validation = self.flow_validator.validate_message_flow(&message, &flow_context).await?;
         
         // Transformation validation (Agent 12: 94/100)
-        IF message.has_transformations() {
-            transformation_result = self.transformation_validator.validate_transformations(
+        if message.has_transformations() {
+            let transformation_result = self.transformation_validator.validate_transformations(
                 &message.transformation_chain
-            ).await?
+            ).await?;
             
-            IF !transformation_result.is_valid {
-                RETURN ValidationResult::Failed(ValidationError::TransformationIntegrityFailed)
+            if !transformation_result.is_valid {
+                return Ok(ValidationResult::Failed(ValidationError::TransformationIntegrityFailed));
             }
         }
         
         // Replay attack detection (Agent 12: Security gap)
-        replay_check = self.replay_detector.check_message(&message).await?
-        IF replay_check.is_replay {
-            RETURN ValidationResult::Failed(ValidationError::ReplayAttackDetected)
+        let replay_check = self.replay_detector.check_message(&message).await?;
+        if replay_check.is_replay {
+            return Ok(ValidationResult::Failed(ValidationError::ReplayAttackDetected));
         }
         
         // Performance validation
-        perf_metrics = self.performance_monitor.measure_validation_time(&validation_result)
-        IF perf_metrics.exceeds_threshold(&schema.performance_thresholds) {
-            self.performance_monitor.record_threshold_violation(&message.message_type)
+        let perf_metrics = self.performance_monitor.measure_validation_time(&validation_result);
+        if perf_metrics.exceeds_threshold(&schema.performance_thresholds) {
+            self.performance_monitor.record_threshold_violation(&message.message_type);
         }
         
         // Cache result with flow validation
-        enhanced_result = ValidationResult::Success {
+        let enhanced_result = ValidationResult::Success {
             base_validation: validation_result,
-            flow_validation: flow_validation,
-            performance_metrics: perf_metrics
-        }
+            flow_validation,
+            performance_metrics: perf_metrics,
+        };
         
-        self.validation_cache.write().await.insert(cache_key, enhanced_result.clone())
+        self.validation_cache.write().await.insert(cache_key, enhanced_result.clone());
         
-        RETURN enhanced_result
+        Ok(enhanced_result)
     }
     
-    FUNCTION register_schema(&mut self, schema: MessageSchema) {
-        self.schemas.insert(schema.message_type.clone(), schema)
+    pub fn register_schema(&mut self, schema: MessageSchema) {
+        self.schemas.insert(schema.message_type.clone(), schema);
     }
 }
 ```
@@ -274,13 +273,13 @@ STRUCT MessageBridge {
 }
 
 // Message Flow Monitor (Agent 12: End-to-end tracking)
-STRUCT MessageFlowMonitor {
+pub struct MessageFlowMonitor {
     active_flows: Arc<RwLock<HashMap<CorrelationId, MessageFlow>>>,
     flow_metrics: Arc<RwLock<FlowMetrics>>,
-    anomaly_detector: FlowAnomalyDetector
+    anomaly_detector: FlowAnomalyDetector,
 }
 
-STRUCT MessageFlow {
+pub struct MessageFlow {
     correlation_id: CorrelationId,
     start_time: Instant,
     path: Vec<ComponentId>,
@@ -333,111 +332,111 @@ IMPL MessageBridge {
         }
         
         // Send with retry and timeout
-        send_result = tokio::time::timeout(
+        let send_result = tokio::time::timeout(
             message.timeout.unwrap_or(DEFAULT_MESSAGE_TIMEOUT),
             self.transport.send_with_retry(serialized, routing_info.clone(), RETRY_POLICY)
-        ).await
+        ).await;
         
-        MATCH send_result {
+        match send_result {
             Ok(Ok(())) => {
-                self.metrics.record_successful_send(&address.to_subject())
+                self.metrics.record_successful_send(&address.to_subject());
                 Ok(())
-            },
+            }
             Ok(Err(transport_error)) => {
-                self.handle_transport_error(message, transport_error).await?
+                self.handle_transport_error(message, transport_error).await?;
                 Err(MessageError::TransportFailed(transport_error))
-            },
-            Err(timeout_error) => {
-                self.dead_letter_queue.enqueue(message, "timeout").await?
-                self.metrics.record_timeout(&address.to_subject())
+            }
+            Err(_timeout_error) => {
+                self.dead_letter_queue.enqueue(message, "timeout").await?;
+                self.metrics.record_timeout(&address.to_subject());
                 Err(MessageError::Timeout)
             }
         }
     }
     
     #[tracing::instrument(skip(self, message))]
-    ASYNC FUNCTION broadcast<M: Message>(&self, message: M, pattern: &str) -> Result<BroadcastResult> {
-        routing_table = self.routing_table.read().await
-        matching_targets = routing_table.keys()
+    pub async fn broadcast<M: Message>(&self, message: M, pattern: &str) -> Result<BroadcastResult, MessageError> {
+        let routing_table = self.routing_table.read().await;
+        let matching_targets = routing_table.keys()
             .filter(|subject| self.subject_matches_pattern(subject, pattern))
             .cloned()
-            .collect::<Vec<_>>()
+            .collect::<Vec<_>>();
         
         // Create futures for parallel sending
-        send_futures = matching_targets.iter().map(|subject| {
-            address = MessageAddress::from_subject(subject).unwrap()
+        let send_futures = matching_targets.iter().map(|subject| {
+            let address = MessageAddress::from_subject(subject).unwrap();
             self.route_message(message.clone(), address)
-        }).collect::<Vec<_>>()
+        }).collect::<Vec<_>>();
         
         // Execute with partial failure handling
-        results = join_all(send_futures).await
+        let results = join_all(send_futures).await;
         
-        successes = results.iter().filter(|r| r.is_ok()).count()
-        failures = results.iter().filter(|r| r.is_err()).count()
+        let successes = results.iter().filter(|r| r.is_ok()).count();
+        let failures = results.iter().filter(|r| r.is_err()).count();
         
-        BroadcastResult {
+        Ok(BroadcastResult {
             total_targets: matching_targets.len(),
             successful_sends: successes,
             failed_sends: failures,
             errors: results.into_iter().filter_map(|r| r.err()).collect()
-        }
+        })
     }
     
-    ASYNC FUNCTION subscribe(&self, pattern: &str, handler: MessageHandler) -> Result<SubscriptionId> {
-        subscription_id = SubscriptionId::new()
+    pub async fn subscribe(&self, pattern: &str, handler: MessageHandler) -> Result<SubscriptionId, MessageError> {
+        let subscription_id = SubscriptionId::new();
         
         // Setup NATS subscription with pattern
-        subscription = self.transport.subscribe(pattern).await?
+        let subscription = self.transport.subscribe(pattern).await?;
         
         // Spawn handler task
-        handler_task = tokio::spawn(async move {
-            WHILE LET Some(message) = subscription.next().await {
-                IF LET Err(e) = handler.handle(message).await {
-                    tracing::error!(error = %e, "Message handler failed")
+        let handler_task = tokio::spawn(async move {
+            while let Some(message) = subscription.next().await {
+                if let Err(e) = handler.handle(message).await {
+                    tracing::error!(error = %e, "Message handler failed");
                 }
             }
-        })
+        });
         
         // Track subscription for cleanup
-        self.track_subscription(subscription_id, handler_task).await
+        self.track_subscription(subscription_id, handler_task).await;
         
-        RETURN Ok(subscription_id)
+        Ok(subscription_id)
     }
     
-    ASYNC FUNCTION request_reply<Req: Message, Resp: Message>(
+    pub async fn request_reply<Req: Message, Resp: Message>(
         &self, 
         request: Req, 
         address: MessageAddress,
         timeout: Duration
-    ) -> Result<Resp> {
+    ) -> Result<Resp, MessageError> {
         // Generate correlation ID
-        correlation_id = Uuid::new_v4().to_string()
+        let correlation_id = Uuid::new_v4().to_string();
         
         // Setup reply subscription
-        reply_subject = format!("_INBOX.{}", correlation_id)
-        reply_subscription = self.transport.subscribe(&reply_subject).await?
+        let reply_subject = format!("_INBOX.{}", correlation_id);
+        let mut reply_subscription = self.transport.subscribe(&reply_subject).await?;
         
         // Modify request with reply information
-        request_with_reply = request.with_correlation_id(correlation_id.clone())
-            .with_reply_to(reply_subject.clone())
+        let request_with_reply = request.with_correlation_id(correlation_id.clone())
+            .with_reply_to(reply_subject.clone());
         
         // Send request
-        self.route_message(request_with_reply, address).await?
+        self.route_message(request_with_reply, address).await?;
         
         // Wait for reply with timeout
-        reply_result = tokio::time::timeout(timeout, async {
-            WHILE LET Some(reply_message) = reply_subscription.next().await {
-                IF reply_message.correlation_id == Some(correlation_id.clone()) {
-                    RETURN self.message_serializer.deserialize::<Resp>(&reply_message.payload)
+        let reply_result = tokio::time::timeout(timeout, async {
+            while let Some(reply_message) = reply_subscription.next().await {
+                if reply_message.correlation_id == Some(correlation_id.clone()) {
+                    return self.message_serializer.deserialize::<Resp>(&reply_message.payload);
                 }
             }
             Err(MessageError::NoReply)
-        }).await
+        }).await;
         
-        MATCH reply_result {
+        match reply_result {
             Ok(Ok(response)) => Ok(response),
             Ok(Err(e)) => Err(e),
-            Err(_) => Err(MessageError::ReplyTimeout)
+            Err(_) => Err(MessageError::ReplyTimeout),
         }
     }
 }
@@ -445,33 +444,43 @@ IMPL MessageBridge {
 
 ### 5.3 Shared Tool Registry Pattern
 
-> **Configuration Reference**: Tool bus configuration is defined in [Implementation Configuration](implementation-config.md#implementation-completeness-checklist) under the "Tool System" section.
+### Dependencies
+
+```yaml
+required_components:
+  - path: implementation-config.md
+    section: implementation-completeness-checklist
+    subsection: tool-system
+```
 
 ```rust
-STRUCT ToolBus {
+pub struct ToolBus {
     tools: Arc<RwLock<HashMap<ToolId, Box<dyn Tool>>>>,
     permissions: HashMap<AgentId, Vec<ToolId>>
 }
 
-TRAIT Tool: Send + Sync {
-    ASYNC FUNCTION execute(&self, params: Value) -> Result<Value>
-    FUNCTION schema(&self) -> ToolSchema
+#[async_trait]
+pub trait Tool: Send + Sync {
+    async fn execute(&self, params: Value) -> Result<Value, ToolError>;
+    fn schema(&self) -> ToolSchema;
 }
 
 // Extension mechanism
-IMPL ToolBus {
-    FUNCTION register_tool<T: Tool + 'static>(&mut self, id: ToolId, tool: T) {
-        self.tools.write().unwrap().insert(id, Box::new(tool))
+impl ToolBus {
+    pub fn register_tool<T: Tool + 'static>(&mut self, id: ToolId, tool: T) {
+        self.tools.write().unwrap().insert(id, Box::new(tool));
     }
     
-    ASYNC FUNCTION call(&self, agent_id: AgentId, tool_id: ToolId, params: Value) -> Result<Value> {
+    pub async fn call(&self, agent_id: AgentId, tool_id: ToolId, params: Value) -> Result<Value, ToolError> {
         // Permission check
-        IF !self.has_permission(agent_id, tool_id) {
-            RETURN Err("Unauthorized tool access")
+        if !self.has_permission(agent_id, tool_id) {
+            return Err(ToolError::Unauthorized);
         }
         
-        tools = self.tools.read().unwrap()
-        RETURN tools.get(&tool_id)?.execute(params).await
+        let tools = self.tools.read().unwrap();
+        tools.get(&tool_id)
+            .ok_or(ToolError::ToolNotFound)?
+            .execute(params).await
     }
 }
 ```
@@ -479,7 +488,7 @@ IMPL ToolBus {
 ### 5.4 Role-Based Agent Spawning
 
 ```rust
-ENUM AgentRole {
+pub enum AgentRole {
     ProductManager { sop: StandardProcedure },
     Architect { design_patterns: Vec<Pattern> },
     Engineer { toolchain: ToolSet },
@@ -487,38 +496,47 @@ ENUM AgentRole {
     Analyst { metrics_tools: MetricsSet }
 }
 
-STRUCT RoleSpawner {
+pub struct RoleSpawner {
     role_registry: HashMap<String, AgentRole>,
     spawn_controller: SpawnController,
-    
-    ASYNC FUNCTION spawn_team(&self, project: ProjectSpec) -> Team {
-        agents = vec![]
+}
+
+impl RoleSpawner {
+    pub async fn spawn_team(&self, project: ProjectSpec) -> Result<Team, SpawnError> {
+        let mut agents = vec![];
         
         // Dynamic team composition based on project needs
-        FOR role IN project.required_roles() {
-            agent = self.spawn_role(role).await?
-            agents.push(agent)
+        for role in project.required_roles() {
+            let agent = self.spawn_role(role).await?;
+            agents.push(agent);
         }
         
-        RETURN Team::new(agents, project.coordination_mode())
+        Ok(Team::new(agents, project.coordination_mode()))
     }
     
-    ASYNC FUNCTION spawn_role(&self, role: AgentRole) -> Result<Agent> {
+    pub async fn spawn_role(&self, role: AgentRole) -> Result<Agent, SpawnError> {
         // Use spawn controller for resource-bounded spawning
-        RETURN self.spawn_controller.spawn_bounded(role).await
+        self.spawn_controller.spawn_bounded(role).await
     }
 }
 ```
 
 ### 5.2 Transport Layer Security Integration
 
-> **mTLS Implementation Status**: Validated architecture with 87/100 score. Implementation follows TLS 1.3 standards with comprehensive certificate lifecycle management.
-> See mTLS validation findings from Agent 17 for detailed security assessment.
+### Security Validation
+
+```yaml
+security_validation:
+  mtls_score: 87
+  tls_version: "1.3"
+  certificate_management: comprehensive
+  validation_source: agent_17_assessment
+```
 
 #### 5.2.1 Transport Security Configuration
 
 ```rust
-STRUCT TransportSecurityManager {
+pub struct TransportSecurityManager {
     tls_config: TLSConfiguration,
     certificate_manager: CertificateManager,
     security_policy: SecurityPolicy,
@@ -530,7 +548,7 @@ STRUCT TransportSecurityManager {
 }
 
 // TLS Policy Standardization (Agent 17: Critical Priority 1)
-STRUCT TLSConfiguration {
+pub struct TLSConfiguration {
     // Standardized TLS policy across all protocols
     minimum_version: TLSVersion::TLS13,        // Enforced framework-wide
     preferred_version: TLSVersion::TLS13,      // No fallback allowed
@@ -544,7 +562,7 @@ STRUCT TLSConfiguration {
 }
 
 // Certificate Path Standardization (Agent 17: Critical Priority 1)
-STRUCT CertificateManager {
+pub struct CertificateManager {
     // Standardized certificate locations
     cert_base_path: PathBuf,                   // "/etc/mister-smith/certs"
     ca_path: PathBuf,                          // "${cert_base_path}/ca"
@@ -561,75 +579,75 @@ STRUCT CertificateManager {
     monitoring_thresholds: ExpirationThresholds
 }
 
-STRUCT ExpirationThresholds {
+pub struct ExpirationThresholds {
     critical: Duration,      // 1 day - immediate action required
     warning: Duration,       // 7 days - schedule renewal
     notice: Duration         // 30 days - monitor closely
 }
 
-IMPL CertificateManager {
-    ASYNC FUNCTION check_certificate_expiration_multi_threshold(&self) -> Result<ExpirationReport> {
-        expiration_report = ExpirationReport::new()
+impl CertificateManager {
+    pub async fn check_certificate_expiration_multi_threshold(&self) -> Result<ExpirationReport, CertError> {
+        let mut expiration_report = ExpirationReport::new();
         
-        FOR cert_path IN self.get_all_certificate_paths() {
-            expiry_time = self.get_certificate_expiry(&cert_path).await?
-            remaining = Duration::from_secs(expiry_time - current_time)
+        for cert_path in self.get_all_certificate_paths() {
+            let expiry_time = self.get_certificate_expiry(&cert_path).await?;
+            let remaining = Duration::from_secs(expiry_time - current_time);
             
             // Multi-threshold alerting (Agent 17 enhancement)
-            IF remaining <= self.monitoring_thresholds.critical {
-                expiration_report.add_critical(&cert_path, remaining)
-                self.trigger_immediate_alert(&cert_path, remaining).await?
-            } ELSE IF remaining <= self.monitoring_thresholds.warning {
-                expiration_report.add_warning(&cert_path, remaining)
-                self.schedule_renewal(&cert_path, remaining).await?
-            } ELSE IF remaining <= self.monitoring_thresholds.notice {
-                expiration_report.add_notice(&cert_path, remaining)
+            if remaining <= self.monitoring_thresholds.critical {
+                expiration_report.add_critical(&cert_path, remaining);
+                self.trigger_immediate_alert(&cert_path, remaining).await?;
+            } else if remaining <= self.monitoring_thresholds.warning {
+                expiration_report.add_warning(&cert_path, remaining);
+                self.schedule_renewal(&cert_path, remaining).await?;
+            } else if remaining <= self.monitoring_thresholds.notice {
+                expiration_report.add_notice(&cert_path, remaining);
             }
         }
         
-        RETURN Ok(expiration_report)
+        Ok(expiration_report)
     }
     
     // Certificate validation caching (Agent 17: Performance optimization)
-    ASYNC FUNCTION validate_certificate_cached(&self, cert_path: &str) -> Result<ValidationResult> {
-        cache_key = format!("cert_validation:{}", cert_path)
+    pub async fn validate_certificate_cached(&self, cert_path: &str) -> Result<ValidationResult, CertError> {
+        let cache_key = format!("cert_validation:{}", cert_path);
         
         // Check cache first
-        IF LET Some(cached_result) = self.validation_cache.read().await.get(&cache_key) {
-            IF !cached_result.is_expired() {
-                RETURN Ok(cached_result.clone())
+        if let Some(cached_result) = self.validation_cache.read().await.get(&cache_key) {
+            if !cached_result.is_expired() {
+                return Ok(cached_result.clone());
             }
         }
         
         // Perform validation
-        validation_result = self.validate_certificate_comprehensive(&cert_path).await?
+        let validation_result = self.validate_certificate_comprehensive(&cert_path).await?;
         
         // Cache result with TTL
         self.validation_cache.write().await.insert(
             cache_key, 
             validation_result.clone().with_ttl(Duration::from_secs(300))
-        )
+        );
         
-        RETURN Ok(validation_result)
+        Ok(validation_result)
     }
 }
 
 // gRPC mTLS Implementation (Agent 17: Critical Priority 1)
-STRUCT GrpcTransportSecurity {
+pub struct GrpcTransportSecurity {
     server_config: ServerTlsConfig,
     client_config: ClientTlsConfig,
     certificate_manager: Arc<CertificateManager>
 }
 
-IMPL GrpcTransportSecurity {
-    ASYNC FUNCTION create_grpc_server_with_mtls(&self, config: &GrpcServerConfig) -> Result<GrpcServer> {
+impl GrpcTransportSecurity {
+    pub async fn create_grpc_server_with_mtls(&self, config: &GrpcServerConfig) -> Result<GrpcServer, SecurityError> {
         // Load certificates with standardized paths
-        ca_cert = self.certificate_manager.load_ca_certificate().await?
-        server_cert = self.certificate_manager.load_server_certificate().await?
-        server_key = self.certificate_manager.load_server_private_key().await?
+        let ca_cert = self.certificate_manager.load_ca_certificate().await?;
+        let server_cert = self.certificate_manager.load_server_certificate().await?;
+        let server_key = self.certificate_manager.load_server_private_key().await?;
         
         // Configure TLS 1.3 with enforced policy
-        tls_config = ServerTlsConfig::new()
+        let tls_config = ServerTlsConfig::new()
             .identity(Identity::from_pem(&server_cert, &server_key))
             .client_ca_root(Certificate::from_pem(&ca_cert))
             .client_auth_required(true)  // Enforce mTLS
@@ -637,87 +655,87 @@ IMPL GrpcTransportSecurity {
             .cipher_suites(&[
                 CipherSuite::TLS13_AES_256_GCM_SHA384,
                 CipherSuite::TLS13_CHACHA20_POLY1305_SHA256,
-                CipherSuite::TLS13_AES_128_GCM_SHA256
-            ])
+                CipherSuite::TLS13_AES_128_GCM_SHA256,
+            ]);
         
-        server = Server::builder()
+        let server = Server::builder()
             .tls_config(tls_config)?
             .add_service(config.service)
-            .serve(config.bind_address)
+            .serve(config.bind_address);
         
-        RETURN Ok(server)
+        Ok(server)
     }
     
-    ASYNC FUNCTION create_grpc_client_with_mtls(&self, config: &GrpcClientConfig) -> Result<GrpcClient> {
+    pub async fn create_grpc_client_with_mtls(&self, config: &GrpcClientConfig) -> Result<GrpcClient, SecurityError> {
         // Load client certificates
-        ca_cert = self.certificate_manager.load_ca_certificate().await?
-        client_cert = self.certificate_manager.load_client_certificate().await?
-        client_key = self.certificate_manager.load_client_private_key().await?
+        let ca_cert = self.certificate_manager.load_ca_certificate().await?;
+        let client_cert = self.certificate_manager.load_client_certificate().await?;
+        let client_key = self.certificate_manager.load_client_private_key().await?;
         
         // Configure client mTLS
-        tls_config = ClientTlsConfig::new()
+        let tls_config = ClientTlsConfig::new()
             .ca_certificate(Certificate::from_pem(&ca_cert))
             .identity(Identity::from_pem(&client_cert, &client_key))
-            .domain_name(&config.server_name)
+            .domain_name(&config.server_name);
         
-        channel = Channel::from_shared(config.endpoint)?
+        let channel = Channel::from_shared(config.endpoint)?
             .tls_config(tls_config)?
             .connect()
-            .await?
+            .await?;
         
-        RETURN Ok(GrpcClient::new(channel))
+        Ok(GrpcClient::new(channel))
     }
 }
 
 // Cross-Protocol Security Coordination (Agent 17: Medium Priority)
-STRUCT CrossProtocolSecurityCoordinator {
+pub struct CrossProtocolSecurityCoordinator {
     protocol_configs: HashMap<TransportProtocol, SecurityConfig>,
     certificate_sharing: CertificateSharingManager,
     validation_synchronizer: CrossProtocolValidationSynchronizer
 }
 
-IMPL CrossProtocolSecurityCoordinator {
-    ASYNC FUNCTION ensure_cross_protocol_consistency(&self) -> Result<ConsistencyReport> {
-        consistency_report = ConsistencyReport::new()
+impl CrossProtocolSecurityCoordinator {
+    pub async fn ensure_cross_protocol_consistency(&self) -> Result<ConsistencyReport, SecurityError> {
+        let mut consistency_report = ConsistencyReport::new();
         
         // Validate TLS version consistency
-        FOR (protocol, config) IN &self.protocol_configs {
-            IF config.tls_version != TLSVersion::TLS13 {
+        for (protocol, config) in &self.protocol_configs {
+            if config.tls_version != TLSVersion::TLS13 {
                 consistency_report.add_violation(
                     protocol,
                     "TLS version inconsistency - all protocols must use TLS 1.3"
-                )
+                );
             }
         }
         
         // Validate certificate path consistency
-        base_path = PathBuf::from("/etc/mister-smith/certs")
-        FOR (protocol, config) IN &self.protocol_configs {
-            IF !config.certificate_paths.starts_with(&base_path) {
+        let base_path = PathBuf::from("/etc/mister-smith/certs");
+        for (protocol, config) in &self.protocol_configs {
+            if !config.certificate_paths.starts_with(&base_path) {
                 consistency_report.add_violation(
                     protocol,
                     "Certificate path inconsistency - must use standardized paths"
-                )
+                );
             }
         }
         
         // Validate cipher suite consistency
-        required_cipher_suites = vec![
+        let required_cipher_suites = vec![
             "TLS13_AES_256_GCM_SHA384",
             "TLS13_CHACHA20_POLY1305_SHA256", 
             "TLS13_AES_128_GCM_SHA256"
-        ]
+        ];
         
-        FOR (protocol, config) IN &self.protocol_configs {
-            IF !config.cipher_suites.is_subset(&required_cipher_suites) {
+        for (protocol, config) in &self.protocol_configs {
+            if !config.cipher_suites.is_subset(&required_cipher_suites) {
                 consistency_report.add_violation(
                     protocol,
                     "Cipher suite inconsistency - must use approved TLS 1.3 suites"
-                )
+                );
             }
         }
         
-        RETURN Ok(consistency_report)
+        Ok(consistency_report)
     }
 }
 ```
@@ -734,13 +752,13 @@ IMPL CrossProtocolSecurityCoordinator {
 #### 5.2.3 Security Policy Enforcement
 
 ```rust
-STRUCT SecurityPolicyEnforcer {
+pub struct SecurityPolicyEnforcer {
     tls_policy: TLSPolicy,
     certificate_policy: CertificatePolicy,
     compliance_checker: ComplianceChecker
 }
 
-STRUCT TLSPolicy {
+pub struct TLSPolicy {
     minimum_version: TLSVersion::TLS13,
     allowed_cipher_suites: Vec<String>,
     key_exchange_groups: Vec<String>,
@@ -748,34 +766,34 @@ STRUCT TLSPolicy {
     forward_secrecy_required: bool
 }
 
-IMPL SecurityPolicyEnforcer {
-    FUNCTION validate_transport_security(&self, transport_config: &TransportConfig) -> Result<SecurityValidation> {
-        validation_result = SecurityValidation::new()
+impl SecurityPolicyEnforcer {
+    pub fn validate_transport_security(&self, transport_config: &TransportConfig) -> Result<SecurityValidation, SecurityError> {
+        let mut validation_result = SecurityValidation::new();
         
         // Enforce TLS 1.3 only (Agent 17: Critical)
-        IF transport_config.tls_version < TLSVersion::TLS13 {
+        if transport_config.tls_version < TLSVersion::TLS13 {
             validation_result.add_violation(
                 SecurityViolation::TLSVersionNotAllowed(transport_config.tls_version)
-            )
+            );
         }
         
         // Validate cipher suites
-        FOR cipher_suite IN &transport_config.cipher_suites {
-            IF !self.tls_policy.allowed_cipher_suites.contains(cipher_suite) {
+        for cipher_suite in &transport_config.cipher_suites {
+            if !self.tls_policy.allowed_cipher_suites.contains(cipher_suite) {
                 validation_result.add_violation(
                     SecurityViolation::UnapprovedCipherSuite(cipher_suite.clone())
-                )
+                );
             }
         }
         
         // Ensure mTLS is configured
-        IF !transport_config.mutual_tls_enabled {
+        if !transport_config.mutual_tls_enabled {
             validation_result.add_violation(
                 SecurityViolation::MutualTLSRequired
-            )
+            );
         }
         
-        RETURN Ok(validation_result)
+        Ok(validation_result)
     }
 }
 ```
@@ -783,41 +801,42 @@ IMPL SecurityPolicyEnforcer {
 ### 5.3 Health Check and Monitoring
 
 ```rust
-STRUCT HealthCheckManager {
+pub struct HealthCheckManager {
     health_checks: Arc<RwLock<HashMap<ComponentId, Box<dyn HealthCheck>>>>,
     check_interval: Duration,
     failure_thresholds: HashMap<ComponentId, u32>,
     notification_channels: Vec<NotificationChannel>
 }
 
-TRAIT HealthCheck {
-    ASYNC FUNCTION check_health(&self) -> HealthResult
-    FUNCTION component_id(&self) -> ComponentId
-    FUNCTION timeout(&self) -> Duration
+#[async_trait]
+pub trait HealthCheck: Send + Sync {
+    async fn check_health(&self) -> HealthResult;
+    fn component_id(&self) -> ComponentId;
+    fn timeout(&self) -> Duration;
 }
 
-IMPL HealthCheckManager {
-    ASYNC FUNCTION run_health_checks(&self) -> Result<()> {
-        LOOP {
-            tokio::time::sleep(self.check_interval).await
+impl HealthCheckManager {
+    pub async fn run_health_checks(&self) -> Result<(), HealthError> {
+        loop {
+            tokio::time::sleep(self.check_interval).await;
             
-            health_checks = self.health_checks.read().await
-            futures = health_checks.values().map(|check| {
+            let health_checks = self.health_checks.read().await;
+            let futures = health_checks.values().map(|check| {
                 timeout(check.timeout(), check.check_health())
-            }).collect::<Vec<_>>()
+            }).collect::<Vec<_>>();
             
-            results = join_all(futures).await
+            let results = join_all(futures).await;
             
-            FOR (component_id, result) IN health_checks.keys().zip(results) {
-                MATCH result {
+            for (component_id, result) in health_checks.keys().zip(results) {
+                match result {
                     Ok(Ok(HealthResult::Healthy)) => {
-                        self.record_success(*component_id).await
-                    },
+                        self.record_success(*component_id).await;
+                    }
                     Ok(Ok(HealthResult::Unhealthy(reason))) => {
-                        self.handle_unhealthy(*component_id, reason).await?
-                    },
-                    Ok(Err(e)) | Err(e) => {
-                        self.handle_check_failure(*component_id, e).await?
+                        self.handle_unhealthy(*component_id, reason).await?;
+                    }
+                    Ok(Err(e)) | Err(_) => {
+                        self.handle_check_failure(*component_id, e).await?;
                     }
                 }
             }
@@ -828,15 +847,23 @@ IMPL HealthCheckManager {
 
 ### 5.4 State Persistence & Recovery
 
-> **Implementation Guide**: Event sourcing patterns connect with the module organization defined in [Implementation Configuration](implementation-config.md#module-organization-structure).
-> See the `events/` module structure for concrete implementations.
-> **Data Flow Integrity**: State persistence incorporates comprehensive data flow validation (Agent 12: 95/100) ensuring consistency across JetStream KV and PostgreSQL dual-store architecture.
+### Dependencies
+
+```yaml
+required_components:
+  - path: implementation-config.md
+    section: module-organization-structure
+    module: events
+  - validation_score: 95
+    component: data_flow_integrity
+    storage_architecture: dual_store_jetstream_postgresql
+```
 
 #### 5.4.1 Event Sourcing for State Management
 
 ```rust
 // Event sourcing pattern with data flow integrity validation (Agent 12)
-STRUCT EventStore {
+pub struct EventStore {
     storage: Arc<dyn EventStorage>,
     event_serializer: EventSerializer,
     snapshot_store: SnapshotStore,
@@ -848,51 +875,51 @@ STRUCT EventStore {
 }
 
 // Dual Store Coordinator (Agent 12: Validated architecture)
-STRUCT DualStoreCoordinator {
+pub struct DualStoreCoordinator {
     jetstream_store: JetStreamKVStore,
     postgres_store: PostgreSQLStore,
     sync_manager: StoreSyncManager,
     conflict_resolver: ConflictResolver
 }
 
-IMPL DualStoreCoordinator {
-    ASYNC FUNCTION persist_with_validation(&self, event: &Event) -> Result<PersistenceResult> {
+impl DualStoreCoordinator {
+    pub async fn persist_with_validation(&self, event: &Event) -> Result<PersistenceResult, PersistenceError> {
         // Calculate checksums for data integrity
-        event_checksum = calculate_event_checksum(event)?
+        let event_checksum = calculate_event_checksum(event)?;
         
         // Persist to JetStream KV first (fast path)
-        kv_result = self.jetstream_store.put(
+        let kv_result = self.jetstream_store.put(
             event.aggregate_id(),
             event,
             PutOptions {
                 version: event.event_version(),
-                checksum: event_checksum.clone()
+                checksum: event_checksum.clone(),
             }
-        ).await?
+        ).await?;
         
         // Async persist to PostgreSQL (durable path)
-        pg_future = self.postgres_store.insert_event(
+        let pg_future = self.postgres_store.insert_event(
             event,
             InsertOptions {
-                checksum: event_checksum,
-                kv_version: kv_result.version
+                checksum: event_checksum.clone(),
+                kv_version: kv_result.version,
             }
-        )
+        );
         
         // Track transformation for audit
         self.transformation_auditor.record_persistence(
             event.event_id(),
             "dual_store_write",
             chrono::Utc::now()
-        ).await
+        ).await;
         
         // Ensure consistency with timeout
-        consistency_result = timeout(
+        let consistency_result = timeout(
             Duration::from_millis(5),  // Agent 12: < 5ms persistence
-            self.sync_manager.ensure_consistency(kv_result, pg_future)
-        ).await??
+            self.sync_manager.ensure_consistency(kv_result.clone(), pg_future)
+        ).await??;
         
-        RETURN Ok(PersistenceResult {
+        Ok(PersistenceResult {
             kv_version: kv_result.version,
             pg_id: consistency_result.pg_id,
             checksum: event_checksum,
@@ -901,107 +928,106 @@ IMPL DualStoreCoordinator {
     }
 }
 
-TRAIT Event {
-    FUNCTION event_type(&self) -> &str
-    FUNCTION aggregate_id(&self) -> &str
-    FUNCTION event_version(&self) -> u64
-    FUNCTION timestamp(&self) -> DateTime<Utc>
-    FUNCTION apply_to_state(&self, state: &mut AgentState) -> Result<()>
+#[async_trait]
+pub trait Event: Send + Sync {
+    fn event_type(&self) -> &str;
+    fn aggregate_id(&self) -> &str;
+    fn event_version(&self) -> u64;
+    fn timestamp(&self) -> DateTime<Utc>;
+    fn apply_to_state(&self, state: &mut AgentState) -> Result<(), StateError>;
 }
 
-STRUCT AgentStateManager {
+pub struct AgentStateManager {
     event_store: EventStore,
     current_states: Arc<RwLock<HashMap<AgentId, AgentState>>>,
     snapshot_interval: u64,
     state_validators: Vec<Box<dyn StateValidator>>
 }
 
-IMPL AgentStateManager {
+impl AgentStateManager {
     #[tracing::instrument(skip(self, event))]
-    ASYNC FUNCTION persist_event(&self, event: Box<dyn Event>) -> Result<()> {
+    pub async fn persist_event(&self, event: Box<dyn Event>) -> Result<(), StateError> {
         // Validate event before persistence
-        FOR validator IN &self.state_validators {
-            validator.validate_event(&*event)?
+        for validator in &self.state_validators {
+            validator.validate_event(&*event)?;
         }
         
         // Data flow validation (Agent 12)
-        flow_validation = self.event_store.consistency_validator.validate_event_flow(
+        let flow_validation = self.event_store.consistency_validator.validate_event_flow(
             &*event,
             &self.current_states
-        ).await?
+        ).await?;
         
-        IF !flow_validation.is_valid {
-            RETURN Err(StateError::DataFlowViolation(flow_validation.reason))
+        if !flow_validation.is_valid {
+            return Err(StateError::DataFlowViolation(flow_validation.reason));
         }
         
         // Store event with dual-store coordination
-        persistence_result = self.event_store.dual_store_coordinator
+        let persistence_result = self.event_store.dual_store_coordinator
             .persist_with_validation(&*event)
-            .await?
+            .await?;
         
         // Verify persistence latency (Agent 12: < 5ms threshold)
-        IF persistence_result.latency_ms > 5 {
+        if persistence_result.latency_ms > 5 {
             tracing::warn!(
                 "State persistence exceeded latency threshold: {}ms",
                 persistence_result.latency_ms
-            )
+            );
         }
         
-        event_id = EventId::from(persistence_result)
+        let event_id = EventId::from(persistence_result);
         
         // Update in-memory state
-        current_states = self.current_states.write().await
-        IF LET Some(state) = current_states.get_mut(event.aggregate_id()) {
-            event.apply_to_state(state)?
-            state.last_event_id = event_id
-            state.version += 1
-        }
-        
-        // Check if snapshot needed
-        IF state.version % self.snapshot_interval == 0 {
-            self.create_snapshot(event.aggregate_id().to_string()).await?
+        let mut current_states = self.current_states.write().await;
+        if let Some(state) = current_states.get_mut(&event.aggregate_id().to_string()) {
+            event.apply_to_state(state)?;
+            state.last_event_id = event_id;
+            state.version += 1;
+            
+            // Check if snapshot needed
+            if state.version % self.snapshot_interval == 0 {
+                self.create_snapshot(event.aggregate_id().to_string()).await?;
+            }
         }
         
         Ok(())
     }
     
     #[tracing::instrument(skip(self))]
-    ASYNC FUNCTION restore_state(&self, agent_id: &str) -> Result<AgentState> {
+    pub async fn restore_state(&self, agent_id: &str) -> Result<AgentState, StateError> {
         // Try to load latest snapshot first
-        IF LET Some(snapshot) = self.event_store.load_latest_snapshot(agent_id).await? {
-            state = snapshot.state
-            last_event_id = snapshot.last_event_id
-        } ELSE {
-            state = AgentState::default()
-            last_event_id = None
-        }
+        let (mut state, last_event_id) = if let Some(snapshot) = self.event_store.load_latest_snapshot(agent_id).await? {
+            (snapshot.state, snapshot.last_event_id)
+        } else {
+            (AgentState::default(), None)
+        };
         
         // Apply events since snapshot
-        events = self.event_store.load_events_since(agent_id, last_event_id).await?
+        let events = self.event_store.load_events_since(agent_id, last_event_id).await?;
         
-        FOR event IN events {
-            event.apply_to_state(&mut state)?
-            state.version += 1
+        for event in events {
+            event.apply_to_state(&mut state)?;
+            state.version += 1;
         }
         
         // Cache restored state
-        self.current_states.write().await.insert(agent_id.to_string(), state.clone())
+        self.current_states.write().await.insert(agent_id.to_string(), state.clone());
         
         Ok(state)
     }
     
-    ASYNC FUNCTION create_snapshot(&self, agent_id: String) -> Result<()> {
-        current_states = self.current_states.read().await
-        IF LET Some(state) = current_states.get(&agent_id) {
-            snapshot = StateSnapshot {
+    pub async fn create_snapshot(&self, agent_id: String) -> Result<(), StateError> {
+        let current_states = self.current_states.read().await;
+        if let Some(state) = current_states.get(&agent_id) {
+            let snapshot = StateSnapshot {
                 agent_id: agent_id.clone(),
                 state: state.clone(),
                 last_event_id: state.last_event_id,
-                timestamp: Utc::now()
-            }
+                timestamp: Utc::now(),
+            };
             
-            self.event_store.save_snapshot(snapshot).await?
-            tracing::info!(agent_id = %agent_id, version = state.version, "State snapshot created")
+            self.event_store.save_snapshot(snapshot).await?;
+            tracing::info!(agent_id = %agent_id, version = state.version, "State snapshot created");
         }
         
         Ok(())
@@ -1013,60 +1039,61 @@ IMPL AgentStateManager {
 
 ```rust
 // CQRS pattern for read/write separation
-STRUCT CommandHandler {
+pub struct CommandHandler {
     event_store: EventStore,
     command_validators: Vec<Box<dyn CommandValidator>>,
     state_manager: AgentStateManager
 }
 
-STRUCT QueryHandler {
+pub struct QueryHandler {
     read_models: HashMap<String, Box<dyn ReadModel>>,
     query_cache: Arc<RwLock<LruCache<String, QueryResult>>>
 }
 
-TRAIT Command {
-    FUNCTION command_type(&self) -> &str
-    FUNCTION target_aggregate(&self) -> &str
-    FUNCTION validate(&self, current_state: &AgentState) -> Result<()>
-    FUNCTION to_events(&self, current_state: &AgentState) -> Result<Vec<Box<dyn Event>>>
+#[async_trait]
+pub trait Command: Send + Sync {
+    fn command_type(&self) -> &str;
+    fn target_aggregate(&self) -> &str;
+    fn validate(&self, current_state: &AgentState) -> Result<(), CommandError>;
+    fn to_events(&self, current_state: &AgentState) -> Result<Vec<Box<dyn Event>>, CommandError>;
 }
 
-IMPL CommandHandler {
+impl CommandHandler {
     #[tracing::instrument(skip(self, command))]
-    ASYNC FUNCTION handle_command(&self, command: Box<dyn Command>) -> Result<CommandResult> {
+    pub async fn handle_command(&self, command: Box<dyn Command>) -> Result<CommandResult, CommandError> {
         // Load current state
-        current_state = self.state_manager.restore_state(command.target_aggregate()).await?
+        let mut current_state = self.state_manager.restore_state(command.target_aggregate()).await?;
         
         // Validate command
-        command.validate(&current_state)?
-        FOR validator IN &self.command_validators {
-            validator.validate_command(&*command, &current_state)?
+        command.validate(&current_state)?;
+        for validator in &self.command_validators {
+            validator.validate_command(&*command, &current_state)?;
         }
         
         // Generate events
-        events = command.to_events(&current_state)?
+        let events = command.to_events(&current_state)?;
         
         // Persist events atomically
-        FOR event IN events {
-            self.state_manager.persist_event(event).await?
+        for event in &events {
+            self.state_manager.persist_event(event.clone()).await?;
         }
         
-        CommandResult {
+        Ok(CommandResult {
             command_id: command.command_id(),
             events_generated: events.len(),
-            new_state_version: current_state.version + events.len() as u64
-        }
+            new_state_version: current_state.version + events.len() as u64,
+        })
     }
 }
 
 // Saga pattern for distributed transactions
-STRUCT SagaOrchestrator {
+pub struct SagaOrchestrator {
     saga_store: SagaStore,
     compensation_handlers: HashMap<String, Box<dyn CompensationHandler>>,
     timeout_manager: TimeoutManager
 }
 
-STRUCT Saga {
+pub struct Saga {
     saga_id: String,
     saga_type: String,
     steps: Vec<SagaStep>,
@@ -1075,7 +1102,7 @@ STRUCT Saga {
     compensation_data: HashMap<String, Value>
 }
 
-ENUM SagaState {
+pub enum SagaState {
     Running,
     Compensating,
     Completed,
@@ -1083,76 +1110,76 @@ ENUM SagaState {
     Aborted
 }
 
-IMPL SagaOrchestrator {
+impl SagaOrchestrator {
     #[tracing::instrument(skip(self, saga))]
-    ASYNC FUNCTION execute_saga(&self, mut saga: Saga) -> Result<SagaResult> {
-        WHILE saga.current_step < saga.steps.len() && saga.state == SagaState::Running {
-            step = &saga.steps[saga.current_step]
+    pub async fn execute_saga(&self, mut saga: Saga) -> Result<SagaResult, SagaError> {
+        while saga.current_step < saga.steps.len() && saga.state == SagaState::Running {
+            let step = &saga.steps[saga.current_step];
             
             // Execute step with timeout
-            step_result = tokio::time::timeout(
+            let step_result = tokio::time::timeout(
                 step.timeout,
                 self.execute_saga_step(&mut saga, step)
-            ).await
+            ).await;
             
-            MATCH step_result {
+            match step_result {
                 Ok(Ok(())) => {
-                    saga.current_step += 1
-                    self.saga_store.save_saga(&saga).await?
-                },
+                    saga.current_step += 1;
+                    self.saga_store.save_saga(&saga).await?;
+                }
                 Ok(Err(step_error)) => {
-                    tracing::error!(saga_id = %saga.saga_id, step = saga.current_step, error = %step_error, "Saga step failed")
-                    saga.state = SagaState::Compensating
-                    self.compensate_saga(&mut saga).await?
-                    BREAK
-                },
+                    tracing::error!(saga_id = %saga.saga_id, step = saga.current_step, error = %step_error, "Saga step failed");
+                    saga.state = SagaState::Compensating;
+                    self.compensate_saga(&mut saga).await?;
+                    break;
+                }
                 Err(_timeout) => {
-                    tracing::error!(saga_id = %saga.saga_id, step = saga.current_step, "Saga step timed out")
-                    saga.state = SagaState::Compensating
-                    self.compensate_saga(&mut saga).await?
-                    BREAK
+                    tracing::error!(saga_id = %saga.saga_id, step = saga.current_step, "Saga step timed out");
+                    saga.state = SagaState::Compensating;
+                    self.compensate_saga(&mut saga).await?;
+                    break;
                 }
             }
         }
         
-        IF saga.current_step >= saga.steps.len() {
-            saga.state = SagaState::Completed
+        if saga.current_step >= saga.steps.len() {
+            saga.state = SagaState::Completed;
         }
         
-        self.saga_store.save_saga(&saga).await?
+        self.saga_store.save_saga(&saga).await?;
         
-        SagaResult {
+        Ok(SagaResult {
             saga_id: saga.saga_id,
             final_state: saga.state,
-            completed_steps: saga.current_step
-        }
+            completed_steps: saga.current_step,
+        })
     }
     
-    ASYNC FUNCTION compensate_saga(&self, saga: &mut Saga) -> Result<()> {
+    pub async fn compensate_saga(&self, saga: &mut Saga) -> Result<(), SagaError> {
         // Execute compensation in reverse order
-        FOR step_index IN (0..saga.current_step).rev() {
-            step = &saga.steps[step_index]
+        for step_index in (0..saga.current_step).rev() {
+            let step = &saga.steps[step_index];
             
-            IF LET Some(handler) = self.compensation_handlers.get(&step.step_type) {
-                compensation_data = saga.compensation_data.get(&step.step_id).cloned()
+            if let Some(handler) = self.compensation_handlers.get(&step.step_type) {
+                let compensation_data = saga.compensation_data.get(&step.step_id).cloned();
                 
-                compensation_result = handler.compensate(
+                let compensation_result = handler.compensate(
                     &step.step_id,
                     compensation_data
-                ).await
+                ).await;
                 
-                IF compensation_result.is_err() {
+                if compensation_result.is_err() {
                     tracing::error!(
                         saga_id = %saga.saga_id, 
                         step = step_index, 
                         "Compensation failed"
-                    )
+                    );
                     // Continue with remaining compensations
                 }
             }
         }
         
-        saga.state = SagaState::Aborted
+        saga.state = SagaState::Aborted;
         Ok(())
     }
 }
@@ -1164,29 +1191,29 @@ IMPL SagaOrchestrator {
 
 ```rust
 // Tokio streams for message processing with backpressure
-STRUCT MessageStream {
+pub struct MessageStream {
     inner: Pin<Box<dyn Stream<Item = Result<Message, MessageError>>>>,
     backpressure_config: BackpressureConfig,
     metrics: StreamMetrics
 }
 
-STRUCT MessageProcessor {
+pub struct MessageProcessor {
     input_streams: Vec<MessageStream>,
     processing_pipeline: ProcessingPipeline,
     output_sinks: Vec<MessageSink>,
     error_handler: ErrorHandler
 }
 
-IMPL MessageProcessor {
+impl MessageProcessor {
     #[tracing::instrument(skip(self))]
-    ASYNC FUNCTION process_messages(&mut self) -> Result<()> {
+    pub async fn process_messages(&mut self) -> Result<(), ProcessError> {
         // Merge all input streams
-        merged_stream = futures::stream::select_all(self.input_streams.iter_mut())
+        let merged_stream = futures::stream::select_all(self.input_streams.iter_mut());
         
         // Process with backpressure handling
         merged_stream
             .map(|message_result| async move {
-                MATCH message_result {
+                match message_result {
                     Ok(message) => {
                         self.process_single_message(message)
                             .instrument(tracing::info_span!(
@@ -1195,7 +1222,7 @@ IMPL MessageProcessor {
                                 message_type = %message.message_type
                             ))
                             .await
-                    },
+                    }
                     Err(error) => {
                         self.error_handler.handle_stream_error(error).await
                     }
@@ -1207,32 +1234,32 @@ IMPL MessageProcessor {
     }
     
     #[tracing::instrument(skip(self, message))]
-    ASYNC FUNCTION process_single_message(&self, message: Message) -> Result<()> {
+    pub async fn process_single_message(&self, message: Message) -> Result<(), ProcessError> {
         // Apply processing pipeline stages
-        processed_message = self.processing_pipeline.process(message).await?
+        let processed_message = self.processing_pipeline.process(message).await?;
         
         // Route to appropriate sinks
-        FOR sink IN &self.output_sinks {
-            IF sink.accepts_message_type(&processed_message.message_type) {
+        for sink in &self.output_sinks {
+            if sink.accepts_message_type(&processed_message.message_type) {
                 // Handle sink backpressure
-                MATCH sink.try_send(processed_message.clone()).await {
+                match sink.try_send(processed_message.clone()).await {
                     Ok(()) => continue,
                     Err(SinkError::Full) => {
                         // Apply backpressure strategy
-                        MATCH self.backpressure_config.strategy {
+                        match self.backpressure_config.strategy {
                             BackpressureStrategy::Block => {
-                                sink.send(processed_message.clone()).await?
-                            },
+                                sink.send(processed_message.clone()).await?;
+                            }
                             BackpressureStrategy::Drop => {
-                                self.metrics.record_dropped_message(&processed_message.message_type)
-                                continue
-                            },
+                                self.metrics.record_dropped_message(&processed_message.message_type);
+                                continue;
+                            }
                             BackpressureStrategy::Buffer => {
-                                self.buffer_message_for_sink(sink.id(), processed_message.clone()).await?
+                                self.buffer_message_for_sink(sink.id(), processed_message.clone()).await?;
                             }
                         }
-                    },
-                    Err(e) => return Err(e.into())
+                    }
+                    Err(e) => return Err(e.into()),
                 }
             }
         }
@@ -1246,7 +1273,7 @@ IMPL MessageProcessor {
 
 ```rust
 // Complex message flows with proper error handling
-STRUCT MessageFlow {
+pub struct MessageFlow {
     flow_id: String,
     flow_type: String,
     stages: Vec<FlowStage>,
@@ -1254,7 +1281,7 @@ STRUCT MessageFlow {
     timeout_config: TimeoutConfig
 }
 
-ENUM FlowStage {
+pub enum FlowStage {
     Sequential(Vec<MessageOperation>),
     Parallel(Vec<MessageOperation>),
     Conditional(Condition, Box<FlowStage>, Option<Box<FlowStage>>),
@@ -1262,111 +1289,111 @@ ENUM FlowStage {
     ErrorHandler(ErrorHandler)
 }
 
-STRUCT MessageFlowExecutor {
+pub struct MessageFlowExecutor {
     flow_registry: HashMap<String, MessageFlow>,
     operation_handlers: HashMap<String, Box<dyn OperationHandler>>,
     metrics: FlowMetrics
 }
 
-IMPL MessageFlowExecutor {
+impl MessageFlowExecutor {
     #[tracing::instrument(skip(self, message))]
-    ASYNC FUNCTION execute_flow(
+    pub async fn execute_flow(
         &self, 
         flow_id: &str, 
         message: Message
-    ) -> Result<FlowResult> {
-        flow = self.flow_registry.get(flow_id)
-            .ok_or(FlowError::UnknownFlow(flow_id.to_string()))?
+    ) -> Result<FlowResult, FlowError> {
+        let flow = self.flow_registry.get(flow_id)
+            .ok_or(FlowError::UnknownFlow(flow_id.to_string()))?;
         
-        flow_context = FlowContext {
+        let flow_context = FlowContext {
             message,
             variables: HashMap::new(),
-            state: FlowState::Running
-        }
+            state: FlowState::Running,
+        };
         
         // Execute with overall timeout
-        result = tokio::time::timeout(
+        let result = tokio::time::timeout(
             flow.timeout_config.total_timeout,
             self.execute_stages(&flow.stages, flow_context)
-        ).await
+        ).await;
         
-        MATCH result {
+        match result {
             Ok(Ok(flow_result)) => {
-                self.metrics.record_flow_success(flow_id)
+                self.metrics.record_flow_success(flow_id);
                 Ok(flow_result)
-            },
+            }
             Ok(Err(flow_error)) => {
                 self.handle_flow_error(flow, flow_error).await
-            },
+            }
             Err(_timeout) => {
-                self.metrics.record_flow_timeout(flow_id)
+                self.metrics.record_flow_timeout(flow_id);
                 Err(FlowError::Timeout)
             }
         }
     }
     
     #[tracing::instrument(skip(self, stages, context))]
-    ASYNC FUNCTION execute_stages(
+    pub async fn execute_stages(
         &self,
         stages: &[FlowStage],
         mut context: FlowContext
-    ) -> Result<FlowResult> {
-        FOR stage IN stages {
-            context = self.execute_stage(stage, context).await?
+    ) -> Result<FlowResult, FlowError> {
+        for stage in stages {
+            context = self.execute_stage(stage, context).await?;
             
-            IF context.state != FlowState::Running {
-                BREAK
+            if context.state != FlowState::Running {
+                break;
             }
         }
         
-        FlowResult {
+        Ok(FlowResult {
             final_message: context.message,
             variables: context.variables,
-            state: context.state
-        }
+            state: context.state,
+        })
     }
     
-    ASYNC FUNCTION execute_stage(
+    pub async fn execute_stage(
         &self,
         stage: &FlowStage,
         context: FlowContext
-    ) -> Result<FlowContext> {
-        MATCH stage {
+    ) -> Result<FlowContext, FlowError> {
+        match stage {
             FlowStage::Sequential(operations) => {
                 self.execute_sequential_operations(operations, context).await
-            },
+            }
             FlowStage::Parallel(operations) => {
                 self.execute_parallel_operations(operations, context).await
-            },
+            }
             FlowStage::Conditional(condition, then_stage, else_stage) => {
-                IF condition.evaluate(&context) {
+                if condition.evaluate(&context) {
                     self.execute_stage(then_stage, context).await
-                } ELSE IF LET Some(else_stage) = else_stage {
+                } else if let Some(else_stage) = else_stage {
                     self.execute_stage(else_stage, context).await
-                } ELSE {
+                } else {
                     Ok(context)
                 }
-            },
+            }
             // ... other stage types
         }
     }
     
-    ASYNC FUNCTION execute_parallel_operations(
+    pub async fn execute_parallel_operations(
         &self,
         operations: &[MessageOperation],
         context: FlowContext
-    ) -> Result<FlowContext> {
+    ) -> Result<FlowContext, FlowError> {
         // Clone context for each operation
-        operation_futures = operations.iter().map(|op| {
-            operation_context = context.clone()
+        let operation_futures = operations.iter().map(|op| {
+            let operation_context = context.clone();
             self.execute_operation(op, operation_context)
-        }).collect::<Vec<_>>()
+        }).collect::<Vec<_>>();
         
         // Execute all operations in parallel
-        results = try_join_all(operation_futures).await?
+        let results = try_join_all(operation_futures).await?;
         
         // Merge results back into single context
-        merged_context = self.merge_operation_results(context, results)
+        let merged_context = self.merge_operation_results(context, results);
         
         Ok(merged_context)
     }
@@ -1375,13 +1402,18 @@ IMPL MessageFlowExecutor {
 
 ## 6. Implementation Guidelines
 
-> **Cross-Reference**: These implementation guidelines work in conjunction with the [Implementation Configuration](implementation-config.md) document.
-> Refer to the configuration settings and module organization for concrete implementation details.
+### Dependencies
+
+```yaml
+required_components:
+  - path: implementation-config.md
+    purpose: configuration_and_module_organization
+```
 
 ### 6.1 Error Handling Strategy
 
 ```rust
-ENUM SystemError {
+pub enum SystemError {
     Runtime(RuntimeError),
     Supervision(SupervisionError),
     Configuration(ConfigError),
@@ -1390,9 +1422,9 @@ ENUM SystemError {
     Persistence(PersistenceError)
 }
 
-IMPL SystemError {
-    FUNCTION severity(&self) -> ErrorSeverity {
-        MATCH self {
+impl SystemError {
+    pub fn severity(&self) -> ErrorSeverity {
+        match self {
             SystemError::Runtime(_) => ErrorSeverity::Critical,
             SystemError::Supervision(_) => ErrorSeverity::High,
             SystemError::Configuration(_) => ErrorSeverity::Medium,
@@ -1402,8 +1434,8 @@ IMPL SystemError {
         }
     }
     
-    FUNCTION recovery_strategy(&self) -> RecoveryStrategy {
-        MATCH self {
+    pub fn recovery_strategy(&self) -> RecoveryStrategy {
+        match self {
             SystemError::Runtime(_) => RecoveryStrategy::Restart,
             SystemError::Supervision(_) => RecoveryStrategy::Escalate,
             SystemError::Configuration(_) => RecoveryStrategy::Reload,
@@ -1418,30 +1450,30 @@ IMPL SystemError {
 ### 6.2 Testing Framework
 
 ```rust
-STRUCT SystemTestHarness {
+pub struct SystemTestHarness {
     mock_runtime: MockRuntime,
     test_supervision_tree: TestSupervisionTree,
     test_event_bus: TestEventBus,
     assertion_framework: AssertionFramework
 }
 
-IMPL SystemTestHarness {
-    ASYNC FUNCTION test_component_failure_recovery<C: Component>(&self, component: C) -> TestResult {
+impl SystemTestHarness {
+    pub async fn test_component_failure_recovery<C: Component>(&self, component: C) -> Result<TestResult, TestError> {
         // Inject failure
-        self.mock_runtime.inject_failure(component.id(), FailureType::Crash).await
+        self.mock_runtime.inject_failure(component.id(), FailureType::Crash).await;
         
         // Verify supervision response
-        recovery_event = self.test_event_bus.wait_for_event(EventType::ComponentRecovery, TIMEOUT_DURATION).await?
+        let recovery_event = self.test_event_bus.wait_for_event(EventType::ComponentRecovery, TIMEOUT_DURATION).await?;
         
         // Assert component was restarted
-        ASSERT!(recovery_event.component_id == component.id())
-        ASSERT!(recovery_event.action == RecoveryAction::Restart)
+        assert_eq!(recovery_event.component_id, component.id());
+        assert_eq!(recovery_event.action, RecoveryAction::Restart);
         
         // Verify component is healthy after restart
-        health_status = component.health_check().await?
-        ASSERT!(health_status == HealthStatus::Healthy)
+        let health_status = component.health_check().await?;
+        assert_eq!(health_status, HealthStatus::Healthy);
         
-        RETURN TestResult::Passed
+        Ok(TestResult::Passed)
     }
 }
 ```
@@ -1452,23 +1484,25 @@ IMPL SystemTestHarness {
 
 ```rust
 // ❌ BAD: Unlimited spawning without resource bounds
-ASYNC FUNCTION handle_task_badly(task: Task) {
-    FOR subtask IN task.decompose() {
-        spawn_agent(subtask) // No limits! Can exhaust resources
+async fn handle_task_badly(task: Task) {
+    for subtask in task.decompose() {
+        spawn_agent(subtask).await; // No limits! Can exhaust resources
     }
 }
 
 // ✅ GOOD: Resource-bounded spawning with limits
-STRUCT SpawnController {
+pub struct SpawnController {
     max_agents: usize,
     active: Arc<AtomicUsize>,
-    
-    ASYNC FUNCTION spawn_bounded(&self, role: AgentRole) -> Result<Agent> {
-        IF self.active.load(Ordering::SeqCst) >= self.max_agents {
-            RETURN Err("Agent limit reached")
+}
+
+impl SpawnController {
+    pub async fn spawn_bounded(&self, role: AgentRole) -> Result<Agent, SpawnError> {
+        if self.active.load(Ordering::SeqCst) >= self.max_agents {
+            return Err(SpawnError::AgentLimitReached);
         }
         // Spawn with cleanup on drop
-        RETURN Ok(BoundedAgent::new(role, self.active.clone()))
+        Ok(BoundedAgent::new(role, self.active.clone()))
     }
 }
 ```
@@ -1477,20 +1511,22 @@ STRUCT SpawnController {
 
 ```rust
 // ❌ BAD: Accumulating unlimited context memory
-STRUCT NaiveAgent {
+pub struct NaiveAgent {
     context: Vec<Message>, // Grows forever, causing memory issues
 }
 
 // ✅ GOOD: Windowed context with periodic summarization
-STRUCT SmartAgent {
+pub struct SmartAgent {
     recent_context: VecDeque<Message>,
     context_summary: Summary,
     max_context_size: usize,
-    
-    FUNCTION add_context(&mut self, msg: Message) {
-        self.recent_context.push_back(msg)
-        IF self.recent_context.len() > self.max_context_size {
-            self.summarize_old_context()
+}
+
+impl SmartAgent {
+    pub fn add_context(&mut self, msg: Message) {
+        self.recent_context.push_back(msg);
+        if self.recent_context.len() > self.max_context_size {
+            self.summarize_old_context();
         }
     }
 }
@@ -1500,22 +1536,24 @@ STRUCT SmartAgent {
 
 ```rust
 // ❌ BAD: Blocking tool calls that freeze the runtime
-IMPL Tool FOR WebSearch {
-    ASYNC FUNCTION execute(&self, query: Value) -> Result<Value> {
-        results = reqwest::blocking::get(url)? // Blocks entire thread!
-        RETURN Ok(results.into())
+impl Tool for WebSearch {
+    async fn execute(&self, query: Value) -> Result<Value, ToolError> {
+        let results = reqwest::blocking::get(url)?; // Blocks entire thread!
+        Ok(results.into())
     }
 }
 
 // ✅ GOOD: Truly async tools with timeouts
-IMPL Tool FOR AsyncWebSearch {
-    ASYNC FUNCTION execute(&self, query: Value) -> Result<Value> {
-        client = reqwest::Client::new()
+impl Tool for AsyncWebSearch {
+    async fn execute(&self, query: Value) -> Result<Value, ToolError> {
+        let client = reqwest::Client::new();
         
-        RETURN tokio::time::timeout(
+        let response = tokio::time::timeout(
             Duration::from_secs(30),
             client.get(url).send()
-        ).await??
+        ).await??;
+        
+        Ok(response.into())
     }
 }
 ```
@@ -1542,49 +1580,58 @@ IMPL Tool FOR AsyncWebSearch {
 
 ## 7. Extension Mechanisms
 
-> **Implementation Context**: Extension mechanisms are implemented within the module structure defined in [Implementation Configuration](implementation-config.md#module-organization-structure).
-> See the `async_patterns/middleware.rs` module for concrete implementations.
+### Dependencies
+
+```yaml
+required_components:
+  - path: implementation-config.md
+    section: module-organization-structure
+    module: async_patterns/middleware.rs
+```
 
 ### 7.1 Middleware Pattern
 
 ```rust
-TRAIT AgentMiddleware: Send + Sync {
-    ASYNC FUNCTION before_process(&self, msg: &Message) -> Result<()>
-    ASYNC FUNCTION after_process(&self, msg: &Message, result: &Value) -> Result<()>
+#[async_trait]
+pub trait AgentMiddleware: Send + Sync {
+    async fn before_process(&self, msg: &Message) -> Result<(), MiddlewareError>;
+    async fn after_process(&self, msg: &Message, result: &Value) -> Result<(), MiddlewareError>;
 }
 
-STRUCT Agent {
+pub struct Agent {
     middleware: Vec<Box<dyn AgentMiddleware>>,
     core_processor: AgentProcessor,
-    
-    ASYNC FUNCTION process(&self, msg: Message) -> Result<Value> {
+}
+
+impl Agent {
+    pub async fn process(&self, msg: Message) -> Result<Value, ProcessError> {
         // Execute before hooks
-        FOR mw IN &self.middleware {
-            mw.before_process(&msg).await?
+        for mw in &self.middleware {
+            mw.before_process(&msg).await?;
         }
         
         // Core processing
-        result = self.core_processor.process(msg).await?
+        let result = self.core_processor.process(msg).await?;
         
         // Execute after hooks
-        FOR mw IN &self.middleware {
-            mw.after_process(&msg, &result).await?
+        for mw in &self.middleware {
+            mw.after_process(&msg, &result).await?;
         }
         
-        RETURN Ok(result)
+        Ok(result)
     }
 }
 
 // Example middleware implementations
-STRUCT LoggingMiddleware { logger: Logger }
-STRUCT MetricsMiddleware { metrics: MetricsCollector }
-STRUCT AuthMiddleware { auth_service: AuthService }
+pub struct LoggingMiddleware { logger: Logger }
+pub struct MetricsMiddleware { metrics: MetricsCollector }
+pub struct AuthMiddleware { auth_service: AuthService }
 ```
 
 ### 7.2 Event Emitter Pattern
 
 ```rust
-ENUM SystemEvent {
+pub enum SystemEvent {
     AgentSpawned(AgentId),
     TaskCompleted(TaskId, Value),
     ToolCalled(AgentId, ToolId),
@@ -1593,27 +1640,29 @@ ENUM SystemEvent {
     SupervisionDecision(NodeId, SupervisionAction)
 }
 
-STRUCT EventBus {
+pub struct EventBus {
     subscribers: HashMap<TypeId, Vec<Box<dyn EventHandler>>>,
     event_history: CircularBuffer<SystemEvent>,
-    
-    FUNCTION emit(&self, event: SystemEvent) {
+}
+
+impl EventBus {
+    pub fn emit(&self, event: SystemEvent) {
         // Store in history
-        self.event_history.push(event.clone())
+        self.event_history.push(event.clone());
         
         // Notify subscribers
-        IF LET Some(handlers) = self.subscribers.get(&event.type_id()) {
-            FOR handler IN handlers {
-                handler.handle(event.clone())
+        if let Some(handlers) = self.subscribers.get(&event.type_id()) {
+            for handler in handlers {
+                handler.handle(event.clone());
             }
         }
     }
     
-    FUNCTION subscribe<H: EventHandler>(&mut self, event_type: TypeId, handler: H) {
+    pub fn subscribe<H: EventHandler>(&mut self, event_type: TypeId, handler: H) {
         self.subscribers
             .entry(event_type)
             .or_insert_with(Vec::new)
-            .push(Box::new(handler))
+            .push(Box::new(handler));
     }
 }
 ```
@@ -1622,33 +1671,31 @@ STRUCT EventBus {
 
 ```rust
 // Extension hook for custom routing logic
-TRAIT RoutingStrategy {
-    FUNCTION select_recipient(&self, msg: &Message, agents: &[AgentId]) -> AgentId
-    FUNCTION priority(&self) -> RoutingPriority
+pub trait RoutingStrategy: Send + Sync {
+    fn select_recipient(&self, msg: &Message, agents: &[AgentId]) -> AgentId;
+    fn priority(&self) -> RoutingPriority;
 }
 
 // Built-in routing strategies
-STRUCT LoadBalancedRouting {
-    agent_loads: Arc<RwLock<HashMap<AgentId, f64>>>
+pub struct LoadBalancedRouting {
+    agent_loads: Arc<RwLock<HashMap<AgentId, f64>>>,
 }
 
-STRUCT CapabilityBasedRouting {
-    agent_capabilities: HashMap<AgentId, Vec<Capability>>
+pub struct CapabilityBasedRouting {
+    agent_capabilities: HashMap<AgentId, Vec<Capability>>,
 }
 
-STRUCT PriorityRouting {
-    priority_queue: BinaryHeap<(Priority, AgentId)>
+pub struct PriorityRouting {
+    priority_queue: BinaryHeap<(Priority, AgentId)>,
 }
 
 // Allow custom routing strategy registration
-IMPL MessageBus {
-    FUNCTION register_routing_strategy(&mut self, name: String, strategy: Box<dyn RoutingStrategy>) {
-        self.routing_strategies.insert(name, strategy)
+impl MessageBus {
+    pub fn register_routing_strategy(&mut self, name: String, strategy: Box<dyn RoutingStrategy>) {
+        self.routing_strategies.insert(name, strategy);
     }
 }
 ```
-
----
 
 ## 8. mTLS Implementation Best Practices and Security Guidelines
 
@@ -1969,19 +2016,32 @@ The neural training integration will require coordination with:
 - **Security**: Model access control and versioning
 - **Operations**: Training job monitoring and resource tracking
 
----
-
 ## Navigation
 
-- **Previous**: [System Architecture Overview](system-architecture.md)
-- **Next**: [Implementation Configuration](implementation-config.md)
-- **Related**:
-  - [Implementation Configuration](implementation-config.md) - Agent configuration and module organization
-  - [Integration Patterns](./integration-patterns.md) - Error handling and event patterns
-  - [Transport Protocols](../transport/) - Communication layer specifications
-  - [Data Management](../data-management/) - Data handling and persistence
-  - [Security Framework](../security/) - Security protocols and implementation
+```yaml
+navigation:
+  previous: system-architecture.md
+  next: implementation-config.md
+  related:
+    - path: implementation-config.md
+      description: agent_configuration_and_module_organization
+    - path: integration-patterns.md
+      description: error_handling_and_event_patterns
+    - path: ../transport/
+      description: communication_layer_specifications
+    - path: ../data-management/
+      description: data_handling_and_persistence
+    - path: ../security/
+      description: security_protocols_and_implementation
+```
 
----
+## Document Metadata
 
-*System Integration Patterns & Implementation - Part of the Mister Smith AI Agent Framework*
+```yaml
+document:
+  title: System Integration Patterns & Implementation
+  version: 1.0.0
+  component: core-architecture
+  status: active_development
+  last_updated: 2025-07-05
+```

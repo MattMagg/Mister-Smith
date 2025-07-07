@@ -11,35 +11,17 @@ permalink: ms-framework/transport/http-transport
 > **Source**: Extracted from `transport-layer-specifications.md` sections 4 and 14
 > **Technology Stack**: Axum 0.8 (HTTP), Tokio 1.38 (async runtime)
 
-## 🔍 VALIDATION STATUS
-
-**Implementation Readiness**: 100% ✅ - Production ready with complete REST API and WebSocket specifications
-
-**Validation Details**:
-
-- **Validator**: Agent 25 - MS Framework Validation Swarm
-- **Validation Date**: 2025-07-05
-- **Score**: 5/5 - Implementation ready
-
-**Key Findings**:
-
-- ✅ Complete OpenAPI 3.0 specification with all endpoints defined
-- ✅ WebSocket integration with real-time communication patterns
-- ✅ Multiple auth schemes (Bearer tokens, API keys) properly specified
-- ✅ Comprehensive HTTP status code mapping with standardized error responses
-- ✅ Integration with Axum 0.8 framework
-- ✅ RESTful endpoint design following best practices
-
-**Critical Issues**: None - Production deployment ready
-
-**Minor Enhancements**:
-
-- Consider enhanced monitoring correlation for cross-protocol metrics
-
-Reference: `/Users/mac-main/Mister-Smith/MisterSmith/validation-swarm/batch5-specialized-domains/agent25-transport-layer-validation.md`
+## Overview
 
 This document defines HTTP-based transport patterns for agent communication using the Claude-Flow Rust Stack.
 This module focuses on RESTful APIs, WebSocket communication, and complete HTTP protocol specifications.
+
+HTTP transport provides the foundation for web-compatible agent communication with support for:
+- REST APIs with comprehensive endpoint specifications
+- WebSocket connections for real-time bidirectional communication
+- Multiple authentication schemes (Bearer tokens, API keys)
+- Standardized error handling with HTTP status codes
+- Integration with Axum 0.8 framework patterns
 
 **Technology Reference** (from tech-framework.md):
 
@@ -95,23 +77,15 @@ WEBSOCKET_PROTOCOL:
 ```yaml
 openapi: 3.0.3
 info:
-  title: Mister Smith Agent Framework API
+  title: Agent Framework API
   description: RESTful API for agent communication and management
   version: 1.0.0
-  contact:
-    name: Mister Smith Framework
-    url: https://github.com/mister-smith/framework
-  license:
-    name: Apache 2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0.html
 
 servers:
-  - url: https://api.mister-smith.dev/v1
-    description: Production server
-  - url: https://staging-api.mister-smith.dev/v1
-    description: Staging server
   - url: http://localhost:8080/v1
     description: Development server
+  - url: https://api.example.com/v1
+    description: Production server template
 
 security:
   - bearerAuth: []
@@ -640,7 +614,245 @@ components:
             $ref: '#/components/schemas/Error'
 ```
 
-### 2.2 WebSocket Protocol Specification
+### 2.2 Axum Implementation Patterns
+
+#### 2.2.1 HTTP Router Configuration
+
+```rust
+use axum::{
+    extract::{Path, Query, State},
+    http::StatusCode,
+    response::Json,
+    routing::{get, post, put, delete},
+    Router,
+};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+
+// Application state shared across handlers
+#[derive(Clone)]
+pub struct AppState {
+    pub agent_registry: Arc<AgentRegistry>,
+    pub task_manager: Arc<TaskManager>,
+    pub config: Arc<HttpConfig>,
+}
+
+// Main HTTP router setup
+pub fn create_router(state: AppState) -> Router {
+    Router::new()
+        // Agent endpoints
+        .route("/agents", get(list_agents).post(register_agent))
+        .route("/agents/:agent_id", get(get_agent).put(update_agent).delete(deregister_agent))
+        .route("/agents/:agent_id/commands", post(send_command))
+        .route("/agents/:agent_id/status", get(get_agent_status))
+        
+        // Task endpoints
+        .route("/tasks", get(list_tasks).post(create_task))
+        .route("/tasks/:task_id", get(get_task).delete(cancel_task))
+        
+        // WebSocket upgrade
+        .route("/ws", get(websocket_handler))
+        
+        // Middleware for authentication and logging
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn(logging_middleware))
+        .with_state(state)
+}
+
+// Agent registration handler
+async fn register_agent(
+    State(state): State<AppState>,
+    Json(payload): Json<AgentRegistration>,
+) -> Result<(StatusCode, Json<AgentRegistrationResponse>), HttpError> {
+    // Validate agent registration
+    if payload.capabilities.is_empty() {
+        return Err(HttpError::BadRequest("Agent must have at least one capability".to_string()));
+    }
+    
+    // Register agent with registry
+    let agent_id = state.agent_registry.register(payload).await?;
+    
+    let response = AgentRegistrationResponse {
+        agent_id,
+        registered_at: chrono::Utc::now(),
+    };
+    
+    Ok((StatusCode::CREATED, Json(response)))
+}
+
+// Task creation handler
+async fn create_task(
+    State(state): State<AppState>,
+    Json(payload): Json<TaskCreation>,
+) -> Result<(StatusCode, Json<Task>), HttpError> {
+    // Validate task creation request
+    if payload.task_type.is_empty() {
+        return Err(HttpError::BadRequest("Task type is required".to_string()));
+    }
+    
+    // Create and assign task
+    let task = state.task_manager.create_task(payload).await?;
+    
+    Ok((StatusCode::CREATED, Json(task)))
+}
+
+// WebSocket upgrade handler
+async fn websocket_handler(
+    ws: axum::extract::WebSocketUpgrade,
+    State(state): State<AppState>,
+) -> impl axum::response::IntoResponse {
+    ws.on_upgrade(move |socket| handle_websocket(socket, state))
+}
+
+async fn handle_websocket(socket: axum::extract::WebSocket, state: AppState) {
+    // WebSocket connection handling logic
+    // See WebSocket Protocol Specification below for message format
+}
+```
+
+#### 2.2.2 Error Handling Patterns
+
+```rust
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
+use serde::Serialize;
+
+#[derive(Debug, Serialize)]
+pub struct ErrorResponse {
+    pub error_code: String,
+    pub message: String,
+    pub details: Option<Vec<ErrorDetail>>,
+    pub trace_id: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ErrorDetail {
+    pub field: String,
+    pub issue: String,
+}
+
+#[derive(Debug)]
+pub enum HttpError {
+    BadRequest(String),
+    Unauthorized(String),
+    NotFound(String),
+    Conflict(String),
+    InternalServerError(String),
+    ValidationError(Vec<ErrorDetail>),
+}
+
+impl IntoResponse for HttpError {
+    fn into_response(self) -> Response {
+        let (status, error_response) = match self {
+            HttpError::BadRequest(msg) => (
+                StatusCode::BAD_REQUEST,
+                ErrorResponse {
+                    error_code: "BAD_REQUEST".to_string(),
+                    message: msg,
+                    details: None,
+                    trace_id: Some(generate_trace_id()),
+                },
+            ),
+            HttpError::Unauthorized(msg) => (
+                StatusCode::UNAUTHORIZED,
+                ErrorResponse {
+                    error_code: "UNAUTHORIZED".to_string(),
+                    message: msg,
+                    details: None,
+                    trace_id: Some(generate_trace_id()),
+                },
+            ),
+            HttpError::NotFound(msg) => (
+                StatusCode::NOT_FOUND,
+                ErrorResponse {
+                    error_code: "NOT_FOUND".to_string(),
+                    message: msg,
+                    details: None,
+                    trace_id: Some(generate_trace_id()),
+                },
+            ),
+            HttpError::Conflict(msg) => (
+                StatusCode::CONFLICT,
+                ErrorResponse {
+                    error_code: "CONFLICT".to_string(),
+                    message: msg,
+                    details: None,
+                    trace_id: Some(generate_trace_id()),
+                },
+            ),
+            HttpError::InternalServerError(msg) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ErrorResponse {
+                    error_code: "INTERNAL_SERVER_ERROR".to_string(),
+                    message: msg,
+                    details: None,
+                    trace_id: Some(generate_trace_id()),
+                },
+            ),
+            HttpError::ValidationError(details) => (
+                StatusCode::BAD_REQUEST,
+                ErrorResponse {
+                    error_code: "VALIDATION_ERROR".to_string(),
+                    message: "Request validation failed".to_string(),
+                    details: Some(details),
+                    trace_id: Some(generate_trace_id()),
+                },
+            ),
+        };
+
+        (status, Json(error_response)).into_response()
+    }
+}
+
+fn generate_trace_id() -> String {
+    uuid::Uuid::new_v4().to_string()
+}
+```
+
+#### 2.2.3 Authentication Middleware
+
+```rust
+use axum::{
+    extract::{Request, State},
+    http::{header, HeaderMap, StatusCode},
+    middleware::Next,
+    response::Response,
+};
+
+pub async fn auth_middleware(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    request: Request,
+    next: Next,
+) -> Result<Response, HttpError> {
+    // Extract authentication token
+    let token = headers
+        .get(header::AUTHORIZATION)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.strip_prefix("Bearer "))
+        .or_else(|| {
+            headers
+                .get("X-API-Key")
+                .and_then(|value| value.to_str().ok())
+        })
+        .ok_or_else(|| HttpError::Unauthorized("Missing authentication token".to_string()))?;
+
+    // Validate token
+    let _user_id = state.auth_service.validate_token(token).await
+        .map_err(|_| HttpError::Unauthorized("Invalid authentication token".to_string()))?;
+
+    // Continue with request
+    Ok(next.run(request).await)
+}
+```
+
+### 2.3 WebSocket Protocol Specification
 
 ```json
 WEBSOCKET_PROTOCOL: {
@@ -721,6 +933,216 @@ WEBSOCKET_PROTOCOL: {
 }
 ```
 
+### 2.4 WebSocket Implementation Patterns
+
+#### 2.4.1 WebSocket Connection Management
+
+```rust
+use axum::extract::ws::{Message, WebSocket};
+use futures_util::{SinkExt, StreamExt};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use tokio::sync::{broadcast, RwLock};
+use uuid::Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebSocketMessage {
+    pub id: String,
+    pub message_type: MessageType,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub payload: serde_json::Value,
+    pub correlation_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MessageType {
+    Event,
+    Command,
+    Response,
+    Heartbeat,
+    Error,
+}
+
+#[derive(Debug, Clone)]
+pub struct WebSocketConnection {
+    pub id: String,
+    pub agent_id: Option<String>,
+    pub protocols: Vec<String>,
+    pub connected_at: chrono::DateTime<chrono::Utc>,
+}
+
+pub struct WebSocketManager {
+    connections: RwLock<HashMap<String, WebSocketConnection>>,
+    broadcast_tx: broadcast::Sender<WebSocketMessage>,
+}
+
+impl WebSocketManager {
+    pub fn new() -> Self {
+        let (broadcast_tx, _) = broadcast::channel(1000);
+        Self {
+            connections: RwLock::new(HashMap::new()),
+            broadcast_tx,
+        }
+    }
+
+    pub async fn handle_connection(
+        &self,
+        socket: WebSocket,
+        connection_id: String,
+    ) -> Result<(), WebSocketError> {
+        let connection = WebSocketConnection {
+            id: connection_id.clone(),
+            agent_id: None,
+            protocols: vec!["events".to_string()],
+            connected_at: chrono::Utc::now(),
+        };
+
+        // Register connection
+        self.connections.write().await.insert(connection_id.clone(), connection);
+
+        // Set up message streams
+        let (mut sender, mut receiver) = socket.split();
+        let mut broadcast_rx = self.broadcast_tx.subscribe();
+
+        // Handle incoming messages
+        let incoming_task = tokio::spawn(async move {
+            while let Some(msg) = receiver.next().await {
+                match msg {
+                    Ok(Message::Text(text)) => {
+                        if let Ok(ws_msg) = serde_json::from_str::<WebSocketMessage>(&text) {
+                            // Process incoming message
+                            // Handle commands, responses, etc.
+                        }
+                    }
+                    Ok(Message::Binary(data)) => {
+                        // Handle binary messages if needed
+                    }
+                    Ok(Message::Close(_)) => {
+                        break;
+                    }
+                    Err(_) => {
+                        break;
+                    }
+                    _ => {}
+                }
+            }
+        });
+
+        // Handle outgoing messages
+        let outgoing_task = tokio::spawn(async move {
+            while let Ok(msg) = broadcast_rx.recv().await {
+                let json_msg = serde_json::to_string(&msg).unwrap();
+                if sender.send(Message::Text(json_msg)).await.is_err() {
+                    break;
+                }
+            }
+        });
+
+        // Wait for either task to complete
+        tokio::select! {
+            _ = incoming_task => {},
+            _ = outgoing_task => {},
+        }
+
+        // Clean up connection
+        self.connections.write().await.remove(&connection_id);
+        Ok(())
+    }
+
+    pub async fn broadcast_event(&self, event: WebSocketMessage) -> Result<(), WebSocketError> {
+        self.broadcast_tx.send(event)
+            .map_err(|_| WebSocketError::BroadcastError)?;
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub enum WebSocketError {
+    ConnectionClosed,
+    BroadcastError,
+    ParseError(String),
+}
+```
+
+#### 2.4.2 Event Broadcasting Integration
+
+```rust
+use crate::agents::AgentEvent;
+use crate::tasks::TaskEvent;
+
+// Integration with agent events
+pub async fn broadcast_agent_event(
+    ws_manager: &WebSocketManager,
+    agent_event: AgentEvent,
+) -> Result<(), WebSocketError> {
+    let ws_message = WebSocketMessage {
+        id: Uuid::new_v4().to_string(),
+        message_type: MessageType::Event,
+        timestamp: chrono::Utc::now(),
+        payload: serde_json::to_value(agent_event)?,
+        correlation_id: None,
+    };
+
+    ws_manager.broadcast_event(ws_message).await
+}
+
+// Integration with task events
+pub async fn broadcast_task_event(
+    ws_manager: &WebSocketManager,
+    task_event: TaskEvent,
+) -> Result<(), WebSocketError> {
+    let ws_message = WebSocketMessage {
+        id: Uuid::new_v4().to_string(),
+        message_type: MessageType::Event,
+        timestamp: chrono::Utc::now(),
+        payload: serde_json::to_value(task_event)?,
+        correlation_id: None,
+    };
+
+    ws_manager.broadcast_event(ws_message).await
+}
+```
+
+#### 2.4.3 WebSocket Integration with Transport Core
+
+```rust
+use crate::transport::TransportLayer;
+
+impl TransportLayer {
+    pub async fn setup_http_websocket(&self) -> Result<(), TransportError> {
+        // Initialize WebSocket manager
+        let ws_manager = WebSocketManager::new();
+
+        // Connect to agent event stream
+        let agent_events = self.agent_registry.subscribe_events().await?;
+        
+        // Connect to task event stream  
+        let task_events = self.task_manager.subscribe_events().await?;
+
+        // Forward agent events to WebSocket
+        tokio::spawn(async move {
+            while let Ok(event) = agent_events.recv().await {
+                if let Err(e) = broadcast_agent_event(&ws_manager, event).await {
+                    log::error!("Failed to broadcast agent event: {:?}", e);
+                }
+            }
+        });
+
+        // Forward task events to WebSocket
+        tokio::spawn(async move {
+            while let Ok(event) = task_events.recv().await {
+                if let Err(e) = broadcast_task_event(&ws_manager, event).await {
+                    log::error!("Failed to broadcast task event: {:?}", e);
+                }
+            }
+        });
+
+        Ok(())
+    }
+}
+```
+
 ## Summary
 
 This HTTP transport module provides comprehensive specifications for:
@@ -737,35 +1159,66 @@ The specifications are designed for use with Axum 0.8 and provide a complete fou
 ### Transport Module Cross-References
 
 - **[Transport Core](./transport-core.md)** - Core abstractions, connection management, and security patterns
+  - Section 5: Transport abstraction layer integration and HTTP-specific routing
+  - Section 7: Connection management patterns for HTTP client and server pools
+  - Section 8: Error handling standards and HTTP status code mapping
+  - Section 9: Authentication patterns including JWT, API keys, and OAuth flows
 - **[NATS Transport](./nats-transport.md)** - High-throughput messaging and pub/sub patterns
+  - Hierarchical subject structure for agent and task communication
+  - JetStream persistence configurations for reliable message delivery
+  - Performance benchmarks and comparison with HTTP throughput
 - **[gRPC Transport](./grpc-transport.md)** - RPC communication and streaming protocols
-- **[Transport CLAUDE.md](./CLAUDE.md)** - Transport module navigation guide
+  - Protocol Buffers v3 definitions for AgentCommunication services
+  - Streaming patterns comparison with HTTP/WebSocket approaches
+  - HTTP/2 transport layer shared foundation
+- **[Transport Layer Specifications](./transport-layer-specifications.md)** - Complete transport architecture
 
 ### Framework Integration Points
 
 - **[Core Architecture](../core-architecture/)** - System integration and async patterns
+  - **[Async Patterns](../core-architecture/async-patterns.md)** - Tokio runtime integration with HTTP services
+  - **[Component Architecture](../core-architecture/component-architecture.md)** - HTTP service component patterns
+  - **[Supervision Trees](../core-architecture/supervision-trees.md)** - HTTP service supervision and restart strategies
 - **[Security](../security/)** - Authentication, authorization, and transport security
+  - **[Authentication](../security/authentication.md)** - JWT and API key implementation patterns
+  - **[Authorization](../security/authorization.md)** - HTTP request authorization middleware
+  - **[Security Integration](../security/security-integration.md)** - End-to-end security patterns
 - **[Data Management](../data-management/)** - Message schemas and persistence patterns
+  - **[Message Schemas](../data-management/message-schemas.md)** - HTTP request/response schema validation
+  - **[Agent Communication](../data-management/agent-communication.md)** - Message format integration
+  - **[Connection Management](../data-management/connection-management.md)** - HTTP connection pooling patterns
 
 ### External References
 
 - **Technology Stack**: `/tech-framework.md` - Canonical technology specifications
 - **OpenAPI/Swagger**: For API documentation and client generation
+- **Axum Documentation**: Framework-specific implementation guidance
+- **Tokio Documentation**: Async runtime patterns and best practices
 
 ### Protocol Selection Guidelines
 
 Use HTTP when you need:
 
 - RESTful APIs following web standards
-- WebSocket real-time bidirectional communication
+- WebSocket real-time bidirectional communication  
 - Integration with web browsers and standard HTTP clients
 - OpenAPI/Swagger documentation and tooling
 - Simple request/response patterns
+- Load balancer and proxy compatibility
+- Standard HTTP status codes and headers
 
 **Alternative Protocols:**
 
-- **NATS**: For high-throughput pub/sub messaging and event distribution
-- **gRPC**: For typed RPC calls and efficient binary protocols
+- **NATS**: For high-throughput pub/sub messaging (3M+ msgs/sec vs HTTP ~10K req/sec)
+- **gRPC**: For typed RPC calls with Protocol Buffers efficiency and streaming support
+
+### HTTP Transport Performance Characteristics
+
+- **Throughput**: ~10,000 requests/second per core (REST API)
+- **Latency**: 1-5ms for local requests, 10-50ms for network requests
+- **WebSocket**: Real-time bidirectional communication with ~1ms message latency
+- **Connection Overhead**: HTTP/1.1 connection pooling, HTTP/2 multiplexing
+- **Scalability**: Horizontal scaling with load balancers, connection pooling
 
 ### Implementation Notes
 

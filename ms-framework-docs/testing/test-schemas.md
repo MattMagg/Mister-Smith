@@ -1,51 +1,107 @@
-# MISTER SMITH TEST SCHEMAS
+# TEST SCHEMAS
 
-**Comprehensive Test Data Structures and Configuration Schemas**
+**Technical Test Data Structures and Configuration Schemas**
 
-**Validation Status:** ✅ VERIFIED - Supporting Document for 15/15 Score  
-**Team Zeta Integration:** 🚀 DEPLOYED - Schema Validation Active  
-**Last Validated:** 2025-01-05  
-**Validation Agent:** Agent 26 (Testing Framework Specialist)
+*Cross-references: [Test Framework](test-framework.md) | [Test Configuration](test-configuration.md) | [Message Schemas](../data-management/message-schemas.md) | [Agent Domains](../agent-domains/)*
 
-## TEAM ZETA SCHEMA INTEGRATION
+## SCHEMA VALIDATION FRAMEWORK
 
-### Schema Validation Agents
+### Automated Schema Validation
 
-Team Zeta agents provide automated schema validation and contract testing:
+Technical validation components for schema testing:
 
-1. **Agent Z1 - Contract Schema Validator**
+1. **Contract Schema Validator**
    - Validates message schemas against contract definitions
    - Ensures backward compatibility for schema evolution
    - Monitors schema usage patterns across agents
 
-2. **Agent Z2 - Test Data Generator**
-   - Generates property-based test data from schemas
+2. **Property-Based Test Data Generator**
+   - Generates test data from schemas using property-based testing
    - Creates edge case scenarios automatically
    - Maintains test data versioning
 
-3. **Agent Z3 - Schema Performance Analyzer**
+3. **Schema Performance Analyzer**
    - Tracks serialization/deserialization performance
    - Identifies schema optimization opportunities
    - Monitors payload size trends
 
-4. **Agent Z4 - Security Schema Auditor**
+4. **Security Schema Auditor**
    - Validates schemas for security vulnerabilities
    - Ensures sensitive data is properly marked
    - Enforces encryption requirements
 
-5. **Agent Z5 - Schema Analytics Coordinator**
+5. **Schema Analytics Coordinator**
    - Aggregates schema usage metrics
    - Tracks schema validation failures
    - Generates schema evolution reports
 
-### Validation Enhancements
+### Technical Validation Requirements
 
-Based on Agent 26's comprehensive validation:
+Schema validation covers:
 
-- **Schema Completeness**: All agent types, message types, and task types covered
+- **Schema Completeness**: All agent types, message types, and task types
 - **Mock Service Integration**: Complete mock implementations for all services
 - **Test Fixture Quality**: Comprehensive fixtures for all testing scenarios
-- **CI/CD Ready**: Full GitHub Actions configuration with multi-stage pipeline
+- **CI/CD Integration**: Full automated pipeline configuration
+
+## SCHEMA VALIDATION PATTERNS
+
+### Property-Based Testing Integration
+
+Schema validation uses property-based testing to generate comprehensive test data:
+
+```rust
+// Example property-based test for AgentStatus validation
+use proptest::prelude::*;
+
+prop_compose! {
+    fn arb_agent_status()(
+        status in prop_oneof![
+            Just(AgentStatus::Created),
+            Just(AgentStatus::Running),
+            Just(AgentStatus::Failed),
+            Just(AgentStatus::Stopped),
+        ]
+    ) -> AgentStatus {
+        status
+    }
+}
+
+proptest! {
+    #[test]
+    fn test_agent_status_serialization(status in arb_agent_status()) {
+        let json = serde_json::to_string(&status).unwrap();
+        let deserialized: AgentStatus = serde_json::from_str(&json).unwrap();
+        assert_eq!(status, deserialized);
+    }
+}
+```
+
+### Contract Testing Patterns
+
+Schema contracts define expected behavior between components:
+
+```rust
+// Contract definition for message validation
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MessageContract {
+    pub version: String,
+    pub schema_hash: String,
+    pub required_fields: Vec<String>,
+    pub optional_fields: Vec<String>,
+    pub constraints: HashMap<String, Constraint>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Constraint {
+    Range { min: i64, max: i64 },
+    Length { min: usize, max: usize },
+    Pattern(String),
+    Enum(Vec<String>),
+}
+```
+
+*Cross-references: [Test Framework](test-framework.md) | [Message Framework](../data-management/message-framework.md) | [Agent Communication](../data-management/agent-communication.md)*
 
 ## TEST CASE DATA STRUCTURES
 
@@ -698,6 +754,114 @@ impl MessageTestFixtures {
 }
 ```
 
+## AUTOMATED TEST GENERATION
+
+### Schema-Driven Test Generation
+
+Automated test generation from schema definitions:
+
+```rust
+// Automated test generation using schema metadata
+use proc_macro2::TokenStream;
+use quote::quote;
+use syn::{DeriveInput, parse_macro_input};
+
+pub fn generate_schema_tests(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+    let test_name = format_ident!("test_{}_schema", name.to_string().to_lowercase());
+    
+    quote! {
+        #[cfg(test)]
+        mod #test_name {
+            use super::*;
+            use proptest::prelude::*;
+            
+            #[test]
+            fn test_serialization_roundtrip() {
+                // Generated test for serialization/deserialization
+                let instance = #name::arbitrary();
+                let json = serde_json::to_string(&instance).unwrap();
+                let deserialized: #name = serde_json::from_str(&json).unwrap();
+                assert_eq!(instance, deserialized);
+            }
+            
+            #[test]
+            fn test_schema_validation() {
+                // Generated test for schema constraints
+                let instance = #name::arbitrary();
+                assert!(instance.validate().is_ok());
+            }
+        }
+    }
+}
+```
+
+### Fixture Generation Patterns
+
+Automated fixture generation for different test scenarios:
+
+```rust
+// Fixture generation trait
+pub trait TestFixtureGenerator<T> {
+    fn generate_minimal() -> T;
+    fn generate_maximal() -> T;
+    fn generate_invalid() -> Vec<T>;
+    fn generate_edge_cases() -> Vec<T>;
+}
+
+// Macro for deriving fixture generators
+#[derive(TestFixtureGenerator)]
+pub struct Agent {
+    pub id: String,
+    pub agent_type: AgentType,
+    pub status: AgentStatus,
+    // ... other fields
+}
+```
+
+### Schema Evolution Testing
+
+Automated testing for schema evolution and backward compatibility:
+
+```rust
+// Schema evolution testing patterns
+#[derive(Debug, Clone)]
+pub struct SchemaEvolutionTest {
+    pub old_version: String,
+    pub new_version: String,
+    pub compatibility_level: CompatibilityLevel,
+    pub migration_path: Option<MigrationPath>,
+}
+
+#[derive(Debug, Clone)]
+pub enum CompatibilityLevel {
+    Full,           // Complete backward compatibility
+    Partial,        // Some breaking changes
+    Breaking,       // Major breaking changes
+}
+
+pub fn test_schema_evolution(evolution: &SchemaEvolutionTest) -> EvolutionTestResult {
+    let old_data = generate_test_data_for_version(&evolution.old_version);
+    let new_data = generate_test_data_for_version(&evolution.new_version);
+    
+    // Test forward compatibility
+    let forward_result = test_forward_compatibility(&old_data, &evolution.new_version);
+    
+    // Test backward compatibility
+    let backward_result = test_backward_compatibility(&new_data, &evolution.old_version);
+    
+    EvolutionTestResult {
+        forward_compatible: forward_result.is_ok(),
+        backward_compatible: backward_result.is_ok(),
+        migration_required: evolution.migration_path.is_some(),
+        compatibility_level: evolution.compatibility_level.clone(),
+    }
+}
+```
+
+*Cross-references: [Test Configuration](test-configuration.md) | [Agent Lifecycle](../data-management/agent-lifecycle.md) | [System Testing](../testing/) | [Message Framework](../data-management/message-framework.md)*
+
 ## ADVANCED MOCK PATTERNS
 
 ### Performance-Aware Mock Infrastructure
@@ -1210,9 +1374,74 @@ impl TestEnvironmentManager {
 }
 ```
 
+## TEST EXECUTION STRATEGIES
+
+### Test Suite Organization
+
+Organized test execution for comprehensive coverage:
+
+```rust
+// Test organization by execution type
+pub enum TestExecutionType {
+    Unit,           // Fast, isolated component tests
+    Integration,    // Component interaction tests
+    Contract,       // API contract validation
+    Performance,    // Benchmark and load tests
+    Security,       // Security vulnerability tests
+    EndToEnd,       // Full system workflow tests
+}
+
+// Test execution configuration
+#[derive(Debug, Clone)]
+pub struct TestExecutionConfig {
+    pub execution_type: TestExecutionType,
+    pub parallel_execution: bool,
+    pub resource_limits: ResourceLimits,
+    pub timeout_seconds: u32,
+    pub retry_on_failure: bool,
+    pub cleanup_policy: CleanupPolicy,
+}
+```
+
+### Parallel Test Execution
+
+Schema validation supports parallel test execution:
+
+```rust
+// Parallel test execution for schema validation
+use rayon::prelude::*;
+
+pub fn execute_schema_tests_parallel(schemas: Vec<TestSchema>) -> Vec<TestResult> {
+    schemas
+        .par_iter()
+        .map(|schema| execute_schema_test(schema))
+        .collect()
+}
+
+pub fn execute_schema_test(schema: &TestSchema) -> TestResult {
+    let start = std::time::Instant::now();
+    
+    // Run validation tests
+    let validation_result = validate_schema(schema);
+    let serialization_result = test_serialization(schema);
+    let contract_result = test_contract_compliance(schema);
+    
+    TestResult {
+        schema_name: schema.name.clone(),
+        duration: start.elapsed(),
+        validation_passed: validation_result.is_ok(),
+        serialization_passed: serialization_result.is_ok(),
+        contract_passed: contract_result.is_ok(),
+        errors: collect_errors(validation_result, serialization_result, contract_result),
+    }
+}
+```
+
+*Cross-references: [Test Framework](test-framework.md) | [Performance Testing](../operations/performance-testing.md) | [Security Testing](../security/security-testing.md)*
+
 ## CONTINUOUS INTEGRATION TEST SUITES
 
-### GitHub Actions Test Configuration
+### Automated Test Pipeline Configuration
 
 ```yaml
 name: Comprehensive Test Suite
@@ -1506,26 +1735,28 @@ pub enum SecuritySeverity {
 }
 ```
 
-## VALIDATION SUMMARY
+## SCHEMA VALIDATION SPECIFICATIONS
 
-### Schema Coverage Assessment
+### Schema Coverage Requirements
 
-Based on Agent 26's validation:
+Technical validation coverage:
 
 - **Agent Types**: All 8 agent types fully defined with schemas
-- **Message Types**: 10 comprehensive message type schemas
+- **Message Types**: 10 comprehensive message type schemas  
 - **Task Types**: 9 task types with complete parameter schemas
 - **Mock Services**: 100% coverage of all framework services
 
-### Team Zeta Integration Status
+### Validation Component Status
 
-- ✅ **Z1**: Contract validation active on all message schemas
-- ✅ **Z2**: Property-based test generation operational
-- ✅ **Z3**: Performance metrics collection enabled
-- ✅ **Z4**: Security schema auditing deployed
-- ✅ **Z5**: Analytics dashboard operational
+Technical validation components:
 
-### Key Enhancements Implemented
+- **Contract Validation**: Active on all message schemas
+- **Property-Based Generation**: Operational for test data
+- **Performance Metrics**: Collection enabled for all schemas
+- **Security Auditing**: Deployed for schema validation
+- **Analytics**: Operational for schema usage tracking
+
+### Technical Pattern Implementation
 
 1. **Performance-Aware Mocks**: Advanced latency simulation with realistic profiles
 2. **Contract Testing**: Consumer-driven contract validation
@@ -1533,7 +1764,7 @@ Based on Agent 26's validation:
 4. **Chaos Engineering**: Failure injection and resilience patterns
 5. **Security Validation**: Schema-level security enforcement
 
-### Quality Metrics
+### Quality Assurance Metrics
 
 - **Schema Completeness**: 100% - All required fields defined
 - **Mock Coverage**: 100% - All services have mock implementations
@@ -1542,6 +1773,6 @@ Based on Agent 26's validation:
 
 ---
 
-*Mister Smith Test Schemas - Comprehensive data structures for multi-agent testing framework*
+*Test Schemas - Technical data structures for multi-agent testing framework*
 *Complete test fixtures, mock services, and CI/CD integration specifications*
-*Validated and Enhanced by Team Zeta - Score 15/15*
+*See also: [Test Framework](test-framework.md) | [Component Architecture](../core-architecture/component-architecture.md) | [System Integration](../core-architecture/system-integration.md)*

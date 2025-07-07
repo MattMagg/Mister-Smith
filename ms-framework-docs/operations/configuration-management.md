@@ -2,40 +2,22 @@
 
 ## Complete Configuration Schemas and Management Framework
 
-**Agent 23 Deliverable**: Configuration & Build Specialist
+### Cross-Reference Integration
 
-### Validation Status
+**Related Documentation**:
+- [Configuration & Deployment Specifications](configuration-deployment-specifications.md) - Deployment patterns and infrastructure integration
+- [System Architecture](../core-architecture/system-architecture.md) - Overall framework architecture
+- [Agent Lifecycle](../data-management/agent-lifecycle.md) - Agent initialization and configuration loading
 
-**Document Status**: ✅ EXCELLENT  
-**Validation Score**: 92/100  
-**Last Validated**: 2025-07-05  
-**Validated By**: Agent 21 - MS Framework Validation Swarm  
-**Implementation Readiness**: 95% - Ready for Implementation
+### Technical Overview
 
-#### Validation Summary
-
-- **Configuration Architecture**: 95/100 - Exceptional 4-layer hierarchical design
-- **Schema Completeness**: 94/100 - Comprehensive schemas for all components  
-- **Multi-Tier Support**: 96/100 - Excellent progressive feature enablement
-- **Secret Management**: 91/100 - Multi-backend with rotation capabilities
-- **Validation Framework**: 93/100 - Sophisticated with cross-field dependencies
-- **Security Assessment**: 94/100 - Strong secret management and access control
-- **Performance**: 91/100 - Efficient caching and validation
-
-#### Key Strengths
+This specification defines the complete configuration management system for multi-tier agent framework deployment. It integrates with deployment patterns defined in [Configuration & Deployment Specifications](configuration-deployment-specifications.md) to provide:
 
 - **4-Layer Configuration Hierarchy** with clear precedence rules
-- **Tier-based Feature Sets** (tier_1/tier_2/tier_3) with progressive enablement
+- **Tier-based Feature Sets** (tier_1/tier_2/tier_3) with progressive enablement  
 - **Advanced Type System** including Duration, Size, Array, and Map types
 - **Hot-Reload Capabilities** with safety mechanisms for development
 - **Container Optimization** patterns with build caching strategies
-
-#### Enhancement Recommendations
-
-1. **Infrastructure-as-Code**: Add Terraform/CloudFormation integration examples
-2. **Troubleshooting Guides**: Include common configuration issues and solutions
-3. **Dynamic Scaling**: Expand configuration patterns for auto-scaling
-4. **Advanced Monitoring**: Add deployment metrics and alerting patterns
 
 ### Overview
 
@@ -43,17 +25,19 @@ This document provides comprehensive configuration management specifications for
 environment variable specifications, validation rules, default value hierarchies, and configuration override patterns that support the framework's multi-tier
 deployment architecture and feature-based modularity.
 
+For deployment implementation patterns that utilize these configurations, see [Configuration & Deployment Specifications](configuration-deployment-specifications.md).
+
 ---
 
-## 1. Executive Summary
+## 1. Configuration System Architecture
 
-### 1.1 Configuration Management Philosophy
+### 1.1 Configuration Management Principles
 
 - **Hierarchical Configuration**: Layer-based configuration with clear precedence rules
 - **Environment Tier Support**: Native support for tier_1 (experimental), tier_2 (validation), and tier_3 (operational) environments
 - **Feature-Driven Configuration**: Configuration schemas that align with feature flag architecture
 - **Security-First Approach**: Secure secret management and configuration validation
-- **Developer Experience**: Clear, documented configuration with comprehensive validation
+- **Agent-Optimized Design**: Configuration structure optimized for programmatic agent consumption
 
 ### 1.2 Configuration Architecture
 
@@ -1679,9 +1663,127 @@ impl ConfigManager {
 }
 ```
 
-### 8.2 Integration with Framework Components
+### 8.2 Configuration Lifecycle Example
 
-#### 8.2.1 Agent Initialization with Configuration
+#### 8.2.1 Complete Configuration Lifecycle
+
+```rust
+// Configuration lifecycle implementation pattern
+pub struct ConfigurationLifecycle {
+    discovery: ConfigDiscovery,
+    manager: ConfigManager,
+    watcher: Option<ConfigWatcher>,
+}
+
+impl ConfigurationLifecycle {
+    pub async fn initialize() -> Result<Self, ConfigError> {
+        // Step 1: Discover configuration files
+        let discovery = ConfigDiscovery::new(
+            env::var("MISTER_SMITH_CONFIG_PATH").ok().map(PathBuf::from),
+            env::var("MISTER_SMITH_ENVIRONMENT_TIER")
+                .unwrap_or_else(|_| "tier_2".to_string()),
+            env::var("MISTER_SMITH_AGENT_TYPE")
+                .unwrap_or_else(|_| "worker".to_string()),
+        );
+        
+        // Step 2: Load and merge configurations
+        let config_files = discovery.discover_configs()?;
+        let manager = ConfigManager::load_from_files(config_files).await?;
+        
+        // Step 3: Validate final configuration
+        manager.validate_config().await?;
+        
+        // Step 4: Set up hot reload (if enabled)
+        let watcher = if manager.hot_reload_enabled() {
+            Some(ConfigWatcher::new(
+                manager.get_config_files(),
+                true,
+            )?)
+        } else {
+            None
+        };
+        
+        Ok(Self {
+            discovery,
+            manager,
+            watcher,
+        })
+    }
+    
+    pub async fn deploy_with_patterns(&self) -> Result<(), ConfigError> {
+        let config = self.manager.get_config().await;
+        
+        // Apply deployment patterns from configuration-deployment-specifications.md
+        match config.framework.environment_tier.as_str() {
+            "tier_1" => self.apply_experimental_deployment(&config).await?,
+            "tier_2" => self.apply_validation_deployment(&config).await?,
+            "tier_3" => self.apply_operational_deployment(&config).await?,
+            _ => return Err(ConfigError::InvalidTier),
+        }
+        
+        Ok(())
+    }
+    
+    async fn apply_experimental_deployment(&self, config: &MisterSmithConfig) -> Result<(), ConfigError> {
+        // Implement tier_1 deployment pattern
+        // - Minimal resource allocation
+        // - Limited feature set
+        // - Development-focused configuration
+        Ok(())
+    }
+    
+    async fn apply_validation_deployment(&self, config: &MisterSmithConfig) -> Result<(), ConfigError> {
+        // Implement tier_2 deployment pattern  
+        // - Standard resource allocation
+        // - Validation feature set
+        // - Integration testing configuration
+        Ok(())
+    }
+    
+    async fn apply_operational_deployment(&self, config: &MisterSmithConfig) -> Result<(), ConfigError> {
+        // Implement tier_3 deployment pattern
+        // - Full resource allocation
+        // - Complete feature set
+        // - Production-grade configuration
+        Ok(())
+    }
+}
+```
+
+#### 8.2.2 Deployment Integration Pattern
+
+```rust
+// Integration with deployment patterns from configuration-deployment-specifications.md
+pub struct DeploymentIntegration {
+    config_lifecycle: ConfigurationLifecycle,
+    deployment_strategy: DeploymentStrategy,
+}
+
+impl DeploymentIntegration {
+    pub async fn execute_progressive_deployment(&self) -> Result<(), DeploymentError> {
+        let config = self.config_lifecycle.manager.get_config().await;
+        
+        // Apply progressive deployment pattern based on configuration
+        match self.deployment_strategy {
+            DeploymentStrategy::BlueGreen => {
+                self.execute_blue_green_deployment(&config).await?;
+            }
+            DeploymentStrategy::Canary => {
+                self.execute_canary_deployment(&config).await?;
+            }
+            DeploymentStrategy::Rolling => {
+                self.execute_rolling_deployment(&config).await?;
+            }
+        }
+        
+        Ok(())
+    }
+}
+```
+
+### 8.3 Integration with Framework Components
+
+#### 8.3.1 Agent Initialization with Configuration
 
 ```rust
 // src/agent/mod.rs - Agent initialization with configuration
@@ -1831,7 +1933,9 @@ impl Agent {
 
 ---
 
-## 10. Infrastructure-as-Code Integration (Enhancement)
+## 10. Infrastructure-as-Code Integration
+
+**Integration with Deployment Patterns**: This section implements the Infrastructure-as-Code patterns defined in [Configuration & Deployment Specifications](configuration-deployment-specifications.md) Section 5.
 
 ### 10.1 Terraform Integration
 
@@ -2108,3 +2212,10 @@ mister-smith config rotate-secrets --dry-run
 This comprehensive configuration management specification provides the foundation for a flexible, secure, and maintainable configuration system
 that supports the Mister Smith AI Agent Framework's multi-tier architecture and feature-based modularity while maintaining strong security
 and operational practices. The Infrastructure-as-Code integration ensures seamless deployment across various cloud platforms and orchestration systems.
+
+**Implementation Integration**: Use these configuration specifications with the deployment patterns defined in [Configuration & Deployment Specifications](configuration-deployment-specifications.md) for complete system deployment.
+
+**Related Specifications**:
+- [Container Bootstrap Patterns](configuration-deployment-specifications.md#54-container-bootstrap-sequence-pattern) - Container initialization using these configurations
+- [Resource Management Patterns](configuration-deployment-specifications.md#6-scaling-and-resource-management-patterns) - Scaling configurations implementation
+- [Secret Management Patterns](configuration-deployment-specifications.md#2-secret-management-patterns) - Secret handling in deployment contexts

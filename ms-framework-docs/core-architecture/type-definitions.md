@@ -28,11 +28,79 @@ The type system shows sophisticated design patterns including zero-cost abstract
 - Type safety guarantees validated
 - Integration compatibility verified
 
+## Table of Contents
+
+1. [Type System Overview](#type-system-overview)
+2. [Integration Type Architecture](#1-integration-type-architecture)
+3. [Universal Agent Type System](#2-universal-agent-type-system)
+4. [Universal Task and Execution System](#3-universal-task-and-execution-system)
+5. [Universal Message and Transport System](#4-universal-message-and-transport-system)
+6. [Universal State Management System](#5-universal-state-management-system)
+7. [Universal Configuration System](#6-universal-configuration-system)
+8. [Universal Supervision System](#7-universal-supervision-system)
+9. [Adapter Pattern Implementations](#8-adapter-pattern-implementations)
+10. [Compatibility and Version Management](#9-compatibility-and-version-management)
+11. [Type System Integration Examples](#10-type-system-integration-examples)
+12. [Performance and Safety Considerations](#11-performance-and-safety-considerations)
+
+## Type System Overview
+
+### Core Type Hierarchy
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        MisterSmith Type System                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Universal Traits (Core Abstractions)                               │
+│  ┌────────────────┬─────────────────┬────────────────────┐         │
+│  │ UniversalAgent │ UniversalTask   │ UniversalMessage   │         │
+│  │ - Agent        │ - Task          │ - Message          │         │
+│  │ - Supervisor   │ - TaskExecutor  │ - Transport        │         │
+│  │ - Actor        │ - TaskHandle    │ - Router           │         │
+│  └────────────────┴─────────────────┴────────────────────┘         │
+│                                                                      │
+│  Core System Traits                                                  │
+│  ┌────────────────┬─────────────────┬────────────────────┐         │
+│  │ StateProvider  │ Configuration   │ Resource           │         │
+│  │ - StateStore   │ - ConfigManager │ - ResourceManager  │         │
+│  │ - Transaction  │ - ConfigSource  │ - ResourcePool     │         │
+│  │ - ChangeStream │ - ConfigWatcher │ - ResourceHandle   │         │
+│  └────────────────┴─────────────────┴────────────────────┘         │
+│                                                                      │
+│  Framework Integration                                               │
+│  ┌────────────────┬─────────────────┬────────────────────┐         │
+│  │ Adapters       │ Bridges         │ Translators        │         │
+│  │ - MsAdapter    │ - MessageBridge │ - TypeTranslator   │         │
+│  │ - RuvAdapter   │ - StateBridge   │ - MessageTranslator│         │
+│  │ - NativeAdapter│ - ConfigBridge  │ - ErrorTranslator  │         │
+│  └────────────────┴─────────────────┴────────────────────┘         │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Type Safety Guarantees
+
+1. **Compile-Time Safety**
+   - All traits require `Send + Sync + 'static` bounds
+   - Generic constraints enforce type compatibility
+   - Lifetime parameters prevent dangling references
+
+2. **Runtime Safety**
+   - Comprehensive error handling with recovery strategies
+   - Resource management through RAII patterns
+   - Thread-safe implementations throughout
+
+3. **Integration Safety**
+   - Zero-cost abstractions for framework adapters
+   - Type-safe message translation
+   - Validated configuration management
+
 ## 1. Integration Type Architecture
 
 ### 1.1 Layered Type System Design
 
-```rust
+```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Unified API Layer                        │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
@@ -60,7 +128,7 @@ The type system shows sophisticated design patterns including zero-cost abstract
 │  │ Native Types    │  │ Native Types    │  │ Integrations │ │
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
 └─────────────────────────────────────────────────────────────┘
-```rust
+```
 
 ### 1.2 Core Integration Module Structure
 
@@ -89,7 +157,7 @@ pub use adapters::{
 pub use bridges::{
     MessageBridge, TransportBridge, StateBridge, ConfigurationBridge
 };
-```rust
+```
 
 ## 2. Universal Agent Type System
 
@@ -133,6 +201,66 @@ pub trait UniversalAgent: Send + Sync + 'static {
     
     /// Dependency requirements
     fn dependencies(&self) -> Vec<AgentDependency>;
+}
+
+/// Example: Concrete UniversalAgent Implementation
+/// This demonstrates how to implement a universal agent that can work
+/// across both ms-framework and ruv-swarm environments
+pub struct DataAnalysisAgent {
+    id: AgentId,
+    role: AgentRole,
+    state: Arc<RwLock<AnalysisState>>,
+    context: Option<Box<dyn AgentContext>>,
+}
+
+impl UniversalAgent for DataAnalysisAgent {
+    type Input = AnalysisRequest;
+    type Output = AnalysisResult;
+    type State = AnalysisState;
+    type Error = AnalysisError;
+    type Context = Box<dyn AgentContext>;
+    
+    async fn process(&self, input: Self::Input) -> Result<Self::Output, Self::Error> {
+        // Validate input
+        input.validate()?;
+        
+        // Process analysis based on request type
+        match input.analysis_type {
+            AnalysisType::Statistical => self.perform_statistical_analysis(input).await,
+            AnalysisType::Predictive => self.perform_predictive_analysis(input).await,
+            AnalysisType::Exploratory => self.perform_exploratory_analysis(input).await,
+        }
+    }
+    
+    fn capabilities(&self) -> AgentCapabilities {
+        AgentCapabilities {
+            cognitive_style: CognitiveStyle::Systematic,
+            technical_skills: vec![
+                TechnicalSkill::DataProcessing,
+                TechnicalSkill::SystemAnalysis,
+                TechnicalSkill::Optimization,
+            ],
+            processing_capacity: ProcessingCapacity::High,
+            resource_requirements: ResourceRequirements {
+                min_memory_mb: 512,
+                min_cpu_cores: 2,
+                gpu_required: false,
+            },
+            communication_protocols: vec![
+                ProtocolSupport::UniversalMessage,
+                ProtocolSupport::JsonRpc,
+                ProtocolSupport::Rest,
+            ],
+        }
+    }
+    
+    async fn state(&self) -> Result<Self::State, Self::Error> {
+        self.state.read().await
+            .clone()
+            .map_err(|e| AnalysisError::StateAccess(e.to_string()))
+    }
+    
+    // Additional implementation details...
 }
 
 /// Type alias standardization to resolve validation-identified inconsistency
@@ -199,7 +327,7 @@ pub enum TechnicalSkill {
     Security,
     Optimization,
 }
-```rust
+```
 
 ### 2.2 Agent Role Taxonomy
 
@@ -259,7 +387,7 @@ pub enum DependencyType {
     Configuration(ConfigurationKey),
     Transport(TransportProtocol),
 }
-```rust
+```
 
 ### 2.3 Agent Context and State Management
 
@@ -315,7 +443,7 @@ pub enum LifecycleEvent {
     DependencyUnavailable(ResourceId),
     Error(ErrorSeverity),
 }
-```rust
+```
 
 ## 3. Universal Task and Execution System
 
@@ -350,6 +478,112 @@ pub trait UniversalTask: Send + 'static {
     
     /// Get current progress (if supported)
     async fn progress(&self) -> Option<Self::Progress>;
+}
+
+/// Example: Concrete UniversalTask Implementation
+/// This demonstrates a task that can be executed across different executors
+pub struct DataProcessingTask {
+    task_id: TaskId,
+    input_path: PathBuf,
+    output_path: PathBuf,
+    processing_options: ProcessingOptions,
+    progress_tracker: Arc<RwLock<ProcessingProgress>>,
+}
+
+impl UniversalTask for DataProcessingTask {
+    type Input = ProcessingRequest;
+    type Output = ProcessingResult;
+    type Error = ProcessingError;
+    type Progress = ProcessingProgress;
+    
+    async fn execute(&self, input: Self::Input) -> Result<Self::Output, Self::Error> {
+        // Initialize progress tracking
+        self.update_progress(ProcessingProgress::Started).await?;
+        
+        // Load data from input path
+        let data = self.load_data(&input.source_path).await?;
+        self.update_progress(ProcessingProgress::DataLoaded { size: data.len() }).await?;
+        
+        // Process data in chunks for better memory management
+        let chunk_size = self.processing_options.chunk_size.unwrap_or(1000);
+        let mut processed_chunks = Vec::new();
+        
+        for (i, chunk) in data.chunks(chunk_size).enumerate() {
+            let processed = self.process_chunk(chunk, &input.operations).await?;
+            processed_chunks.push(processed);
+            
+            // Update progress
+            let progress_pct = ((i + 1) * 100) / (data.len() / chunk_size);
+            self.update_progress(ProcessingProgress::Processing { percent: progress_pct }).await?;
+        }
+        
+        // Combine results and save
+        let final_result = self.combine_results(processed_chunks).await?;
+        self.save_result(&final_result, &self.output_path).await?;
+        
+        self.update_progress(ProcessingProgress::Completed).await?;
+        
+        Ok(ProcessingResult {
+            output_path: self.output_path.clone(),
+            records_processed: data.len(),
+            processing_time: self.get_elapsed_time(),
+            metadata: self.generate_metadata(&final_result),
+        })
+    }
+    
+    fn metadata(&self) -> TaskMetadata {
+        TaskMetadata {
+            task_id: self.task_id.clone(),
+            task_type: TaskType::Transformation {
+                input_type: "CSV".to_string(),
+                output_type: "Parquet".to_string(),
+            },
+            name: "Data Processing Task".to_string(),
+            description: "Processes CSV data and outputs Parquet format".to_string(),
+            version: semver::Version::new(1, 0, 0),
+            created_at: Utc::now(),
+            created_by: AgentId::new("data-processor-001"),
+            priority: TaskPriority::Normal,
+            tags: vec!["data-processing".to_string(), "etl".to_string()],
+            schema: TaskSchema::default(),
+        }
+    }
+    
+    fn requirements(&self) -> ExecutionRequirements {
+        ExecutionRequirements {
+            cpu_cores: Some(4),
+            memory_mb: Some(2048),
+            disk_mb: Some(10240),
+            network_bandwidth: None,
+            gpu_required: false,
+            timeout: Duration::from_secs(3600),
+            retry_policy: RetryPolicy::exponential_backoff(3, Duration::from_secs(5)),
+            isolation_level: IsolationLevel::Thread,
+            required_capabilities: vec![
+                TechnicalSkill::DataProcessing,
+            ],
+        }
+    }
+    
+    fn estimated_duration(&self, input: &Self::Input) -> Duration {
+        // Estimate based on input size
+        let size_mb = input.estimated_size_mb();
+        let rate_mb_per_sec = 10.0; // Processing rate estimate
+        Duration::from_secs_f64(size_mb / rate_mb_per_sec)
+    }
+    
+    fn is_cancellable(&self) -> bool {
+        true
+    }
+    
+    async fn cancel(&self) -> Result<(), Self::Error> {
+        self.update_progress(ProcessingProgress::Cancelled).await?;
+        Ok(())
+    }
+    
+    async fn progress(&self) -> Option<Self::Progress> {
+        self.progress_tracker.read().await.ok().cloned()
+    }
 }
 
 /// Task metadata with comprehensive information
@@ -423,7 +657,7 @@ pub enum TaskType {
     Communication { protocol: CommunicationProtocol },
     Custom { category: String, subcategory: Option<String> },
 }
-```rust
+```
 
 ### 3.2 Task Execution Framework
 
@@ -511,7 +745,7 @@ where T: Send + 'static
         }
     }
 }
-```rust
+```
 
 ## 4. Universal Message and Transport System
 
@@ -599,7 +833,7 @@ pub enum Destination {
     Queue(String),
     Custom(String),
 }
-```rust
+```
 
 ### 4.2 Transport Abstraction Layer
 
@@ -690,7 +924,7 @@ impl TransportBridge {
         }
     }
 }
-```rust
+```
 
 ## 5. Universal State Management System
 
@@ -827,7 +1061,7 @@ pub enum ConsistencyLevel {
     Session,        // Session consistency
     Causal,         // Causal consistency
 }
-```rust
+```
 
 ## 6. Universal Configuration System
 
@@ -948,7 +1182,7 @@ pub enum ConfigurationFormat {
     Properties,
     Environment,
 }
-```rust
+```
 
 ## 7. Universal Supervision System
 
@@ -1044,7 +1278,7 @@ pub enum SupervisionModel {
     Flat,           // ruv-swarm style flat coordination
     Hybrid,         // Intelligent selection based on context
 }
-```rust
+```
 
 ## 8. Adapter Pattern Implementations
 
@@ -1114,7 +1348,7 @@ where A: ruv_swarm::Agent + Send + Sync + 'static
     
     // ... other method implementations
 }
-```rust
+```
 
 ### 8.2 Message Adapters
 
@@ -1165,7 +1399,7 @@ impl MessageTranslator {
         Ok(message)
     }
 }
-```rust
+```
 
 ## 9. Compatibility and Version Management
 
@@ -1232,7 +1466,7 @@ impl FeatureFlags {
         }
     }
 }
-```rust
+```
 
 ### 9.2 Resource Conflict Resolution
 
@@ -1291,7 +1525,7 @@ pub enum PortAllocationConfig {
     },
     Environmental,
 }
-```rust
+```
 
 ## 10. Type System Integration Examples
 
@@ -1391,7 +1625,7 @@ impl UnifiedFramework {
         executor.submit(task).await
     }
 }
-```rust
+```
 
 ## 11. Performance and Safety Considerations
 
@@ -1467,7 +1701,7 @@ Based on validation findings, the following enhancements are planned:
            fn fields(&self) -> &[FieldInfo];
        }
    }
-```rust
+   ```
 
 2. **Type Alias Standardization** (Low Impact)
    - Create central `types.rs` module
@@ -1479,7 +1713,7 @@ Based on validation findings, the following enhancements are planned:
    #[derive(UniversalAgent)]
    #[derive(AsyncTask)]
    #[derive(ValidatedType)]
-```rust
+   ```
 
 **Medium Priority**:
 

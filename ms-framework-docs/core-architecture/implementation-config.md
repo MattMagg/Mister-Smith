@@ -2,9 +2,8 @@
 
 ## Overview
 
-This document contains the agent implementation configuration and module organization structure
-for the Mister Smith AI Agent Framework. It provides concrete configuration settings,
-orchestration patterns, and the complete module structure for implementing the framework.
+Concrete configuration structures and patterns for implementing agents in the Mister Smith Framework.
+Focused on practical configuration, validation, and module organization.
 
 ## Navigation
 
@@ -16,25 +15,10 @@ orchestration patterns, and the complete module structure for implementing the f
 
 ---
 
-## 🔍 VALIDATION STATUS
 
-**Last Validated**: 2025-07-05  
-**Validator**: Framework Documentation Team  
-**Validation Score**: Pending full validation  
-**Status**: Active Development  
+## 1. Agent Implementation Configuration
 
-### Implementation Status
-
-- Agent configuration structures complete
-- Orchestration patterns defined
-- Module organization specified
-- Integration points documented
-
----
-
-## 8. Agent Implementation Configuration
-
-### 7.1 Agent Implementation Settings
+### 1.1 Core Agent Configuration
 
 ```rust
 use serde::{Deserialize, Serialize};
@@ -146,7 +130,7 @@ fn default_log_level() -> String {
 }
 ```
 
-### 7.2 Orchestration Patterns
+### 1.2 Agent Orchestration Configuration
 
 ```rust
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Validate)]
@@ -340,7 +324,7 @@ fn default_cooldown_period() -> Duration {
 }
 ```
 
-### 7.3 Configuration Validation System
+### 1.3 Configuration Validation System
 
 ```rust
 use std::env;
@@ -539,7 +523,7 @@ pub struct EnvVarMapping {
 }
 ```
 
-### 7.4 Configuration Migration Patterns
+### 1.4 Configuration Migration
 
 ```rust
 use semver::Version;
@@ -621,100 +605,109 @@ impl ConfigMigration for V1ToV2Migration {
 }
 ```
 
-### 7.5 Configuration Usage Examples
+### 1.5 Configuration Usage Examples
 
 ```rust
-// Example 1: Loading configuration with validation
+// Example 1: Agent-specific configuration
 use mister_smith_core::config::*;
 
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+pub struct SearchAgentConfig {
+    #[serde(flatten)]
+    pub base: AgentConfig,
+    
+    /// Maximum search depth
+    #[validate(range(min = 1, max = 10))]
+    pub max_search_depth: u32,
+    
+    /// Search timeout in seconds
+    #[serde(with = "humantime_serde")]
+    pub search_timeout: Duration,
+    
+    /// Allowed tools for this agent
+    pub allowed_tools: Vec<String>,
+}
+
+// Example 2: Loading agent configuration
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create validator with environment prefix
+    // Load configuration with validation
     let validator = ConfigValidator::new("MS");
+    let config: SearchAgentConfig = validator.load_config()?;
     
-    // Load and validate configuration
-    let config: AgentConfig = validator.load_config()?;
+    // Create agent with config
+    let agent = SearchAgent::builder()
+        .id(AgentId::new())
+        .config(config)
+        .tool_registry(Arc::new(ToolRegistry::new()))
+        .build()?;
     
-    println!("Loaded configuration:");
-    println!("  Worker threads: {}", config.runtime.worker_threads);
-    println!("  Max memory: {} bytes", config.runtime.max_memory);
-    println!("  Log level: {}", config.monitoring.log_level);
+    // Start agent actor
+    let actor_ref = ActorSystem::spawn(agent).await?;
     
     Ok(())
 }
 
-// Example 2: Configuration with environment variable overrides
-// Set environment variables:
-// export MS_RUNTIME__WORKER_THREADS=16
-// export MS_MONITORING__LOG_LEVEL=debug
-// export MS_SUPERVISION__MAX_RESTART_ATTEMPTS=5
+// Example 3: Configuration file (search-agent.toml)
+/*
+# Base agent configuration
+[runtime]
+worker_threads = 4
+blocking_threads = 2
+max_memory = 1073741824  # 1GB
 
-// Example 3: Custom configuration validation
-impl AgentConfig {
-    pub fn validate_custom(&self) -> Result<(), ConfigValidationError> {
-        // Custom validation logic
-        if self.runtime.worker_threads > self.runtime.blocking_threads * 4 {
-            return Err(ConfigValidationError::InvalidValue {
-                field: "runtime.worker_threads".to_string(),
-                reason: "Worker threads should not exceed 4x blocking threads".to_string(),
-            });
-        }
+[supervision]
+max_restart_attempts = 3
+restart_window = "1m"
+escalation_timeout = "15s"
+
+[monitoring]
+health_check_interval = "10s"
+metrics_export_interval = "30s"
+log_level = "info"
+
+# Agent-specific configuration
+max_search_depth = 5
+search_timeout = "30s"
+allowed_tools = ["web_search", "file_search", "database_query"]
+
+# Resource limits for this agent
+[orchestration.resources.limits]
+cpu = 1.0
+memory_mb = 1024
+disk_mb = 512
+*/
+
+// Example 4: Environment variable configuration
+// export MS_RUNTIME__WORKER_THREADS=8
+// export MS_MAX_SEARCH_DEPTH=3
+// export MS_SEARCH_TIMEOUT=60s
+// export MS_ALLOWED_TOOLS=web_search,file_search
+
+// Example 5: Dynamic configuration updates
+impl SearchAgent {
+    pub async fn update_config(&mut self, new_config: SearchAgentConfig) -> Result<()> {
+        // Validate new configuration
+        new_config.validate()?;
         
-        if self.supervision.restart_window < self.supervision.escalation_timeout {
-            return Err(ConfigValidationError::InvalidValue {
-                field: "supervision.restart_window".to_string(),
-                reason: "Restart window must be >= escalation timeout".to_string(),
-            });
+        // Check if restart required
+        let restart_required = self.config.runtime != new_config.runtime;
+        
+        // Update non-critical settings immediately
+        self.config.max_search_depth = new_config.max_search_depth;
+        self.config.search_timeout = new_config.search_timeout;
+        
+        // Schedule restart if needed
+        if restart_required {
+            self.schedule_graceful_restart().await?;
         }
         
         Ok(())
     }
 }
-
-// Example 4: Configuration file (mister-smith.toml)
-/*
-[runtime]
-worker_threads = 8
-blocking_threads = 4
-max_memory = 2147483648  # 2GB
-
-[supervision]
-max_restart_attempts = 5
-restart_window = "2m"
-escalation_timeout = "30s"
-
-[monitoring]
-health_check_interval = "15s"
-metrics_export_interval = "30s"
-log_level = "info"
-
-[orchestration]
-replicas = 3
-
-[orchestration.resources.requests]
-cpu = 0.5
-memory_mb = 512
-disk_mb = 1024
-
-[orchestration.resources.limits]
-cpu = 2.0
-memory_mb = 2048
-disk_mb = 4096
-
-[orchestration.autoscaling]
-min_replicas = 2
-max_replicas = 10
-
-[orchestration.autoscaling.scaling_policy]
-target_cpu_percent = 70
-target_memory_percent = 80
-scale_up_threshold = 3
-scale_down_threshold = 5
-cooldown_period = "2m"
-*/
 ```
 
-### 7.6 Configuration Error Handling
+### 1.6 Configuration Error Handling
 
 ```rust
 /// Comprehensive error handling for configuration issues
@@ -768,7 +761,7 @@ pub fn print_env_var_help() {
 }
 ```
 
-## Module Organization Structure
+## 2. Module Organization Structure
 
 ```rust
 // src/lib.rs
@@ -843,31 +836,41 @@ src/
 └── types.rs                  // Core type definitions
 ```
 
-## Implementation Completeness Checklist
+## 3. Implementation Checklist
 
-### ✅ Completed Implementations
+### Configuration Checklist
 
-- **Runtime Management**: Complete Rust implementation with tokio integration
-- **Error Handling**: Comprehensive error types with thiserror
-- **Type System**: Strongly-typed IDs and core types with serde support
-- **Actor System**: Full async actor implementation with mailboxes
-- **Task Execution**: AsyncTask trait with retry policies and timeouts
-- **Stream Processing**: Futures-based stream processing with backpressure
-- **Tool System**: Complete tool registry with permissions and metrics
-- **Agent-as-Tool**: Pattern for using agents as tools
-- **Constants**: All configurable values replaced with concrete defaults
-- **Module Organization**: Clear separation of concerns
+- [ ] **Validation**
+  - [ ] All fields have validation rules
+  - [ ] Default values are sensible
+  - [ ] Environment variable mapping works
+  - [ ] Schema validation passes
 
-### 🔧 Ready for Implementation
+- [ ] **Error Handling**
+  - [ ] Clear error messages for invalid config
+  - [ ] Helpful hints for missing fields
+  - [ ] Migration path for old configs
+  - [ ] Validation errors are actionable
 
-- **Supervision Tree**: Architecture defined, needs concrete implementation
-- **Event System**: Patterns defined, needs EventBus implementation
-- **Resource Management**: Connection pool patterns ready
-- **Configuration Management**: Framework ready for implementation
-- **Health Monitoring**: Interfaces defined, needs concrete implementation
-- **Circuit Breaker**: Pattern defined, needs implementation
-- **Message Bridge**: Communication patterns ready
-- **Middleware System**: Pattern defined for extensibility
+- [ ] **Testing**
+  - [ ] Unit tests for validation logic
+  - [ ] Integration tests for env vars
+  - [ ] Migration tests for upgrades
+  - [ ] Edge case coverage
+
+### Module Organization Checklist
+
+- [ ] **Structure**
+  - [ ] Clear module boundaries
+  - [ ] No circular dependencies
+  - [ ] Proper re-exports in mod.rs
+  - [ ] Test modules organized
+
+- [ ] **Dependencies**
+  - [ ] Minimal external dependencies
+  - [ ] Version pinning for stability
+  - [ ] Feature flags used appropriately
+  - [ ] Security audit passing
 
 ## Key Implementation Notes
 
@@ -897,60 +900,47 @@ humantime-serde = "1.1"
 semver = "1.0"
 ```
 
-### Usage Example
+### Quick Start Example
 
 ```rust
 use mister_smith_core::prelude::*;
-use mister_smith_core::config::{ConfigValidator, AgentConfig};
 
 #[tokio::main]
 async fn main() -> Result<(), SystemError> {
-    // Load and validate configuration
-    let validator = ConfigValidator::new("MS");
-    let agent_config: AgentConfig = validator
-        .load_config()
-        .map_err(|e| SystemError::Configuration(e.to_string()))?;
+    // 1. Load agent configuration
+    let config: AgentConfig = ConfigValidator::new("MS").load_config()?;
     
-    // Perform custom validation
-    agent_config.validate_custom()
-        .map_err(|e| SystemError::Configuration(e.to_string()))?;
+    // 2. Initialize actor system
+    let actor_system = ActorSystem::with_config(config.clone());
     
-    // Initialize runtime with validated config
-    let runtime_config = RuntimeConfig {
-        worker_threads: agent_config.runtime.worker_threads,
-        blocking_threads: agent_config.runtime.blocking_threads,
-        max_memory: agent_config.runtime.max_memory,
-        ..Default::default()
-    };
+    // 3. Create tool registry
+    let tool_registry = Arc::new(ToolRegistry::new());
+    tool_registry.register(WebSearchTool::new()).await?;
+    tool_registry.register(FileSystemTool::new()).await?;
     
-    let mut runtime_manager = RuntimeManager::initialize(runtime_config)?;
-    runtime_manager.start_system().await?;
-    
-    // Create actor system with supervision config
-    let actor_system = ActorSystem::with_config(ActorSystemConfig {
-        max_restart_attempts: agent_config.supervision.max_restart_attempts,
-        restart_window: agent_config.supervision.restart_window,
-        escalation_timeout: agent_config.supervision.escalation_timeout,
-    });
-    
-    // Create tool bus
-    let tool_bus = ToolBus::new();
-    
-    // Register built-in tools
-    let echo_tool = tools::builtin::EchoTool::new();
-    tool_bus.register_tool(echo_tool).await;
-    
-    // Start monitoring with configured intervals
-    let monitor = SystemMonitor::new(
-        agent_config.monitoring.health_check_interval,
-        agent_config.monitoring.metrics_export_interval,
+    // 4. Create and spawn agent
+    let agent = ExampleAgent::new(
+        AgentId::new(),
+        tool_registry.clone(),
+        config
     );
-    monitor.start().await;
     
-    // Application logic here...
+    let agent_ref = actor_system.spawn_actor(agent).await?;
     
-    // Graceful shutdown
-    runtime_manager.graceful_shutdown().await?;
+    // 5. Send message to agent
+    let (tx, rx) = oneshot::channel();
+    agent_ref.send(AgentMessage::ExecuteTool {
+        tool_id: "web_search".to_string(),
+        params: json!({ "query": "rust async patterns" }),
+        respond_to: tx,
+    }).await?;
+    
+    // 6. Wait for result
+    let result = rx.await??;
+    println!("Tool result: {:?}", result);
+    
+    // 7. Graceful shutdown
+    actor_system.shutdown().await?;
     
     Ok(())
 }
@@ -960,32 +950,7 @@ async fn main() -> Result<(), SystemError> {
 
 ## Related Documents
 
-### Integration and Patterns
-
-- **[System Integration](system-integration.md)** - Integration patterns, message routing, state persistence
-- [Integration Patterns](./integration-patterns.md) - Error handling, event systems, dependency injection
-- [Integration Contracts](integration-contracts.md) - Service contracts and API specifications
-- [Integration Implementation](integration-implementation.md) - Testing and metrics implementation
-
-### Core Architecture
-
-- [System Architecture](system-architecture.md) - Complete architectural specifications
-- [Type Definitions](type-definitions.md) - Core type system and traits
-- [Dependency Specifications](dependency-specifications.md) - External dependencies
-
-### Implementation Guides
-
+- [System Architecture](system-architecture.md) - Core architectural patterns
+- [Type Definitions](type-definitions.md) - Type system specifications
 - [Coding Standards](coding-standards.md) - Development guidelines
-- [Module Organization & Type System](module-organization-type-system.md) - Detailed type specifications
-
-### Framework Documentation
-
-- [Framework Documentation](../CLAUDE.md) - Main framework documentation
-- [Data Management](../data-management/CLAUDE.md) - Data handling specifications
-- [Security](../security/CLAUDE.md) - Security protocols
-- [Transport](../transport/CLAUDE.md) - Communication layer documentation
-
----
-
-*Agent 6 - Phase 1, Group 1A - Framework Modularization Operation*
-*Extracted from system-architecture.md - Sections 8-9: Agent Config + Module Organization*
+- [Dependency Specifications](dependency-specifications.md) - External dependencies

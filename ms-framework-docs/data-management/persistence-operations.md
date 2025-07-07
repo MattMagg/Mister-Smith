@@ -10,18 +10,9 @@ tags:
 
 ## Error Handling, Monitoring & Migration Framework
 
-> **📊 VALIDATION STATUS: PRODUCTION READY**
+> **Technical Specifications**: Persistence error handling and recovery patterns integrated with agent operations
 >
-> | Criterion | Score | Status |
-> |-----------|-------|---------|
-> | Error Handling | 5/5 | ✅ Comprehensive |
-> | Conflict Resolution | 5/5 | ✅ Advanced |
-> | Monitoring Framework | 5/5 | ✅ Enterprise-Grade |
-> | Migration Procedures | 5/5 | ✅ Zero-Downtime |
-> | Operational Tooling | 5/5 | ✅ Complete |
-> | **TOTAL SCORE** | **15/15** | **✅ DEPLOYMENT APPROVED** |
->
-> *Validated: 2025-07-05 | Document Lines: 2,876 | Implementation Status: 100%*
+> **Cross-References**: Integrates with [agent-integration.md](./agent-integration.md) for unified agent-to-persistence error handling
 > **Navigation**: Part of the modularized data persistence framework
 >
 > - **Core Trilogy**: [[persistence-operations]] ⟷ [[storage-patterns]] ⟷ [[connection-management]]
@@ -30,10 +21,10 @@ tags:
 
 ## Executive Summary
 
-This document defines operational patterns for the Mister Smith AI Agent Framework's data persistence layer,
-covering error handling strategies, conflict resolution mechanisms, monitoring frameworks, and zero-downtime
-migration procedures. It ensures robust operation, observability, and maintainability of the dual-store
-architecture across PostgreSQL and JetStream KV.
+This document defines operational patterns for data persistence with comprehensive error handling and recovery strategies.
+It covers unified error handling (integrated with [agent-integration.md](./agent-integration.md)), conflict resolution,
+monitoring frameworks, and migration procedures. These patterns ensure robust persistence operations with
+proper integration points for agent system failures and recovery scenarios.
 
 ## 6. Error Handling and Conflict Resolution
 
@@ -191,29 +182,64 @@ CLASS ErrorRecoveryManager {
         context: RecoveryContext
     ) -> RecoveryAction {
         
-        -- Network and connectivity errors
-        IF error.type IN [CONNECTION_TIMEOUT, NETWORK_UNREACHABLE, DNS_FAILURE] THEN
-            RETURN RETRY_WITH_BACKOFF
+        -- Check retry limits first to prevent infinite loops
+        IF context.retry_count >= context.max_retries THEN
+            RETURN ESCALATE_TO_OPERATOR
         END IF
         
-        -- Data consistency errors
+        -- Network and connectivity errors (limited retries)
+        IF error.type IN [CONNECTION_TIMEOUT, NETWORK_UNREACHABLE] THEN
+            IF context.retry_count < 3 THEN
+                RETURN RETRY_WITH_BACKOFF
+            ELSE
+                RETURN FALLBACK_TO_CACHE
+            END IF
+        END IF
+        
+        -- DNS failures should not retry immediately
+        IF error.type = DNS_FAILURE THEN
+            IF context.time_since_last_success > Duration.minutes(5) THEN
+                RETURN ESCALATE_TO_OPERATOR
+            ELSE
+                RETURN FALLBACK_TO_CACHE
+            END IF
+        END IF
+        
+        -- Data consistency errors (quick retry then escalate)
         IF error.type IN [VERSION_CONFLICT, SERIALIZATION_FAILURE] THEN
-            RETURN RETRY_WITH_BACKOFF
+            IF context.retry_count < 2 THEN
+                RETURN RETRY_WITH_BACKOFF
+            ELSE
+                RETURN ESCALATE_TO_OPERATOR
+            END IF
         END IF
         
-        -- Resource exhaustion
+        -- Resource exhaustion (consider context)
         IF error.type IN [CONNECTION_POOL_EXHAUSTED, MEMORY_LIMIT_EXCEEDED] THEN
-            RETURN GRACEFUL_DEGRADATION
+            IF context.system_load > 0.8 THEN
+                RETURN GRACEFUL_DEGRADATION
+            ELSE
+                RETURN RETRY_WITH_BACKOFF
+            END IF
         END IF
         
-        -- Data corruption or integrity violations
+        -- Data corruption or integrity violations (never retry)
         IF error.type IN [CONSTRAINT_VIOLATION, DATA_CORRUPTION] THEN
             RETURN ESCALATE_TO_OPERATOR
         END IF
         
-        -- Temporary service degradation
+        -- Temporary service degradation (context-aware)
         IF error.type IN [SERVICE_UNAVAILABLE, RATE_LIMITED] THEN
-            RETURN FALLBACK_TO_CACHE
+            IF context.cache_available THEN
+                RETURN FALLBACK_TO_CACHE
+            ELSE
+                RETURN GRACEFUL_DEGRADATION
+            END IF
+        END IF
+        
+        -- Integration with agent-integration.md errors
+        IF error.type IN [AGENT_SPAWN_FAILED, COORDINATION_TIMEOUT] THEN
+            RETURN GRACEFUL_DEGRADATION
         END IF
         
         -- Unknown or unclassified errors
@@ -268,16 +294,41 @@ CLASS ConsistencyMonitor {
     PRIVATE metrics: MetricsCollector
     
     FUNCTION trackConsistencyWindow(agent_id: String) {
-        -- Measure time between KV write and SQL flush
+        -- Measure time between KV write and SQL flush with null safety
         kv_time = getLastKVWrite(agent_id)
         sql_time = getLastSQLWrite(agent_id)
+        
+        -- Handle missing data gracefully
+        IF kv_time IS NULL OR sql_time IS NULL THEN
+            metrics.incrementCounter("consistency_data_missing", {"agent": agent_id})
+            RETURN
+        END IF
+        
+        -- Ensure operations are from the same logical sequence
+        IF NOT areFromSameOperation(kv_time, sql_time) THEN
+            metrics.incrementCounter("consistency_sequence_mismatch", {"agent": agent_id})
+            RETURN
+        END IF
+        
+        -- Calculate lag ensuring it's non-negative (KV should happen first)
         lag = sql_time - kv_time
+        IF lag < 0 THEN
+            -- Log reverse order as potential issue
+            metrics.incrementCounter("consistency_reverse_order", {"agent": agent_id})
+            lag = 0  -- Treat as synchronous for metrics
+        END IF
         
         metrics.recordGauge("consistency_lag_ms", lag, {"agent": agent_id})
         
+        -- Check for violations with agent-integration.md error types
         IF lag > Duration.millis(200) THEN
             metrics.incrementCounter("consistency_violations")
-            triggerRepairJob(agent_id)
+            triggerRepairJob(agent_id, lag)
+            
+            -- Integrate with agent spawn errors if persistence is blocking
+            IF lag > Duration.seconds(5) THEN
+                notifyAgentIntegrationLayer(agent_id, PERSISTENCE_LAG_CRITICAL)
+            END IF
         END IF
     }
     

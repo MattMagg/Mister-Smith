@@ -2,12 +2,6 @@
 
 [← Back to Core Architecture](./CLAUDE.md) | [Integration Contracts](./integration-contracts.md) | [System Integration →](./system-integration.md)
 
-**Agent**: 19 - Core Architecture Integration Specialist  
-**Mission**: Define comprehensive integration patterns for error handling, events, and dependency injection  
-**Target**: Resolve integration gaps in error handling (45%), event systems, and service dependencies  
-
----
-
 ## Executive Summary
 
 This document provides advanced integration patterns for error handling, event-driven architecture,
@@ -24,59 +18,37 @@ these patterns enable robust cross-component communication, unified error recove
 - Resilience patterns (circuit breakers, retries, fallbacks)
 - Service lifecycle management
 
-**Target Achievement**: Elevate error handling from 45% to 85% compatibility, establish comprehensive event system, and provide complete DI framework.
-
 ## Table of Contents
 
 1. **[Error Handling Integration Patterns](#3-error-handling-integration-patterns)**
    - Unified error hierarchy with recovery strategies
    - Component-specific error types with SystemError integration
    - Error propagation and mapping utilities
+   - [Practical Example: Database Error Recovery](#database-error-recovery-example)
 
 2. **[Event System Integration Patterns](#4-event-system-integration-patterns)**
    - Event-driven architecture integration
    - Core framework events and subscription patterns
    - Event bus implementation with correlation
+   - [Practical Example: Agent Communication](#agent-communication-example)
 
 3. **[Dependency Injection Integration](#5-dependency-injection-integration)**
    - Service registry and dependency resolution
    - Injectable trait and lifecycle management
    - Dependency graph validation and scoped registries
+   - [Practical Example: Service Configuration](#service-configuration-example)
 
-**Related Documents:**
+## Related Documents
 
-- [Integration Contracts and Core Architecture](./integration-contracts.md)
-- [Testing, Roadmap, and Metrics](./integration-implementation.md)
-- [Component Architecture](./component-architecture.md) - Core component design patterns
+- [Integration Contracts](./integration-contracts.md) - Core contracts and interfaces
+- [Component Architecture](./component-architecture.md) - Component design patterns
 - [Async Patterns](./async-patterns.md) - Asynchronous integration patterns
 - [System Integration](./system-integration.md) - System-level integration approaches
 - [Tokio Runtime](./tokio-runtime.md) - Runtime configuration and lifecycle management
 
----
-
-## 🔍 VALIDATION STATUS
-
-**Last Validated**: 2025-07-05  
-**Validator**: Framework Documentation Team  
-**Validation Score**: Pending full validation  
-**Status**: Active Development  
-
-### Implementation Status
-
-- Unified error hierarchy established
-- Event-driven patterns documented
-- Dependency injection framework complete
-- Cross-cutting concerns integrated
-
----
-
 ## 3. Error Handling Integration Patterns
 
-**Addresses**: Error interface compatibility (Agent 14: 45% compatibility) | Data Flow Integrity Validation (Agent 12: 92/100)
-
-### Data Flow Integrity Integration
-
-Based on comprehensive data flow integrity validation (ref: Agent 12), the error handling patterns incorporate robust data flow validation mechanisms:
+The error handling patterns provide a unified approach to error management across all framework components, incorporating data flow validation and recovery strategies.
 
 ### 3.1 Unified Error Hierarchy
 
@@ -781,11 +753,117 @@ impl ErrorRecovery for TransportError {
 }
 ```
 
----
+### Database Error Recovery Example
+
+Here's a practical example of using the error handling patterns for database operations:
+
+```rust
+use std::time::Duration;
+use async_trait::async_trait;
+
+// Practical database service implementation
+pub struct DatabaseService {
+    pool: ConnectionPool,
+    error_propagator: ErrorPropagator,
+    retry_policy: RetryPolicy,
+}
+
+impl DatabaseService {
+    pub async fn execute_with_recovery<T, F>(&self, operation: F) -> Result<T, SystemError>
+    where
+        F: Fn() -> BoxFuture<'static, Result<T, DataError>> + Send + Sync,
+        T: Send + 'static,
+    {
+        let mut attempts = 0;
+        let mut last_error = None;
+        
+        loop {
+            match operation().await {
+                Ok(result) => return Ok(result),
+                Err(e) => {
+                    // Use the error recovery trait to determine strategy
+                    let recovery = e.recovery_strategy();
+                    
+                    match recovery {
+                        RecoveryAction::Retry { delay } => {
+                            if attempts >= e.max_retry_attempts() {
+                                return Err(SystemError::DataPersistence(e));
+                            }
+                            
+                            attempts += 1;
+                            
+                            // Apply backoff strategy
+                            let backoff_delay = match e.backoff_strategy() {
+                                BackoffStrategy::Exponential { initial, factor, max } => {
+                                    let delay = initial * factor.powf(attempts as f64);
+                                    std::cmp::min(delay, max)
+                                }
+                                BackoffStrategy::Fixed { interval } => interval,
+                                _ => delay,
+                            };
+                            
+                            tokio::time::sleep(backoff_delay).await;
+                            last_error = Some(e);
+                            continue;
+                        }
+                        RecoveryAction::Failover { backup_component } => {
+                            // Switch to backup database
+                            self.switch_to_backup(&backup_component).await?;
+                            // Retry operation once with backup
+                            return operation().await
+                                .map_err(|e| SystemError::DataPersistence(e));
+                        }
+                        RecoveryAction::Escalate { to_component } => {
+                            // Log and escalate to monitoring system
+                            self.escalate_error(&e, &to_component).await;
+                            return Err(SystemError::DataPersistence(e));
+                        }
+                        _ => return Err(SystemError::DataPersistence(e)),
+                    }
+                }
+            }
+        }
+    }
+    
+    async fn switch_to_backup(&self, backup_name: &str) -> Result<(), SystemError> {
+        // Implementation for switching to backup database
+        self.pool.switch_to_backup(backup_name).await
+            .map_err(|e| SystemError::DataPersistence(DataError::ConnectionFailed(e.to_string())))
+    }
+    
+    async fn escalate_error(&self, error: &DataError, component: &str) {
+        // Send error details to monitoring component
+        let context = error.context();
+        tracing::error!(
+            target: component,
+            trace_id = %context.trace_id,
+            span_id = %context.span_id,
+            component = %context.component,
+            operation = %context.operation,
+            "Database error escalated: {:?}", error
+        );
+    }
+}
+
+// Example usage
+pub async fn example_database_operation(db: &DatabaseService) -> Result<User, SystemError> {
+    db.execute_with_recovery(|| {
+        Box::pin(async {
+            // Simulated database query
+            let query = "SELECT * FROM users WHERE id = $1";
+            let result = db.pool.query_one(query, &[&user_id]).await
+                .map_err(|e| DataError::QueryFailed(e.to_string()))?;
+            
+            User::from_row(&result)
+                .map_err(|e| DataError::SerializationFailed(e.to_string()))
+        })
+    }).await
+}
+```
 
 ## 4. Event System Integration Patterns
 
-**Addresses**: Missing cross-component communication patterns (Agent 14: Integration testing framework missing)
+The event system provides asynchronous, decoupled communication between components with built-in data flow validation and correlation tracking.
 
 ### 4.1 Event-Driven Architecture Integration
 
@@ -799,21 +877,31 @@ use std::time::Duration;
 use tokio::sync::{broadcast, mpsc, RwLock};
 use uuid::Uuid;
 
-// Type aliases for missing types
-type AgentId = Uuid;
-type HealthStatus = String;
-type SupervisionStrategy = String;
+// Core framework types
+pub type AgentId = Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AgentType {
     System,
     User,
     Background,
+    Specialized(String),
 }
 
-// Placeholder traits that need to be defined elsewhere
-pub trait Transport: Send + Sync {}
-pub trait ConfigProvider: Send + Sync {}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum HealthStatus {
+    Healthy,
+    Degraded { reason: String },
+    Unhealthy { error: String },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SupervisionStrategy {
+    OneForOne,
+    OneForAll,
+    RestForOne,
+    SimpleOneForOne,
+}
 
 // Event error types with data flow validation
 #[derive(Debug, thiserror::Error)]
@@ -1431,11 +1519,177 @@ impl EventCorrelator {
 }
 ```
 
----
+### Agent Communication Example
+
+This example demonstrates how agents use the event system for communication:
+
+```rust
+use std::sync::Arc;
+use tokio::sync::RwLock;
+
+// Agent that processes data and publishes results
+pub struct DataProcessingAgent {
+    id: AgentId,
+    event_bus: Arc<dyn EventBus>,
+    processor: DataProcessor,
+}
+
+#[async_trait]
+impl Agent for DataProcessingAgent {
+    type Input = ProcessingRequest;
+    type Output = ProcessingResult;
+    type Error = AgentError;
+    type Config = ProcessingConfig;
+    
+    async fn process(&self, input: Self::Input) -> Result<Self::Output, Self::Error> {
+        // Process the data
+        let result = self.processor.process(&input.data).await?;
+        
+        // Create processing completed event
+        let event = SystemEvent::Agent(AgentEvent::ProcessingCompleted {
+            agent_id: self.id,
+            task_id: input.task_id,
+            duration: result.processing_time,
+        });
+        
+        // Publish event to notify other agents
+        self.event_bus.publish(event).await
+            .map_err(|e| AgentError::ProcessingError(format!("Failed to publish event: {}", e)))?;
+        
+        // If this is part of a workflow, publish workflow event
+        if let Some(workflow_id) = input.workflow_id {
+            let workflow_event = WorkflowEvent {
+                workflow_id,
+                step: "data_processing".to_string(),
+                status: WorkflowStatus::StepCompleted,
+                metadata: result.metadata.clone(),
+            };
+            
+            self.event_bus.publish(workflow_event).await
+                .map_err(|e| AgentError::ProcessingError(format!("Failed to publish workflow event: {}", e)))?;
+        }
+        
+        Ok(result)
+    }
+}
+
+// Coordinator agent that orchestrates workflow
+pub struct WorkflowCoordinatorAgent {
+    id: AgentId,
+    event_bus: Arc<dyn EventBus>,
+    workflow_state: Arc<RwLock<HashMap<Uuid, WorkflowState>>>,
+}
+
+impl WorkflowCoordinatorAgent {
+    pub async fn start(&self) -> Result<(), AgentError> {
+        // Subscribe to agent events
+        let mut agent_events = self.event_bus.subscribe::<SystemEvent>().await
+            .map_err(|e| AgentError::InitializationFailed(format!("Failed to subscribe: {}", e)))?;
+        
+        // Subscribe to workflow events
+        let mut workflow_events = self.event_bus.subscribe::<WorkflowEvent>().await
+            .map_err(|e| AgentError::InitializationFailed(format!("Failed to subscribe: {}", e)))?;
+        
+        // Handle events concurrently
+        tokio::select! {
+            _ = self.handle_agent_events(agent_events) => {},
+            _ = self.handle_workflow_events(workflow_events) => {},
+        }
+        
+        Ok(())
+    }
+    
+    async fn handle_agent_events(&self, mut events: EventSubscription<SystemEvent>) {
+        while let Some(event) = events.next().await {
+            match event {
+                SystemEvent::Agent(AgentEvent::ProcessingCompleted { agent_id, task_id, .. }) => {
+                    // Update workflow state
+                    let mut state = self.workflow_state.write().await;
+                    if let Some(workflow) = state.values_mut()
+                        .find(|w| w.contains_task(&task_id)) {
+                        workflow.mark_task_completed(task_id);
+                        
+                        // Check if workflow is complete
+                        if workflow.is_complete() {
+                            self.complete_workflow(workflow.id).await;
+                        } else {
+                            // Schedule next task
+                            self.schedule_next_task(workflow).await;
+                        }
+                    }
+                }
+                SystemEvent::Agent(AgentEvent::ProcessingFailed { agent_id, task_id, error }) => {
+                    // Handle failure with retry or escalation
+                    self.handle_task_failure(agent_id, task_id, error).await;
+                }
+                _ => {}
+            }
+        }
+    }
+    
+    async fn schedule_next_task(&self, workflow: &WorkflowState) -> Result<(), AgentError> {
+        if let Some(next_task) = workflow.get_next_task() {
+            // Create request for next agent
+            let request = ProcessingRequest {
+                task_id: next_task.id,
+                workflow_id: Some(workflow.id),
+                data: next_task.data.clone(),
+                priority: workflow.priority,
+            };
+            
+            // Use request-response pattern to assign task
+            let response = self.event_bus.request::<TaskAssignmentRequest, TaskAssignmentResponse>(
+                TaskAssignmentRequest {
+                    task: next_task.clone(),
+                    preferred_agent_type: next_task.agent_type.clone(),
+                },
+                Duration::from_secs(5)
+            ).await?;
+            
+            tracing::info!(
+                "Task {} assigned to agent {}",
+                next_task.id,
+                response.assigned_agent_id
+            );
+        }
+        
+        Ok(())
+    }
+}
+
+// Example workflow event
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowEvent {
+    pub workflow_id: Uuid,
+    pub step: String,
+    pub status: WorkflowStatus,
+    pub metadata: HashMap<String, String>,
+}
+
+impl Event for WorkflowEvent {
+    fn event_type(&self) -> &'static str {
+        "workflow.status"
+    }
+    
+    fn event_id(&self) -> Uuid {
+        Uuid::new_v4()
+    }
+    
+    fn correlation_id(&self) -> Option<Uuid> {
+        Some(self.workflow_id)
+    }
+    
+    fn metadata(&self) -> &EventMetadata {
+        // Implementation details...
+    }
+    
+    // Other trait methods...
+}
+```
 
 ## 5. Dependency Injection Integration
 
-**Addresses**: Shared trait library missing (Agent 14: 65% trait compatibility)
+The dependency injection patterns provide a flexible, type-safe approach to service composition and lifecycle management.
 
 ### 5.1 Service Registry and Dependency Resolution
 
@@ -2282,13 +2536,195 @@ pub struct ExampleAgentConfig {
 }
 ```
 
+### Service Configuration Example
+
+This example demonstrates practical dependency injection for configuring services:
+
+```rust
+use std::sync::Arc;
+use async_trait::async_trait;
+
+// Example: Setting up a complete agent system with DI
+pub async fn setup_agent_system() -> Result<Arc<dyn ServiceRegistry>, DIError> {
+    let registry = DefaultServiceRegistry::new();
+    
+    // Register configuration provider
+    let config_provider = HierarchicalConfig::builder()
+        .add_environment_variables()
+        .add_file("config/base.toml")?
+        .add_file("config/production.toml")?
+        .add_kubernetes_secrets("mister-smith")
+        .build();
+    
+    registry.register(config_provider).await?;
+    
+    // Register transport with factory
+    registry.register_factory::<NatsTransport, _>(NatsTransportFactory::new()).await?;
+    
+    // Register event bus with dependencies
+    registry.register_factory::<DefaultEventBus, _>(EventBusFactory::new()).await?;
+    
+    // Register security services
+    registry.register_factory::<SecurityManager, _>(SecurityManagerFactory::new()).await?;
+    
+    // Register data services
+    registry.register_factory::<DatabaseService, _>(DatabaseServiceFactory::new()).await?;
+    
+    // Register agent services with complex dependencies
+    registry.register_factory::<DataProcessingAgent, _>(
+        DataProcessingAgentFactory::new()
+    ).await?;
+    
+    registry.register_factory::<WorkflowCoordinatorAgent, _>(
+        WorkflowCoordinatorAgentFactory::new()
+    ).await?;
+    
+    // Start all services in dependency order
+    registry.start_services().await?;
+    
+    Ok(Arc::new(registry))
+}
+
+// Factory for transport service
+pub struct NatsTransportFactory {
+    connection_options: ConnectionOptions,
+}
+
+#[async_trait]
+impl ServiceFactory<NatsTransport> for NatsTransportFactory {
+    async fn create(&self, registry: &ServiceRegistry) -> Result<NatsTransport, DIError> {
+        // Resolve configuration dependency
+        let config_provider = registry.resolve::<dyn ConfigProvider>().await?;
+        
+        let nats_config = config_provider.get::<NatsConfig>(
+            &ConfigKey::new("transport", "nats", "connection")
+        ).await
+        .map_err(|e| DIError::ServiceCreationFailed {
+            reason: format!("Failed to load NATS config: {}", e),
+        })?;
+        
+        // Create NATS client with config
+        let client = async_nats::connect_with_options(
+            &nats_config.servers,
+            self.connection_options.clone()
+        ).await
+        .map_err(|e| DIError::ServiceCreationFailed {
+            reason: format!("Failed to connect to NATS: {}", e),
+        })?;
+        
+        // Create JetStream context
+        let jetstream = async_nats::jetstream::new(client.clone());
+        
+        Ok(NatsTransport {
+            client,
+            jetstream,
+            config: nats_config,
+        })
+    }
+}
+
+// Factory for agent with multiple dependencies
+pub struct DataProcessingAgentFactory {
+    agent_id: AgentId,
+}
+
+#[async_trait]
+impl ServiceFactory<DataProcessingAgent> for DataProcessingAgentFactory {
+    async fn create(&self, registry: &ServiceRegistry) -> Result<DataProcessingAgent, DIError> {
+        // Resolve all required dependencies
+        let event_bus = registry.resolve::<dyn EventBus>().await?;
+        let config_provider = registry.resolve::<dyn ConfigProvider>().await?;
+        let database = registry.resolve::<DatabaseService>().await?;
+        let security = registry.resolve::<SecurityManager>().await?;
+        
+        // Load agent-specific configuration
+        let agent_config = config_provider.get::<ProcessingConfig>(
+            &ConfigKey::new("agents", "data_processing", "config")
+                .with_environment("production")
+        ).await?;
+        
+        // Create processor with injected dependencies
+        let processor = DataProcessor::new(
+            database.clone(),
+            security.clone(),
+            agent_config.processing_options.clone(),
+        );
+        
+        let agent = DataProcessingAgent {
+            id: self.agent_id,
+            event_bus,
+            processor,
+            config: agent_config,
+        };
+        
+        Ok(agent)
+    }
+}
+
+// Example: Request-scoped services for HTTP handlers
+pub async fn handle_http_request(
+    registry: Arc<dyn ServiceRegistry>,
+    request: HttpRequest,
+) -> Result<HttpResponse, Error> {
+    // Create request-scoped registry
+    let request_scope = registry.create_scope(&format!("request-{}", request.id)).await?;
+    
+    // Register request-specific services
+    request_scope.register(RequestContext {
+        request_id: request.id,
+        user_id: request.user_id.clone(),
+        trace_id: request.trace_id.clone(),
+    }).await?;
+    
+    // Resolve handler with request-scoped dependencies
+    let handler = request_scope.resolve::<RequestHandler>().await?;
+    
+    // Process request
+    let response = handler.process(request).await?;
+    
+    Ok(response)
+}
+
+// Health check using dependency injection
+pub async fn perform_system_health_check(
+    registry: &dyn ServiceRegistry,
+) -> Result<SystemHealthReport, Error> {
+    let mut report = SystemHealthReport::new();
+    
+    // Check registry health
+    let registry_health = registry.health_status();
+    report.add_component("service_registry", registry_health);
+    
+    // Check all registered services
+    for service_info in registry.list_services() {
+        if service_info.tags.contains(&"healthcheck".to_string()) {
+            // Services tagged for health checking
+            match registry.resolve_named::<dyn HealthCheckable>(&service_info.name).await {
+                Ok(service) => {
+                    let health = service.check_health().await;
+                    report.add_component(&service_info.name, health);
+                }
+                Err(e) => {
+                    report.add_component(
+                        &service_info.name,
+                        ComponentHealth::Unhealthy {
+                            error: format!("Failed to resolve service: {}", e),
+                        }
+                    );
+                }
+            }
+        }
+    }
+    
+    Ok(report)
+}
+```
+
 ---
 
 ## Data Flow Integrity Validation Integration
 
-### Agent 12 Validation Patterns Applied
-
-Based on comprehensive data flow integrity validation (Agent 12: 92/100), the following patterns have been integrated:
+The following patterns integrate data flow validation across all framework components:
 
 #### 1. End-to-End Data Flow Validation (95/100)
 
@@ -2528,43 +2964,33 @@ pub enum DomainError {
 
 ---
 
-## Conclusion
+## Summary
 
-This document establishes comprehensive integration patterns for error handling, event-driven communication,
-and dependency injection within the Mister Smith framework.
-These patterns build upon the foundation provided by the integration contracts to enable robust,
+This document provides comprehensive integration patterns for error handling, event-driven communication,
+and dependency injection within the Mister Smith framework. These patterns enable robust,
 scalable, and maintainable multi-agent systems.
 
-**Key Achievements:**
+### Key Integration Patterns
 
-- Unified error hierarchy with automatic recovery strategies
-- Event-driven architecture supporting publish-subscribe and request-response patterns
-- Complete dependency injection framework with lifecycle management
-- Cross-cutting concerns integration for observability and resilience
+- **Error Handling**: Unified hierarchy with automatic recovery strategies, backoff policies, and data flow validation
+- **Event System**: Asynchronous pub-sub and request-response patterns with correlation tracking
+- **Dependency Injection**: Type-safe service composition with lifecycle management and circular dependency detection
 
-**Related Documentation:**
+### Implementation Requirements
 
-- [Integration Contracts and Core Architecture](./integration-contracts.md) - Foundational specifications
-- [Testing, Roadmap, and Metrics](./integration-implementation.md) - Implementation guidance and validation
-- [Component Architecture](./component-architecture.md) - Core component design patterns
-- [Tokio Runtime](./tokio-runtime.md) - Runtime configuration and lifecycle management
+- Consolidate type definitions in a shared contracts crate
+- Complete event correlation and lifecycle management implementations
+- Implement production-ready error propagation across component boundaries
+- Add comprehensive metrics collection for all integration points
+
+### Related Documentation
+
+- [Integration Contracts](./integration-contracts.md) - Core contracts and interfaces
+- [Component Architecture](./component-architecture.md) - Component design patterns
 - [Async Patterns](./async-patterns.md) - Asynchronous integration patterns
 - [System Integration](./system-integration.md) - System-level integration approaches
-
-**Implementation Notes:**
-
-- Several implementation stubs require completion for production use
-- Type definitions should be consolidated in a shared contracts crate
-- Error types need proper hierarchical organization
-- Event correlation and lifecycle management need full implementation
+- [Tokio Runtime](./tokio-runtime.md) - Runtime configuration
 
 ---
 
-[← Previous: System Integration](system-integration.md) | [↑ Up: Core Architecture](CLAUDE.md) | [Next: Implementation Configuration →](implementation-config.md)
-
----
-
-*Error, Event, and Dependency Injection Patterns v1.0*  
-*Agent 19 - Core Architecture Integration Specialist*  
-*Generated: 2025-07-03*  
-*Target: Establish advanced integration patterns for 85%+ component compatibility*
+[← System Integration](system-integration.md) | [↑ Core Architecture](CLAUDE.md) | [Implementation Configuration →](implementation-config.md)

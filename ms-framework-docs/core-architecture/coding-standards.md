@@ -1,50 +1,32 @@
 # Coding Standards & Conventions
 
-**Agent 16 Deliverable**: Comprehensive coding standards for autonomous agent implementation
-
 ## Overview
 
-This document establishes comprehensive coding standards for the Mister Smith AI Agent Framework.
-These standards ensure consistent, maintainable, and secure code across all framework components,
-enabling autonomous agents to implement features following established patterns and best practices.
+Concrete coding standards for implementing agents in the Mister Smith Framework.
+Focused on Rust best practices, agent-specific patterns, and security requirements.
 
 ---
 
-## 🔍 VALIDATION STATUS
-
-**Last Validated**: 2025-07-05  
-**Validator**: Framework Documentation Team  
-**Validation Score**: Pending full validation  
-**Status**: Active Development  
-
-### Implementation Status
-
-- Core principles and philosophy established
-- Naming conventions documented
-- Error handling patterns defined
-- Testing requirements specified
-
----
 
 ## 1. Core Principles
 
-### 1.1 Framework Philosophy
+### 1.1 Core Requirements
 
-- **Type Safety First**: Leverage Rust's type system to prevent runtime errors
-- **Async by Default**: All I/O operations must be asynchronous using Tokio
-- **Explicit Error Handling**: No `unwrap()` or `panic!()` in production code
-- **Documentation Required**: All public APIs must have comprehensive documentation
-- **Testing Required**: All functionality must be thoroughly tested
-- **Security Conscious**: Validate all inputs and handle resources securely
-- **Performance Aware**: Consider allocation patterns and use appropriate data structures
+- **Type Safety**: Use Rust's type system to prevent runtime errors
+- **Async by Default**: All I/O operations use Tokio async/await
+- **Explicit Error Handling**: No `unwrap()` or `panic!()` in production
+- **Documentation**: All public APIs require rustdoc
+- **Testing**: Minimum 80% coverage with unit and integration tests
+- **Security**: Input validation, resource limits, audit logging
+- **Performance**: Minimize allocations, use `Arc` for shared state
 
-### 1.2 Design Patterns
+### 1.2 Agent Design Patterns
 
-- **Dependency Injection**: Use ServiceRegistry for component composition
-- **RAII Resource Management**: Automatic cleanup through Drop trait
-- **Builder Pattern**: For complex object construction
-- **Strategy Pattern**: For configurable behavior through traits
-- **Observer Pattern**: Event-driven architecture with EventBus
+- **Actor Model**: Agents as isolated actors with message passing
+- **Supervision Trees**: Hierarchical fault tolerance
+- **RAII Resources**: Automatic cleanup via Drop trait
+- **Builder Pattern**: For agent and config construction
+- **Tool Registry**: Dynamic tool registration and discovery
 
 ---
 
@@ -52,18 +34,15 @@ enabling autonomous agents to implement features following established patterns 
 
 ### 2.1 Module Names
 
-Use `snake_case` for module names:
-
 ```rust
 // ✅ Good
-mod async_patterns;
-mod supervision_tree;
-mod runtime_manager;
+mod agent_runtime;
+mod tool_registry;
+mod message_handler;
 
 // ❌ Bad
-mod AsyncPatterns;
-mod supervisionTree;
-mod runtime-manager;
+mod AgentRuntime;
+mod tool-registry;
 ```
 
 ### 2.2 Type Names
@@ -844,48 +823,6 @@ pub enum RuntimeError {
 }
 ```
 
-### 7.5 Safety Documentation
-
-```rust
-impl UnsafeOperations {
-    /// Performs unsafe memory operation with strict safety requirements.
-    ///
-    /// # Safety
-    ///
-    /// This function is unsafe because it directly manipulates raw pointers.
-    /// The caller must ensure:
-    ///
-    /// 1. `ptr` is valid and properly aligned for type `T`
-    /// 2. `ptr` points to an initialized value of type `T`
-    /// 3. No other references to the memory exist during this operation
-    /// 4. The memory is not accessed after this function returns
-    /// 5. `len` accurately represents the number of elements at `ptr`
-    ///
-    /// # Undefined Behavior
-    ///
-    /// This function exhibits undefined behavior if:
-    /// - `ptr` is null or dangling
-    /// - `ptr` is not properly aligned for `T`
-    /// - The memory region `[ptr, ptr + len * size_of::<T>())` is not valid
-    /// - Concurrent access occurs during execution
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// let mut value = 42i32;
-    /// let ptr = &mut value as *mut i32;
-    /// 
-    /// // SAFETY: ptr is valid, aligned, and exclusively owned
-    /// unsafe {
-    ///     let result = unsafe_operation(ptr, 1);
-    ///     assert_eq!(result, 42);
-    /// }
-    /// ```
-    pub unsafe fn unsafe_operation<T>(ptr: *mut T, len: usize) -> T {
-        // Implementation...
-    }
-}
-```
 
 ---
 
@@ -1286,7 +1223,7 @@ pub fn bad_processing(items: Vec<Item>) -> Vec<ProcessedItem> {
 }
 ```
 
-### 11.2 Security Practices (Enhanced from Agent-12 Security Prerequisites)
+### 11.2 Security Practices
 
 **Core Security Implementation Requirements:**
 
@@ -1550,37 +1487,27 @@ impl SecurityEventCorrelator {
 }
 ```
 
-**Security Framework Integration Requirements:**
+**Security Requirements:**
 
 1. **Authentication & Authorization**
-   - Multi-factor authentication (MFA) mandatory for privileged operations
-   - Role-based access control (RBAC) with attribute-based extensions (ABAC)
-   - Session management with secure token handling and expiration
-   - Certificate-based authentication for service-to-service communication
+   - Token-based authentication with expiration
+   - Role-based access control (RBAC) for agent permissions
+   - Certificate validation for agent-to-agent communication
 
-2. **Data Protection & Encryption**
-   - Field-level encryption for PII using AES-256-GCM
-   - TLS 1.3 minimum for all network communications
-   - Key rotation every 90 days with automated lifecycle management
-   - Zero-knowledge encryption for sensitive configuration data
+2. **Data Protection**
+   - TLS 1.3 for all network communications
+   - Encrypt sensitive configuration at rest
+   - Secure credential storage in memory
 
-3. **Audit & Compliance**
-   - Tamper-proof audit logging with blockchain-style hash chains
-   - Real-time security event correlation and threat detection
-   - Automated compliance monitoring (SOC 2, GDPR, ISO 27001)
-   - Forensic-ready log preservation with legal hold capabilities
+3. **Audit & Monitoring**
+   - Log all tool executions with user context
+   - Tamper-resistant audit trail
+   - Rate limiting on API endpoints
 
-4. **Threat Detection & Response**
-   - ML-powered anomaly detection with behavioral baseline learning
-   - Automated incident response with playbook execution
-   - Security orchestration and automated response (SOAR) integration
-   - Continuous vulnerability scanning with automated remediation
-
-5. **Operational Security**
-   - 24/7 security operations center (SOC) integration
-   - Penetration testing automation with CI/CD pipeline integration
-   - Security configuration validation and drift detection
-   - Business continuity planning with <4 hour recovery objectives
+4. **Input Validation**
+   - Validate all external inputs against schemas
+   - Sanitize tool parameters
+   - Enforce resource limits (memory, CPU, execution time)
 
 ### 11.3 Resource Management
 
@@ -1626,97 +1553,119 @@ impl<R: Resource> Deref for ResourceGuard<R> {
 
 ---
 
-## 12. Templates & Examples
+## 12. Agent Implementation Examples
 
-### 12.1 New Module Template
+### 12.1 Agent Implementation Template
 
 ```rust
-//! Module Name
-//! 
-//! Brief description of module purpose and responsibilities.
-//! 
-//! # Examples
-//! 
-//! ```rust
-//! use mister_smith::module::{ModuleManager, ModuleConfig};
-//! 
-//! let config = ModuleConfig::default();
-//! let manager = ModuleManager::new(config)?;
-//! ```
-
 use crate::{
-    errors::{SystemError, SystemResult},
-    config::Configuration,
+    actors::{Actor, ActorRef, ActorResult},
+    tools::{Tool, ToolRegistry},
+    supervision::{SupervisionStrategy, Supervisor},
 };
-
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-// Re-exports
-pub use self::{
-    manager::ModuleManager,
-    config::{ModuleConfig, ModuleSettings},
-    error::{ModuleError, ModuleResult},
-};
-
-// Internal modules
-mod manager;
-mod config;
-mod error;
-
-#[cfg(test)]
-mod tests;
-
-/// Main module component
-pub struct ModuleManager {
-    config: ModuleConfig,
-    state: Arc<RwLock<ModuleState>>,
+/// Example agent implementation
+pub struct ExampleAgent {
+    id: AgentId,
+    tool_registry: Arc<ToolRegistry>,
+    state: Arc<RwLock<AgentState>>,
 }
 
-impl ModuleManager {
-    /// Creates a new module manager
-    pub fn new(config: ModuleConfig) -> ModuleResult<Self> {
-        config.validate()?;
+impl ExampleAgent {
+    pub fn new(id: AgentId, tool_registry: Arc<ToolRegistry>) -> Self {
+        Self {
+            id,
+            tool_registry,
+            state: Arc::new(RwLock::new(AgentState::Initializing)),
+        }
+    }
+    
+    /// Execute a tool with proper error handling
+    async fn execute_tool(&self, tool_id: &str, params: Value) -> AgentResult<Value> {
+        // Validate tool exists
+        let tool = self.tool_registry
+            .get_tool(tool_id)
+            .ok_or_else(|| AgentError::ToolNotFound(tool_id.to_string()))?;
         
-        Ok(Self {
-            config,
-            state: Arc::new(RwLock::new(ModuleState::Uninitialized)),
-        })
+        // Check permissions
+        if !self.has_permission(tool_id).await? {
+            return Err(AgentError::PermissionDenied);
+        }
+        
+        // Execute with timeout
+        let result = timeout(
+            Duration::from_secs(30),
+            tool.execute(params)
+        ).await
+        .map_err(|_| AgentError::ToolTimeout)?;
+        
+        result
     }
 }
 
-#[derive(Debug, Clone)]
-enum ModuleState {
-    Uninitialized,
-    Running,
-    Stopped,
+#[async_trait]
+impl Actor for ExampleAgent {
+    type Message = AgentMessage;
+    type Error = AgentError;
+    
+    async fn handle_message(&mut self, msg: Self::Message) -> ActorResult<()> {
+        match msg {
+            AgentMessage::ExecuteTool { tool_id, params, respond_to } => {
+                let result = self.execute_tool(&tool_id, params).await;
+                let _ = respond_to.send(result);
+            }
+            AgentMessage::Shutdown => {
+                self.shutdown().await?;
+            }
+        }
+        Ok(())
+    }
 }
 ```
 
-### 12.2 Async Trait Template
+### 12.2 Tool Implementation Template
 
 ```rust
 #[async_trait]
-pub trait ComponentName: Send + Sync + 'static {
-    /// Associated types with bounds
-    type Config: Send + Sync + Clone + 'static;
-    type Error: Send + std::error::Error + 'static;
-    type Output: Send + 'static;
+impl Tool for CustomTool {
+    fn id(&self) -> &str {
+        "custom_tool"
+    }
     
-    /// Initialize the component
-    async fn initialize(&mut self, config: Self::Config) -> Result<(), Self::Error>;
+    fn schema(&self) -> &ToolSchema {
+        &self.schema
+    }
     
-    /// Process input and return output
-    async fn process(&self, input: Input) -> Result<Self::Output, Self::Error>;
-    
-    /// Check component health
-    fn health_check(&self) -> HealthStatus;
-    
-    /// Get component identifier
-    fn component_id(&self) -> ComponentId {
-        ComponentId::new()
+    async fn execute(
+        &self,
+        params: Value,
+        context: &ExecutionContext,
+    ) -> Result<Value, ToolError> {
+        // Validate parameters against schema
+        self.schema.validate(&params)?;
+        
+        // Extract typed parameters
+        let input: CustomInput = serde_json::from_value(params)
+            .map_err(|e| ToolError::InvalidParams(e.to_string()))?;
+        
+        // Check rate limits
+        self.rate_limiter.check(context.user_id()).await?;
+        
+        // Execute with monitoring
+        let start = Instant::now();
+        let result = self.execute_internal(input).await?;
+        
+        // Record metrics
+        context.metrics().record_execution(
+            self.id(),
+            start.elapsed(),
+            result.is_ok()
+        );
+        
+        Ok(serde_json::to_value(result)?)
     }
 }
 ```
@@ -1805,15 +1754,62 @@ mod tests {
 
 ---
 
-## Summary
+## 13. Agent Implementation Checklist
 
-These coding standards provide comprehensive guidelines for implementing consistent, maintainable, and secure code in the Mister Smith AI Agent Framework. Key principles include:
+### Agent Development Checklist
 
-1. **Type Safety**: Explicit constraints and proper error handling
-2. **Async Patterns**: Tokio-based async/await with proper resource management
-3. **Documentation**: Comprehensive rustdoc with examples and error documentation
-4. **Testing**: Thorough test coverage with appropriate async testing patterns
-5. **Architecture**: Dependency injection and established design patterns
-6. **Security**: Input validation and secure resource management
+- [ ] **Architecture**
+  - [ ] Implement Actor trait for message handling
+  - [ ] Define message types with proper error variants
+  - [ ] Set up supervision strategy
+  - [ ] Configure health checks
 
-Following these standards ensures that autonomous agents can implement features correctly and consistently across the entire framework.
+- [ ] **Error Handling**
+  - [ ] Define agent-specific error types
+  - [ ] No `unwrap()` or `panic!()` in code
+  - [ ] Proper error propagation with `?`
+  - [ ] Timeout handling for all async operations
+
+- [ ] **Resource Management**
+  - [ ] Use Arc for shared state
+  - [ ] Implement Drop for cleanup
+  - [ ] Rate limiting on tool executions
+  - [ ] Memory limits enforced
+
+- [ ] **Security**
+  - [ ] Input validation on all external data
+  - [ ] Permission checks before tool execution
+  - [ ] Audit logging for all actions
+  - [ ] Secure credential handling
+
+- [ ] **Testing**
+  - [ ] Unit tests for all public methods
+  - [ ] Integration tests for actor communication
+  - [ ] Mock tool registry for testing
+  - [ ] Error condition coverage
+
+- [ ] **Documentation**
+  - [ ] Rustdoc on all public APIs
+  - [ ] Examples in documentation
+  - [ ] Error conditions documented
+  - [ ] Configuration options explained
+
+### Code Review Checklist
+
+- [ ] **Rust Best Practices**
+  - [ ] Proper use of lifetimes and borrowing
+  - [ ] No unnecessary clones
+  - [ ] Efficient data structures chosen
+  - [ ] Const/static used appropriately
+
+- [ ] **Async Safety**
+  - [ ] No blocking operations in async context
+  - [ ] Proper cancellation handling
+  - [ ] Resource cleanup on drop
+  - [ ] Timeout on all network operations
+
+- [ ] **Agent Patterns**
+  - [ ] Message passing instead of shared mutable state
+  - [ ] Supervision hierarchy properly configured
+  - [ ] Tools registered with appropriate permissions
+  - [ ] Health checks return accurate status

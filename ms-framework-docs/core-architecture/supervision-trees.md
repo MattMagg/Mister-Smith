@@ -6,25 +6,37 @@
 
 ## Overview
 
-**⚠️ IMPLEMENTATION STATUS: NOT IMPLEMENTED**  
-**Technical Readiness: 0%** - Contains only pseudocode specifications  
-**Production Safety: CRITICAL BLOCKER** - No executable Rust implementation exists  
-**Team Omega Validation**: ✅ CONFIRMED CRITICAL GAP #2  
-**Timeline to Production**: 10 weeks, CRITICAL priority  
+**STATUS**: SPECIFICATION DOCUMENT - Pseudocode patterns for future implementation
 
-The Supervision Tree Architecture **specifies** (but does not implement) a hierarchical fault-tolerance system for the Mister Smith framework.
-This module defines the core supervision patterns intended to ensure system reliability through structured error handling and recovery strategies.
+The Supervision Tree Architecture defines hierarchical fault-tolerance patterns for the Mister Smith framework. This specification outlines:
 
-**CRITICAL WARNING**: The current file contains only pseudocode and architectural specifications.
-No actual Rust implementation exists, meaning the framework has NO fault tolerance capabilities in its current state.
+- Tree-based supervision hierarchies
+- Failure isolation boundaries  
+- Recovery strategies
+- Hub-and-spoke routing patterns
 
-### Team Omega Assessment (2025-07-05)
+### Architecture Diagram
 
-- **Current State**: Pseudocode patterns only
-- **Required State**: Production-ready Rust implementation
-- **Impact**: Blocks all agent orchestration and fault tolerance
-- **Dependencies**: Required by all 15 specialized agent domains
-- **Resource Requirement**: 2 senior Rust developers, 10 weeks
+```
+                    ┌─────────────────┐
+                    │ Root Supervisor │
+                    │   (OneForAll)   │
+                    └────────┬────────┘
+                             │
+            ┌────────────────┴────────────────┐
+            │                                 │
+    ┌───────▼────────┐               ┌───────▼────────┐
+    │Agent Supervisor│               │Agent Supervisor│
+    │  (OneForOne)   │               │  (OneForOne)   │
+    └───────┬────────┘               └───────┬────────┘
+            │                                 │
+      ┌─────┴─────┬──────┐             ┌─────┴─────┬──────┐
+      │           │      │             │           │      │
+  ┌───▼──┐  ┌────▼──┐ ┌─▼──┐     ┌───▼──┐  ┌────▼──┐ ┌─▼──┐
+  │Agent │  │Agent  │ │... │     │Agent │  │Agent  │ │... │
+  │Worker│  │Worker │ │    │     │Worker│  │Worker │ │    │
+  └──────┘  └───────┘ └────┘     └──────┘  └───────┘ └────┘
+```
 
 ## Document Cross-References
 
@@ -49,20 +61,11 @@ No actual Rust implementation exists, meaning the framework has NO fault toleran
 6. [Cross-References](#technical-cross-references)
 7. [Integration with Component Architecture](#integration-with-component-architecture)
 
-## 🔍 VALIDATION STATUS
+## Implementation Notes
 
-**Last Validated**: 2025-07-05  
-**Validator**: Framework Documentation Team  
-**Validation Score**: 0% - NOT IMPLEMENTED  
-**Status**: CRITICAL BLOCKER - Pseudocode Only  
-
-### Implementation Status
-
-- ⚠️ NO RUST IMPLEMENTATION EXISTS
-- Pseudocode specifications provided
-- Architecture patterns defined
-- Required by all agent domains
-- 10 weeks to production readiness
+- Language: Pseudocode (requires Rust translation)
+- Async Runtime: Tokio (when implemented)
+- Key Dependencies: Arc, Mutex, RwLock for thread safety
 
 ## Core Concepts
 
@@ -87,48 +90,49 @@ See [Component Architecture - Event-Driven Architecture](component-architecture.
 
 ---
 
-*⚠️ TECHNICAL ACCURACY NOTE: Contrary to the statement above, NO concrete Rust implementations exist.
-All code in this file is pseudocode only.
-The supervision tree functionality is NOT implemented and requires complete development before the framework can provide any fault tolerance.*
-
-## [Additional Sections Abbreviated]
-
-*The remaining sections (Supervision Tree, Event System, Resource Management, etc.) follow the same implementation pattern shown above, with all pseudocode transformed to concrete Rust code.*
+**Note**: This specification defines supervision tree patterns for the Mister Smith framework. All code examples represent design patterns for future implementation.
 
 ### 3.1 Supervisor Hierarchy
 
-**⚠️ IMPLEMENTATION STATUS: PSEUDOCODE ONLY - NOT IMPLEMENTED**
+The supervisor hierarchy implements a flexible tree structure for managing agent lifecycles and failure recovery. The hub-and-spoke pattern enables centralized routing while maintaining clear supervision boundaries.
 
-The supervisor hierarchy **intends to implement** a flexible tree structure for managing agent lifecycles and failure recovery.
-The hub-and-spoke pattern is designed to enable centralized routing while maintaining clear supervision boundaries.
-
-**REQUIRED FOR IMPLEMENTATION**:
-
-- Convert all pseudocode to actual Rust async trait implementations
-- Implement concrete types for SupervisionTree, Supervisor trait, and SupervisorNode
-- Add error boundary specifications
-- Implement actual fault detection and recovery mechanisms
+```
+    Hub-and-Spoke Routing Pattern:
+    
+    ┌────────────┐
+    │ Supervisor │◄──── Central routing decisions
+    │    (Hub)   │
+    └─────┬──────┘
+          │
+    ┌─────┴─────┬──────┬──────┬──────┐
+    │           │      │      │      │
+    ▼           ▼      ▼      ▼      ▼
+  Agent1     Agent2  Agent3  Agent4  Agent5
+  (Spoke)    (Spoke) (Spoke) (Spoke) (Spoke)
+```
 
 ```rust
-STRUCT SupervisionTree {
+// Core supervision tree structure
+struct SupervisionTree {
     root_supervisor: RootSupervisor,
     node_registry: Arc<RwLock<HashMap<NodeId, SupervisorNode>>>,
     failure_detector: FailureDetector,
     restart_policies: HashMap<NodeType, RestartPolicy>
 }
 
-TRAIT Supervisor {
-    TYPE Child
+// Supervisor trait definition with async methods
+trait Supervisor {
+    type Child;
     
-    ASYNC FUNCTION supervise(&self, children: Vec<Self::Child>) -> SupervisionResult
-    FUNCTION supervision_strategy() -> SupervisionStrategy
-    FUNCTION restart_policy() -> RestartPolicy
-    FUNCTION escalation_policy() -> EscalationPolicy
+    async fn supervise(&self, children: Vec<Self::Child>) -> SupervisionResult;
+    fn supervision_strategy() -> SupervisionStrategy;
+    fn restart_policy() -> RestartPolicy;
+    fn escalation_policy() -> EscalationPolicy;
     
-    // Hub-and-Spoke pattern with central routing logic
-    ASYNC FUNCTION route_task(&self, task: Task) -> AgentId {
-        // Central routing logic
-        MATCH task.task_type {
+    // Hub-and-Spoke pattern: central routing logic
+    async fn route_task(&self, task: Task) -> AgentId {
+        // Central routing decision based on task type
+        match task.task_type {
             TaskType::Research => self.find_agent("researcher"),
             TaskType::Code => self.find_agent("coder"),
             TaskType::Analysis => self.find_agent("analyst"),
@@ -137,7 +141,8 @@ TRAIT Supervisor {
     }
 }
 
-STRUCT SupervisorNode {
+// Supervisor node managing child processes
+struct SupervisorNode {
     node_id: NodeId,
     node_type: NodeType,
     children: Vec<ChildRef>,
@@ -146,133 +151,181 @@ STRUCT SupervisorNode {
     metrics: SupervisionMetrics
 }
 
-IMPL SupervisorNode {
-    ASYNC FUNCTION handle_child_failure(&self, child_id: ChildId, error: ChildError) -> SupervisionDecision {
-        strategy = self.supervision_strategy()
+impl SupervisorNode {
+    // Handle child process failures based on supervision strategy
+    async fn handle_child_failure(&self, child_id: ChildId, error: ChildError) -> SupervisionDecision {
+        let strategy = self.supervision_strategy();
         
-        MATCH strategy {
+        match strategy {
             SupervisionStrategy::OneForOne => {
-                self.restart_child(child_id).await?
-                RETURN SupervisionDecision::Handled
+                // Restart only the failed child
+                self.restart_child(child_id).await?;
+                SupervisionDecision::Handled
             },
             SupervisionStrategy::OneForAll => {
-                self.restart_all_children().await?
-                RETURN SupervisionDecision::Handled
+                // Restart all children when one fails
+                self.restart_all_children().await?;
+                SupervisionDecision::Handled
             },
             SupervisionStrategy::RestForOne => {
-                self.restart_child_and_siblings(child_id).await?
-                RETURN SupervisionDecision::Handled
+                // Restart failed child and all started after it
+                self.restart_child_and_siblings(child_id).await?;
+                SupervisionDecision::Handled
             },
             SupervisionStrategy::Escalate => {
-                RETURN SupervisionDecision::Escalate(error)
+                // Propagate failure to parent supervisor
+                SupervisionDecision::Escalate(error)
             }
         }
     }
     
-    ASYNC FUNCTION restart_child(&self, child_id: ChildId) -> Result<()> {
-        child_ref = self.children.iter().find(|c| c.id == child_id)?
-        old_child = child_ref.stop().await?
+    // Restart a single child process with policy enforcement
+    async fn restart_child(&self, child_id: ChildId) -> Result<()> {
+        let child_ref = self.children.iter().find(|c| c.id == child_id)?;
+        let old_child = child_ref.stop().await?;
         
-        restart_policy = self.restart_policy()
-        IF restart_policy.should_restart(&old_child.failure_history) {
-            new_child = child_ref.start_new().await?
-            self.children.push(new_child)
-            RETURN Ok(())
+        let restart_policy = self.restart_policy();
+        if restart_policy.should_restart(&old_child.failure_history) {
+            let new_child = child_ref.start_new().await?;
+            self.children.push(new_child);
+            Ok(())
+        } else {
+            Err(SupervisionError::RestartLimitExceeded)
         }
-        
-        RETURN Err(SupervisionError::RestartLimitExceeded)
     }
 }
 ```
 
 #### Supervision Strategies
 
-The framework supports multiple supervision strategies:
+```
+Strategy Decision Tree:
 
-1. **OneForOne**: Only restart the failed child
-2. **OneForAll**: Restart all children when one fails
-3. **RestForOne**: Restart the failed child and all children started after it
-4. **Escalate**: Propagate the failure to the parent supervisor
+                  Failure Detected
+                        |
+                        v
+              ┌─────────────────────┐
+              │ Supervision Strategy│
+              └─────────┬───────────┘
+                        │
+    ┌─────────┬─────────┼─────────┬──────────┐
+    │         │         │         │          │
+    v         v         v         v          │
+OneForOne OneForAll RestForOne Escalate     │
+    │         │         │         │          │
+    v         v         v         v          │
+Restart   Restart   Restart   Propagate     │
+Failed    All       Failed+    to Parent    │
+Child     Children  Siblings                 │
+```
 
-#### Implementation Notes
-
-- All supervisors implement the `Supervisor` trait
-- Task routing follows the hub-and-spoke pattern for centralized control
-- Restart policies are configurable per node type
-- Metrics collection is built into every supervisor node
+| Strategy | Action | Use Case |
+|----------|--------|----------|
+| **OneForOne** | Restart only failed child | Independent workers |
+| **OneForAll** | Restart all children | Tightly coupled processes |
+| **RestForOne** | Restart failed + younger siblings | Ordered dependencies |
+| **Escalate** | Propagate to parent supervisor | Critical failures |
 
 ### 3.2 Failure Detection and Recovery
 
 The failure detection system uses advanced algorithms to quickly identify and respond to system failures while minimizing false positives.
 
 ```rust
-STRUCT FailureDetector {
+// Failure detection with adaptive algorithms
+struct FailureDetector {
     heartbeat_interval: Duration,
     failure_threshold: u32,
     monitored_nodes: Arc<RwLock<HashMap<NodeId, NodeHealth>>>,
     phi_accrual_detector: PhiAccrualFailureDetector
 }
 
-IMPL FailureDetector {
-    ASYNC FUNCTION monitor_node(&self, node_id: NodeId) -> Result<()> {
-        LOOP {
-            tokio::time::sleep(self.heartbeat_interval).await
+impl FailureDetector {
+    // Monitor node health using adaptive failure detection
+    async fn monitor_node(&self, node_id: NodeId) -> Result<()> {
+        loop {
+            // Wait for next heartbeat interval
+            tokio::time::sleep(self.heartbeat_interval).await;
             
-            heartbeat_result = self.send_heartbeat(node_id).await
-            phi_value = self.phi_accrual_detector.phi(node_id, heartbeat_result.timestamp)
+            // Send heartbeat and calculate phi value
+            let heartbeat_result = self.send_heartbeat(node_id).await;
+            let phi_value = self.phi_accrual_detector.phi(
+                node_id, 
+                heartbeat_result.timestamp
+            );
             
-            IF phi_value > CONFIGURABLE_THRESHOLD {
-                self.report_failure(node_id, FailureReason::HeartbeatTimeout).await?
+            // Check if phi exceeds failure threshold
+            if phi_value > CONFIGURABLE_THRESHOLD {
+                self.report_failure(
+                    node_id, 
+                    FailureReason::HeartbeatTimeout
+                ).await?;
             }
             
-            IF self.should_stop_monitoring(node_id) {
-                BREAK
+            // Check if monitoring should stop
+            if self.should_stop_monitoring(node_id) {
+                break;
             }
         }
         
-        RETURN Ok(())
+        Ok(())
     }
     
-    ASYNC FUNCTION report_failure(&self, node_id: NodeId, reason: FailureReason) -> Result<()> {
-        failure_event = FailureEvent::new(node_id, reason, Instant::now())
+    // Report detected failures to supervision tree
+    async fn report_failure(
+        &self, 
+        node_id: NodeId, 
+        reason: FailureReason
+    ) -> Result<()> {
+        let failure_event = FailureEvent::new(
+            node_id, 
+            reason, 
+            Instant::now()
+        );
         
-        supervision_tree = self.get_supervision_tree()
-        supervision_tree.handle_node_failure(failure_event).await?
+        let supervision_tree = self.get_supervision_tree();
+        supervision_tree.handle_node_failure(failure_event).await?;
         
-        RETURN Ok(())
+        Ok(())
     }
 }
 
-STRUCT CircuitBreaker {
+// Circuit breaker for preventing cascading failures
+struct CircuitBreaker {
     state: Arc<Mutex<CircuitState>>,
     failure_threshold: u32,
     timeout: Duration,
     half_open_max_calls: u32
 }
 
-IMPL CircuitBreaker {
-    ASYNC FUNCTION call<F, R>(&self, operation: F) -> Result<R>
-    WHERE F: Future<Output = Result<R>> {
-        state_guard = self.state.lock().await
+impl CircuitBreaker {
+    // Execute operation with circuit breaker protection
+    async fn call<F, R>(&self, operation: F) -> Result<R>
+    where 
+        F: Future<Output = Result<R>> 
+    {
+        let state_guard = self.state.lock().await;
         
-        MATCH *state_guard {
+        match *state_guard {
             CircuitState::Closed => {
-                drop(state_guard)
-                result = operation.await
-                self.record_result(&result).await
-                RETURN result
+                // Normal operation - allow call
+                drop(state_guard);
+                let result = operation.await;
+                self.record_result(&result).await;
+                result
             },
             CircuitState::Open => {
-                RETURN Err(CircuitBreakerError::Open)
+                // Circuit open - fail fast
+                Err(CircuitBreakerError::Open)
             },
             CircuitState::HalfOpen => {
-                IF self.can_attempt_call() {
-                    drop(state_guard)
-                    result = operation.await
-                    self.record_half_open_result(&result).await
-                    RETURN result
-                } ELSE {
-                    RETURN Err(CircuitBreakerError::HalfOpenLimitExceeded)
+                // Testing recovery - limited calls allowed
+                if self.can_attempt_call() {
+                    drop(state_guard);
+                    let result = operation.await;
+                    self.record_half_open_result(&result).await;
+                    result
+                } else {
+                    Err(CircuitBreakerError::HalfOpenLimitExceeded)
                 }
             }
         }
@@ -282,69 +335,133 @@ IMPL CircuitBreaker {
 
 #### Phi Accrual Failure Detector
 
-The phi accrual failure detector provides:
+```
+Phi Value Calculation:
 
-- Adaptive failure detection based on network conditions
-- Configurable sensitivity through phi threshold
-- Reduced false positives compared to traditional timeout-based detection
+    Time Since Last Heartbeat
+            │
+            v
+    ┌─────────────┐
+    │ Phi Function │
+    └──────┬──────┘
+            │
+            v
+    Phi = -log10(1 - CDF(time))
+            │
+            v
+    ┌─────────────┐
+    │   Threshold  │
+    │  Comparison  │
+    └─────┬──────┘
+            │
+      Phi > Φ ?
+            │
+    ┌───────▼───────┐
+    │ Node Failed?  │
+    └───────────────┘
+```
 
-#### Circuit Breaker Pattern
+**Key Features**:
+- Adaptive to network conditions
+- Configurable sensitivity (Φ threshold)
+- Minimizes false positives
 
-The circuit breaker prevents cascading failures by:
+#### Circuit Breaker State Machine
 
-- **Closed State**: Normal operation, all calls pass through
-- **Open State**: Calls fail immediately without attempting the operation
-- **Half-Open State**: Limited calls allowed to test recovery
+```
+         ┌──────────┐
+    ┌────┤  CLOSED  ├────┐
+    │    └─────┬────┘    │
+    │         │           │
+    │    Failures > N     │
+    │         │           │
+    │         v           │
+    │    ┌──────────┐    │
+    │    │   OPEN   │    │ Success
+    │    └─────┬────┘    │
+    │         │           │
+    │    Timeout Elapsed  │
+    │         │           │
+    │         v           │
+    │    ┌──────────┐    │
+    └────┤HALF-OPEN ├────┘
+         └──────────┘
+              │
+         Failure
+              │
+              v
+          [OPEN]
+```
+
+| State | Behavior | Transition Trigger |
+|-------|----------|-----------------|
+| **Closed** | Allow all calls | Failure threshold exceeded |
+| **Open** | Fail fast | Timeout elapsed |
+| **Half-Open** | Limited test calls | Success or failure |
 
 ## Error Boundary and Recovery Patterns
 
 ### Error Type Taxonomy
 
 ```rust
-// Comprehensive error classification system
-ENUM ErrorCategory {
-    Transient {           // Temporary failures
+// Error classification for targeted recovery strategies
+enum ErrorCategory {
+    // Temporary failures that may resolve
+    Transient { 
         retry_able: bool,
         expected_duration: Option<Duration>
     },
-    Systematic {          // Persistent failures
+    // Persistent failures requiring intervention
+    Systematic { 
         scope: ErrorScope,
         severity: Severity
     },
-    Resource {            // Resource-related failures
+    // Resource exhaustion or limits
+    Resource { 
         resource_type: ResourceType,
         exhausted: bool
     },
-    Byzantine {           // Malicious or corrupted behavior
+    // Malicious or corrupted behavior
+    Byzantine { 
         trust_level: f64,
         quarantine_required: bool
     },
-    NetworkPartition {    // Split-brain scenarios
+    // Network split-brain scenarios
+    NetworkPartition { 
         partition_id: PartitionId,
         affected_nodes: Vec<NodeId>
     }
 }
 
-STRUCT ErrorBoundary {
+// Error boundary for fault isolation
+struct ErrorBoundary {
     error_handlers: HashMap<ErrorCategory, Box<dyn ErrorHandler>>,
     propagation_rules: PropagationRules,
     recovery_strategies: HashMap<ErrorCategory, RecoveryStrategy>
 }
 
-IMPL ErrorBoundary {
-    FUNCTION contains_error(&self, error: &Error) -> ContainmentDecision {
-        category = self.classify_error(error)
-        handler = self.error_handlers.get(&category)?
+impl ErrorBoundary {
+    // Determine how to contain and handle errors
+    fn contains_error(&self, error: &Error) -> ContainmentDecision {
+        let category = self.classify_error(error);
+        let handler = self.error_handlers.get(&category)?;
         
-        MATCH handler.handle(error) {
-            HandleResult::Contained => ContainmentDecision::Stop,
+        match handler.handle(error) {
+            HandleResult::Contained => {
+                // Error handled locally
+                ContainmentDecision::Stop
+            },
             HandleResult::NeedsRecovery(strategy) => {
-                self.initiate_recovery(strategy, error)
+                // Initiate recovery process
+                self.initiate_recovery(strategy, error);
                 ContainmentDecision::StopAfterRecovery
             },
-            HandleResult::Propagate => ContainmentDecision::Propagate(
-                self.propagation_rules.transform(error)
-            )
+            HandleResult::Propagate => {
+                // Transform and escalate error
+                ContainmentDecision::Propagate(
+                    self.propagation_rules.transform(error)
+                )
+            }
         }
     }
 }
@@ -353,90 +470,128 @@ IMPL ErrorBoundary {
 ### Recovery Coordination
 
 ```rust
-STRUCT RecoveryCoordinator {
+// Coordinates multi-node recovery operations
+struct RecoveryCoordinator {
     active_recoveries: Arc<RwLock<HashMap<RecoveryId, RecoverySession>>>,
     recovery_graph: DependencyGraph,
     state_manager: StateManager
 }
 
-IMPL RecoveryCoordinator {
-    ASYNC FUNCTION coordinate_multi_node_recovery(
+impl RecoveryCoordinator {
+    // Coordinate recovery of multiple failed nodes
+    async fn coordinate_multi_node_recovery(
         &self, 
         failed_nodes: Vec<NodeId>
     ) -> RecoveryResult {
-        // Build recovery dependency graph
-        recovery_plan = self.build_recovery_plan(failed_nodes)
+        // Build dependency-aware recovery plan
+        let recovery_plan = self.build_recovery_plan(failed_nodes);
         
-        // Execute recovery in topological order
-        FOR stage IN recovery_plan.stages {
-            futures = stage.nodes.iter().map(|node| {
+        // Execute recovery stages in topological order
+        for stage in recovery_plan.stages {
+            let futures = stage.nodes.iter().map(|node| {
                 self.recover_node_with_verification(node)
-            })
+            });
             
-            results = join_all(futures).await
+            let results = join_all(futures).await;
             
-            // Verify stage completion
-            IF !self.verify_stage_health(stage, results) {
-                RETURN RecoveryResult::PartialFailure(
+            // Verify stage completed successfully
+            if !self.verify_stage_health(stage, results) {
+                return RecoveryResult::PartialFailure(
                     self.rollback_incomplete_stage(stage).await
-                )
+                );
             }
         }
         
-        RETURN RecoveryResult::Success
+        RecoveryResult::Success
     }
     
-    ASYNC FUNCTION recover_node_with_verification(&self, node: &NodeId) -> Result<()> {
-        // Save current state for potential rollback
-        checkpoint = self.state_manager.checkpoint(node).await?
+    // Recover node with checkpoint and verification
+    async fn recover_node_with_verification(&self, node: &NodeId) -> Result<()> {
+        // Create checkpoint for potential rollback
+        let checkpoint = self.state_manager.checkpoint(node).await?;
         
         // Attempt recovery
-        recovery_result = self.execute_recovery(node).await
+        let recovery_result = self.execute_recovery(node).await;
         
-        // Verify recovery success
-        health_check = self.perform_health_check(node).await
+        // Verify node is healthy after recovery
+        let health_check = self.perform_health_check(node).await;
         
-        IF health_check.is_healthy() {
-            self.state_manager.commit_checkpoint(checkpoint).await
-            RETURN Ok(())
+        if health_check.is_healthy() {
+            // Commit successful recovery
+            self.state_manager.commit_checkpoint(checkpoint).await;
+            Ok(())
+        } else {
+            // Rollback to checkpoint on failure
+            self.state_manager.rollback_to_checkpoint(checkpoint).await?;
+            Err(RecoveryError::VerificationFailed)
         }
-        
-        // Recovery failed, attempt rollback
-        self.state_manager.rollback_to_checkpoint(checkpoint).await?
-        RETURN Err(RecoveryError::VerificationFailed)
     }
 }
 ```
 
 ### State Reconstruction
 
+```
+State Recovery Flow:
+
+    ┌───────────────────┐
+    │ State Reconstruction │
+    └─────────┬─────────┘
+                │
+    ┌───────────▼───────────┐
+    │ Gather from Sources │
+    └───────────┬───────────┘
+                │
+        ┌───────┼───────┬────────┐
+        │       │       │        │
+    [Source1][Source2][Source3][Event Log]
+        │       │       │        │
+        └───────┼───────┴────────┘
+                │
+    ┌───────────▼───────────┐
+    │ >= 3 Sources Found? │
+    └───────┬───────┬─────┘
+            │ Yes    │ No
+            v        v
+    [BFT Consensus] [Highest Reliability]
+```
+
 ```rust
-STRUCT StateReconstructor {
+// State reconstruction from multiple sources
+struct StateReconstructor {
     state_sources: Vec<Box<dyn StateSource>>,
     consistency_checker: ConsistencyChecker
 }
 
-IMPL StateReconstructor {
-    ASYNC FUNCTION reconstruct_state(&self, node_id: NodeId) -> Result<NodeState> {
-        // Gather state from multiple sources
-        state_candidates = Vec::new()
+impl StateReconstructor {
+    // Reconstruct node state with Byzantine fault tolerance
+    async fn reconstruct_state(&self, node_id: NodeId) -> Result<NodeState> {
+        // Gather state from all available sources
+        let mut state_candidates = Vec::new();
         
-        FOR source IN &self.state_sources {
-            IF let Some(state) = source.retrieve_state(node_id).await {
-                state_candidates.push((source.reliability_score(), state))
+        for source in &self.state_sources {
+            if let Some(state) = source.retrieve_state(node_id).await {
+                state_candidates.push((
+                    source.reliability_score(), 
+                    state
+                ));
             }
         }
         
-        // Use consensus or highest reliability source
-        IF state_candidates.len() >= 3 {
+        // Apply consensus or reliability-based selection
+        if state_candidates.len() >= 3 {
             // Byzantine fault tolerant consensus
-            RETURN self.consensus_state(state_candidates)
-        } ELSE IF let Some((_, state)) = state_candidates.iter().max_by_key(|(score, _)| score) {
-            RETURN Ok(state.clone())
+            self.consensus_state(state_candidates)
+        } else if let Some((_, state)) = state_candidates
+            .iter()
+            .max_by_key(|(score, _)| score) 
+        {
+            // Use most reliable source
+            Ok(state.clone())
+        } else {
+            // Fallback to event log reconstruction
+            self.reconstruct_from_event_log(node_id).await
         }
-        
-        // Reconstruct from event log if no state available
-        RETURN self.reconstruct_from_event_log(node_id).await
     }
 }
 ```
@@ -445,39 +600,63 @@ IMPL StateReconstructor {
 
 ### Bulkhead Pattern
 
+```
+Bulkhead Isolation:
+
+    ┌─────────────────────────────────────────┐
+    │              Service Requests              │
+    └────────────────────┬────────────────────┘
+                         │
+    ┌───────────┬────────┴────────┬───────────┐
+    │           │                 │           │
+    │ Bulkhead1 │    Bulkhead2    │ Bulkhead3 │
+    │  (n=10)   │     (n=20)      │   (n=5)   │
+    │           │                 │           │
+    └─────┬─────┘                 └─────┬─────┘
+          │                               │
+    [Service A]                     [Service B]
+    
+    Isolation prevents failure cascade
+```
+
 ```rust
-STRUCT BulkheadManager {
+// Resource isolation to prevent failure propagation
+struct BulkheadManager {
     bulkheads: HashMap<ServiceGroup, Bulkhead>,
     resource_pools: HashMap<ServiceGroup, ResourcePool>
 }
 
-STRUCT Bulkhead {
+// Individual bulkhead for service isolation
+struct Bulkhead {
     max_concurrent_calls: usize,
     max_wait_duration: Duration,
     semaphore: Arc<Semaphore>,
     thread_pool: Option<ThreadPool>
 }
 
-IMPL Bulkhead {
-    ASYNC FUNCTION execute<F, R>(&self, operation: F) -> Result<R>
-    WHERE F: Future<Output = R> {
-        // Acquire permit with timeout
-        permit = timeout(
+impl Bulkhead {
+    // Execute operation with resource isolation
+    async fn execute<F, R>(&self, operation: F) -> Result<R>
+    where 
+        F: Future<Output = R> 
+    {
+        // Acquire permit with timeout to prevent blocking
+        let permit = timeout(
             self.max_wait_duration, 
             self.semaphore.acquire()
-        ).await??
+        ).await??;
         
         // Execute in isolated context
-        IF let Some(pool) = &self.thread_pool {
-            // Thread pool isolation
-            result = pool.spawn(operation).await?
-        } ELSE {
-            // Semaphore-only isolation
-            result = operation.await
-        }
+        let result = if let Some(pool) = &self.thread_pool {
+            // Thread pool provides stronger isolation
+            pool.spawn(operation).await?
+        } else {
+            // Semaphore-based concurrency limiting
+            operation.await
+        };
         
-        drop(permit)
-        RETURN Ok(result)
+        drop(permit);
+        Ok(result)
     }
 }
 ```
@@ -485,7 +664,8 @@ IMPL Bulkhead {
 ### Intelligent Retry Mechanisms
 
 ```rust
-STRUCT RetryPolicy {
+// Retry policy with backoff and jitter
+struct RetryPolicy {
     base_delay: Duration,
     max_delay: Duration,
     max_attempts: u32,
@@ -493,46 +673,52 @@ STRUCT RetryPolicy {
     retry_budget: RetryBudget
 }
 
-STRUCT RetryBudget {
+// Token bucket for retry rate limiting
+struct RetryBudget {
     tokens: Arc<AtomicU32>,
     refill_rate: u32,
     refill_interval: Duration
 }
 
-IMPL RetryPolicy {
-    ASYNC FUNCTION execute_with_retry<F, R>(&self, operation: F) -> Result<R>
-    WHERE F: Fn() -> Future<Output = Result<R>> + Clone {
-        attempt = 0
+impl RetryPolicy {
+    // Execute operation with intelligent retry logic
+    async fn execute_with_retry<F, R>(&self, operation: F) -> Result<R>
+    where 
+        F: Fn() -> Future<Output = Result<R>> + Clone 
+    {
+        let mut attempt = 0;
         
-        LOOP {
-            // Check retry budget
-            IF !self.retry_budget.try_consume() {
-                RETURN Err(RetryError::BudgetExhausted)
+        loop {
+            // Check retry budget before attempting
+            if !self.retry_budget.try_consume() {
+                return Err(RetryError::BudgetExhausted);
             }
             
-            result = operation().await
+            let result = operation().await;
             
-            IF result.is_ok() || !self.should_retry(&result, attempt) {
-                RETURN result
+            // Success or non-retryable error
+            if result.is_ok() || !self.should_retry(&result, attempt) {
+                return result;
             }
             
-            // Calculate delay with exponential backoff and jitter
-            delay = self.calculate_delay_with_jitter(attempt)
-            sleep(delay).await
+            // Calculate backoff delay with jitter
+            let delay = self.calculate_delay_with_jitter(attempt);
+            sleep(delay).await;
             
-            attempt += 1
-            IF attempt >= self.max_attempts {
-                RETURN Err(RetryError::MaxAttemptsExceeded)
+            attempt += 1;
+            if attempt >= self.max_attempts {
+                return Err(RetryError::MaxAttemptsExceeded);
             }
         }
     }
     
-    FUNCTION calculate_delay_with_jitter(&self, attempt: u32) -> Duration {
-        base = self.base_delay * 2u32.pow(attempt)
-        capped = min(base, self.max_delay)
+    // Calculate exponential backoff with jitter
+    fn calculate_delay_with_jitter(&self, attempt: u32) -> Duration {
+        let base = self.base_delay * 2u32.pow(attempt);
+        let capped = min(base, self.max_delay);
         
-        // Add jitter to prevent thundering herd
-        jitter = rand::random::<f64>() * self.jitter_factor
+        // Add random jitter to prevent thundering herd
+        let jitter = rand::random::<f64>() * self.jitter_factor;
         Duration::from_secs_f64(capped.as_secs_f64() * (1.0 + jitter))
     }
 }
@@ -541,29 +727,32 @@ IMPL RetryPolicy {
 ### Timeout Hierarchy Management
 
 ```rust
-STRUCT TimeoutHierarchy {
+// Hierarchical timeout management
+struct TimeoutHierarchy {
     global_timeout: Duration,
     service_timeouts: HashMap<ServiceId, Duration>,
     operation_timeouts: HashMap<OperationType, Duration>,
     propagation_rules: TimeoutPropagationRules
 }
 
-IMPL TimeoutHierarchy {
-    FUNCTION calculate_timeout(&self, context: &OperationContext) -> Duration {
-        // Start with most specific timeout
-        base_timeout = self.operation_timeouts
+impl TimeoutHierarchy {
+    // Calculate effective timeout for operation
+    fn calculate_timeout(&self, context: &OperationContext) -> Duration {
+        // Find most specific timeout configuration
+        let base_timeout = self.operation_timeouts
             .get(&context.operation_type)
             .or_else(|| self.service_timeouts.get(&context.service_id))
-            .unwrap_or(&self.global_timeout)
+            .unwrap_or(&self.global_timeout);
         
-        // Apply propagation rules
-        remaining_budget = context.parent_timeout_remaining
-        propagated = self.propagation_rules.calculate(
+        // Apply timeout propagation rules
+        let remaining_budget = context.parent_timeout_remaining;
+        let propagated = self.propagation_rules.calculate(
             base_timeout, 
             remaining_budget,
             context.depth
-        )
+        );
         
+        // Use minimum of base and propagated timeout
         min(*base_timeout, propagated)
     }
 }
@@ -572,34 +761,37 @@ IMPL TimeoutHierarchy {
 ### Health Check Framework
 
 ```rust
-STRUCT HealthCheckFramework {
+// Health check framework for component monitoring
+struct HealthCheckFramework {
     health_checks: HashMap<ComponentId, Box<dyn HealthCheck>>,
     aggregation_strategy: HealthAggregationStrategy,
     deep_check_interval: Duration
 }
 
-TRAIT HealthCheck {
-    ASYNC FUNCTION check_health(&self) -> HealthStatus
-    FUNCTION health_check_type(&self) -> HealthCheckType
+// Health check trait for extensibility
+trait HealthCheck {
+    async fn check_health(&self) -> HealthStatus;
+    fn health_check_type(&self) -> HealthCheckType;
 }
 
-STRUCT DeepHealthCheck {
+// Deep health check with dependency validation
+struct DeepHealthCheck {
     dependency_checks: Vec<Box<dyn HealthCheck>>,
     performance_validator: PerformanceValidator
 }
 
-IMPL HealthCheck FOR DeepHealthCheck {
-    ASYNC FUNCTION check_health(&self) -> HealthStatus {
-        // Check all dependencies
-        dependency_results = join_all(
+impl HealthCheck for DeepHealthCheck {
+    async fn check_health(&self) -> HealthStatus {
+        // Check all dependencies concurrently
+        let dependency_results = join_all(
             self.dependency_checks.iter().map(|c| c.check_health())
-        ).await
+        ).await;
         
         // Validate performance metrics
-        performance_health = self.performance_validator.validate().await
+        let performance_health = self.performance_validator.validate().await;
         
-        // Aggregate results
-        RETURN HealthStatus::aggregate([
+        // Aggregate all health results
+        HealthStatus::aggregate([
             dependency_results,
             vec![performance_health]
         ].concat())
@@ -610,32 +802,39 @@ IMPL HealthCheck FOR DeepHealthCheck {
 ### Graceful Degradation
 
 ```rust
-STRUCT GracefulDegradationManager {
+// Graceful degradation for load management
+struct GracefulDegradationManager {
     feature_flags: Arc<RwLock<FeatureFlags>>,
     degradation_policies: HashMap<ServiceId, DegradationPolicy>,
     load_monitor: LoadMonitor
 }
 
-STRUCT DegradationPolicy {
+// Policy defining feature sets at different load levels
+struct DegradationPolicy {
     thresholds: Vec<(LoadLevel, FeatureSet)>,
     minimum_features: FeatureSet
 }
 
-IMPL GracefulDegradationManager {
-    ASYNC FUNCTION adjust_service_level(&self) -> Result<()> {
-        current_load = self.load_monitor.get_current_load().await
+impl GracefulDegradationManager {
+    // Adjust service features based on system load
+    async fn adjust_service_level(&self) -> Result<()> {
+        let current_load = self.load_monitor.get_current_load().await;
         
-        FOR (service_id, policy) IN &self.degradation_policies {
-            appropriate_level = policy.thresholds.iter()
+        // Apply appropriate feature set for each service
+        for (service_id, policy) in &self.degradation_policies {
+            let appropriate_level = policy.thresholds.iter()
                 .find(|(threshold, _)| current_load <= *threshold)
                 .map(|(_, features)| features)
-                .unwrap_or(&policy.minimum_features)
+                .unwrap_or(&policy.minimum_features);
             
             self.feature_flags.write().await
-                .set_service_features(service_id, appropriate_level.clone())
+                .set_service_features(
+                    service_id, 
+                    appropriate_level.clone()
+                );
         }
         
-        RETURN Ok(())
+        Ok(())
     }
 }
 ```
@@ -643,33 +842,39 @@ IMPL GracefulDegradationManager {
 ### Backpressure and Flow Control
 
 ```rust
-STRUCT BackpressureController {
+// Backpressure control for flow management
+struct BackpressureController {
     input_queue: Arc<Mutex<BoundedQueue<Task>>>,
     pressure_gauge: Arc<AtomicU64>,
     flow_control_policy: FlowControlPolicy
 }
 
-IMPL BackpressureController {
-    ASYNC FUNCTION accept_task(&self, task: Task) -> Result<()> {
-        pressure = self.pressure_gauge.load(Ordering::Relaxed)
+impl BackpressureController {
+    // Accept or reject tasks based on system pressure
+    async fn accept_task(&self, task: Task) -> Result<()> {
+        let pressure = self.pressure_gauge.load(Ordering::Relaxed);
         
-        MATCH self.flow_control_policy.evaluate(pressure) {
+        match self.flow_control_policy.evaluate(pressure) {
             FlowDecision::Accept => {
-                self.input_queue.lock().await.push(task)??
+                // System has capacity
+                self.input_queue.lock().await.push(task)??;
                 Ok(())
             },
             FlowDecision::Delay(duration) => {
-                sleep(duration).await
+                // Delay and retry
+                sleep(duration).await;
                 self.accept_task(task).await
             },
             FlowDecision::Reject => {
+                // System overloaded
                 Err(BackpressureError::Rejected)
             },
             FlowDecision::Shed(priority_threshold) => {
-                IF task.priority >= priority_threshold {
-                    self.input_queue.lock().await.push(task)??
+                // Accept only high priority tasks
+                if task.priority >= priority_threshold {
+                    self.input_queue.lock().await.push(task)??;
                     Ok(())
-                } ELSE {
+                } else {
                     Err(BackpressureError::LoadShedding)
                 }
             }
@@ -683,60 +888,64 @@ IMPL BackpressureController {
 ### Creating a Supervision Tree
 
 ```rust
-// Example: Setting up a multi-agent supervision tree
-FUNCTION setup_agent_supervision() -> SupervisionTree {
-    tree = SupervisionTree::new()
+// Complete example: Setting up multi-agent supervision tree
+fn setup_agent_supervision() -> SupervisionTree {
+    let mut tree = SupervisionTree::new();
     
-    // Create root supervisor with OneForAll strategy
-    root = RootSupervisor::new(SupervisionStrategy::OneForAll)
+    // Root supervisor: restarts all on critical failure
+    let mut root = RootSupervisor::new(
+        SupervisionStrategy::OneForAll
+    );
     
-    // Create agent supervisors with OneForOne strategy
-    research_supervisor = AgentSupervisor::new(
+    // Research agent supervisor: isolated failures
+    let research_supervisor = AgentSupervisor::new(
         "research",
         SupervisionStrategy::OneForOne,
         RestartPolicy::exponential_backoff()
-    )
+    );
     
-    code_supervisor = AgentSupervisor::new(
+    // Code agent supervisor: limited restart attempts
+    let code_supervisor = AgentSupervisor::new(
         "code", 
         SupervisionStrategy::OneForOne,
         RestartPolicy::max_restarts(3)
-    )
+    );
     
-    // Build hierarchy
-    root.add_child(research_supervisor)
-    root.add_child(code_supervisor)
+    // Construct supervision hierarchy
+    root.add_child(research_supervisor);
+    root.add_child(code_supervisor);
     
-    tree.set_root(root)
-    RETURN tree
+    tree.set_root(root);
+    tree
 }
 ```
 
 ### Implementing Custom Supervisors
 
 ```rust
-STRUCT CustomAgentSupervisor {
+// Custom supervisor implementation example
+struct CustomAgentSupervisor {
     agent_type: String,
     max_concurrent_tasks: usize,
     task_queue: Arc<Mutex<VecDeque<Task>>>
 }
 
-IMPL Supervisor FOR CustomAgentSupervisor {
-    TYPE Child = AgentWorker
+impl Supervisor for CustomAgentSupervisor {
+    type Child = AgentWorker;
     
-    ASYNC FUNCTION supervise(&self, children: Vec<Self::Child>) -> SupervisionResult {
-        // Custom supervision logic
-        FOR child IN children {
-            spawn_task(self.monitor_child(child))
+    async fn supervise(&self, children: Vec<Self::Child>) -> SupervisionResult {
+        // Spawn monitoring tasks for each child
+        for child in children {
+            spawn_task(self.monitor_child(child));
         }
         
-        // Distribute tasks from queue
-        WHILE let Some(task) = self.task_queue.lock().await.pop_front() {
-            agent_id = self.route_task(task).await
-            self.dispatch_to_agent(agent_id, task).await?
+        // Task distribution loop
+        while let Some(task) = self.task_queue.lock().await.pop_front() {
+            let agent_id = self.route_task(task).await;
+            self.dispatch_to_agent(agent_id, task).await?;
         }
         
-        RETURN SupervisionResult::Running
+        SupervisionResult::Running
     }
 }
 ```
@@ -746,51 +955,63 @@ IMPL Supervisor FOR CustomAgentSupervisor {
 ### Basic Supervision Setup
 
 ```rust
-// Initialize supervision system
-supervision_tree = SupervisionTree::new()
-failure_detector = FailureDetector::new(
+// Initialize supervision system with configuration
+let supervision_tree = SupervisionTree::new();
+let failure_detector = FailureDetector::new(
     heartbeat_interval: Duration::from_secs(5),
     failure_threshold: 3
-)
+);
 
-// Start monitoring
-supervision_tree.start().await?
-failure_detector.start_monitoring(supervision_tree.all_nodes()).await?
+// Start supervision and monitoring
+supervision_tree.start().await?;
+failure_detector.start_monitoring(
+    supervision_tree.all_nodes()
+).await?;
 ```
 
 ### Handling Agent Failures
 
 ```rust
-// Configure restart policies for different agent types
-policies = HashMap::new()
-policies.insert(NodeType::Researcher, RestartPolicy::exponential_backoff())
-policies.insert(NodeType::Coder, RestartPolicy::max_restarts(5))
-policies.insert(NodeType::Analyst, RestartPolicy::always_restart())
+// Configure agent-specific restart policies
+let mut policies = HashMap::new();
+policies.insert(
+    NodeType::Researcher, 
+    RestartPolicy::exponential_backoff()
+);
+policies.insert(
+    NodeType::Coder, 
+    RestartPolicy::max_restarts(5)
+);
+policies.insert(
+    NodeType::Analyst, 
+    RestartPolicy::always_restart()
+);
 
-supervision_tree.set_restart_policies(policies)
+supervision_tree.set_restart_policies(policies);
 ```
 
 ### Circuit Breaker Usage
 
 ```rust
-// Wrap external service calls in circuit breaker
-circuit_breaker = CircuitBreaker::new(
+// Circuit breaker protects external service calls
+let circuit_breaker = CircuitBreaker::new(
     failure_threshold: 5,
     timeout: Duration::from_secs(30),
     half_open_max_calls: 3
-)
+);
 
-// Use circuit breaker for protected calls
-result = circuit_breaker.call(async {
+// Execute with circuit breaker protection
+let result = circuit_breaker.call(async {
     external_service.process_request(request).await
-}).await
+}).await;
 
-MATCH result {
+match result {
     Ok(response) => process_response(response),
     Err(CircuitBreakerError::Open) => {
-        // Service is unavailable, use fallback
+        // Circuit open - use fallback strategy
         use_fallback_strategy()
-    }
+    },
+    Err(e) => handle_error(e)
 }
 ```
 
@@ -824,111 +1045,154 @@ MATCH result {
 
 ## Performance Considerations
 
-**⚠️ NOTE**: These are theoretical considerations for when the supervision tree is actually implemented.
+### Optimization Strategies
 
-1. **Heartbeat Overhead**: Tune intervals based on network conditions (NOT IMPLEMENTED)
-   - Use adaptive intervals based on network latency measurements
-   - Batch heartbeats for co-located services
-   - Consider UDP for heartbeat traffic in stable networks
+#### 1. Heartbeat Optimization
+```
+    Standard Heartbeat          Batched Heartbeat
+    
+    A->S, B->S, C->S           [A,B,C]->S
+    (3 messages)               (1 message)
+```
 
-2. **Restart Storms**: Use exponential backoff to prevent restart loops (NOT IMPLEMENTED)
-   - Implement restart budgets to cap system-wide restart rate
-   - Use jittered delays to prevent synchronized restarts
-   - Track restart success rates for strategy adjustment
+- Adaptive intervals based on network latency
+- Batch heartbeats for co-located services
+- UDP option for stable networks
 
-3. **Memory Usage**: Supervisor nodes maintain state - consider cleanup strategies (NOT IMPLEMENTED)
-   - Implement sliding window for failure history
-   - Use weak references for inactive child monitoring
-   - Periodic state compaction for long-running supervisors
+#### 2. Restart Storm Prevention
+```
+    Exponential Backoff:
+    
+    Attempt 1: 100ms
+    Attempt 2: 200ms
+    Attempt 3: 400ms
+    Attempt 4: 800ms
+    ...
+    Max delay: 30s
+```
 
-4. **Concurrency**: All supervisor operations are async and thread-safe (NOT IMPLEMENTED)
-   - Use lock-free data structures where possible
-   - Implement read-write locks for strategy updates
-   - Batch supervision decisions for efficiency
+- Restart budgets (e.g., max 10 restarts/minute)
+- Jittered delays: delay * (1 + random(0, 0.1))
+- Success rate tracking for strategy tuning
 
-5. **Strategy Performance Characteristics**:
-   - **OneForOne**: O(1) restart complexity, minimal coordination
-   - **OneForAll**: O(n) restart complexity, requires barrier synchronization  
-   - **RestForOne**: O(k) restart complexity where k = affected children
-   - **Custom Strategies**: Profile and benchmark before production use
+#### 3. Memory Management
+
+| Component | Memory Strategy | Cleanup Interval |
+|-----------|----------------|------------------|
+| Failure History | Sliding window (last 100) | On each failure |
+| Inactive Children | Weak references | 5 minutes |
+| Supervision Metrics | Circular buffer | Hourly compaction |
+
+#### 4. Concurrency Patterns
+
+- Lock-free data structures for hot paths
+- Read-write locks for configuration updates
+- Batch decisions to reduce lock contention
+
+#### 5. Strategy Complexity
+
+| Strategy | Restart Complexity | Coordination Overhead |
+|----------|-------------------|----------------------|
+| OneForOne | O(1) | Minimal |
+| OneForAll | O(n) | Barrier sync required |
+| RestForOne | O(k) | Partial ordering |
+| Custom | Varies | Profile required |
 
 ## Implementation Requirements
 
-**CRITICAL**: Before this component can provide ANY fault tolerance:
+### Core Components
 
-1. **Convert Pseudocode to Rust**: All pseudocode must be replaced with actual Rust implementations
-   - Lines 64-363: Core supervision implementations need translation
-   - Lines 267-643: New resilience patterns require Rust implementation
-   - Integration with tokio runtime for async operations
-   - Strong typing with proper error handling
+```
+Implementation Priority:
 
-2. **Implement Core Types**:
-   - SupervisionTree, Supervisor trait, SupervisorNode
-   - FailureDetector with Phi Accrual algorithm
-   - CircuitBreaker with state management
-   - ErrorBoundary trait and implementations
-   - RecoveryCoordinator with state management
+    P0: Core Types
+    ├── SupervisionTree
+    ├── Supervisor trait
+    ├── SupervisorNode
+    └── Basic strategies
+    
+    P1: Failure Detection
+    ├── FailureDetector
+    ├── PhiAccrual algorithm
+    └── CircuitBreaker
+    
+    P2: Recovery Systems
+    ├── ErrorBoundary
+    ├── RecoveryCoordinator
+    └── StateReconstructor
+    
+    P3: Resilience Patterns
+    ├── Bulkhead isolation
+    ├── Retry mechanisms
+    ├── Timeout management
+    └── Backpressure control
+```
 
-3. **Add Error Boundaries**: Define concrete error types and propagation mechanisms
-   - Comprehensive ErrorCategory enum implementation
-   - Error transformation and propagation rules
-   - Context preservation across boundaries
-   - Recovery strategy mappings
+### Technical Requirements
 
-4. **Advanced Resilience Patterns**:
-   - Bulkhead isolation with thread pools
-   - Retry mechanisms with jitter and budgets
-   - Timeout hierarchy with propagation
-   - Health check framework with aggregation
-   - Graceful degradation policies
-   - Backpressure and flow control
+1. **Rust Implementation**
+   - Async/await with Tokio runtime
+   - Strong typing with comprehensive error types
+   - Zero-copy message passing where possible
 
-5. **Integration Testing**:
-   - Validate fault detection accuracy
-   - Test recovery mechanisms under load
-   - Verify strategy selection logic
-   - Ensure proper error containment
+2. **Testing Requirements**
+   - Unit tests for each component
+   - Integration tests for supervision trees
+   - Chaos testing for failure scenarios
+   - Performance benchmarks
 
-6. **Performance Testing**:
-   - Benchmark supervision overhead
-   - Measure recovery latency
-   - Test scalability with many supervised nodes
-   - Validate resource usage patterns
-
-**Estimated Development Time**:
-
-- Core supervision (Steps 1-3): 4-5 weeks
-- Advanced patterns (Step 4): 3-4 weeks  
-- Testing & optimization (Steps 5-6): 2-3 weeks
-- **Total**: 9-12 weeks for complete implementation
+3. **Integration Points**
+   - EventBus for failure notifications
+   - ResourceManager for resource allocation
+   - ConfigurationManager for dynamic policies
 
 ## Security Considerations
 
-1. **Privilege Escalation**: Supervisors run with elevated privileges
-   - Use principle of least privilege for child processes
-   - Implement capability-based security for supervisor actions
-   - Regular audit of supervisor permissions
+### Privilege Management
+```
+    Supervisor (Elevated)
+         │
+    [Capability Filter]
+         │
+    Child Process (Limited)
+```
 
-2. **Resource Limits**: Implement caps on restart attempts
-   - Per-service restart quotas with time windows
-   - Global system restart budget
-   - Resource consumption limits per supervisor
+- Principle of least privilege enforcement
+- Capability-based security model
+- Regular permission audits
 
-3. **Audit Logging**: All supervision decisions should be logged
-   - Structured logging with decision rationale
-   - Tamper-evident log storage
-   - Real-time alerting for anomalous patterns
+### Resource Protection
 
-4. **Access Control**: Restrict supervision tree modifications
-   - Role-based access control for strategy changes
-   - Signed configuration updates
-   - Two-factor authentication for critical changes
+| Limit Type | Scope | Default | Configurable |
+|------------|-------|---------|-------------|
+| Restart Quota | Per-service | 10/min | Yes |
+| Global Budget | System-wide | 100/min | Yes |
+| Memory Cap | Per-supervisor | 100MB | Yes |
+| CPU Quota | Per-supervisor | 25% | Yes |
 
-5. **Byzantine Fault Tolerance**:
-   - Implement voting mechanisms for critical decisions
-   - Quarantine suspected malicious nodes
-   - Cryptographic verification of health reports
-   - Consensus-based state validation
+### Audit Framework
+
+- Structured decision logging
+- Tamper-evident storage
+- Real-time anomaly alerts
+- Compliance reporting
+
+### Byzantine Fault Protection
+
+```
+    Health Reports
+         │
+    [Crypto Verify]
+         │
+    [Voting: 2/3]
+         │
+    Decision
+```
+
+- Cryptographic health report verification
+- Consensus-based critical decisions
+- Automatic node quarantine
+- State validation protocols
 
 ---
 
@@ -942,18 +1206,27 @@ This integration ensures robust system operation through structured error handli
 The [SystemCore](component-architecture.md#41-component-architecture) serves as the central integration point for supervision:
 
 ```rust
-// Integration points with component-architecture.md
-SystemCore::setup_supervision() -> {
-    // Wire supervision tree with event bus for failure notifications
-    supervision_tree.subscribe_to_events(event_bus)
+// Integration with SystemCore components
+fn setup_supervision() {
+    // Connect supervision tree to event bus
+    supervision_tree.subscribe_to_events(event_bus);
     
-    // Apply component-specific supervision policies
-    policies = SupervisionPolicyBuilder::new()
-        .for_component(ComponentType::EventBus, SupervisionStrategy::OneForOne)
-        .for_component(ComponentType::ResourceManager, SupervisionStrategy::RestForOne)
-        .for_component(ComponentType::ConfigManager, SupervisionStrategy::Escalate)
+    // Configure component-specific supervision
+    let policies = SupervisionPolicyBuilder::new()
+        .for_component(
+            ComponentType::EventBus, 
+            SupervisionStrategy::OneForOne
+        )
+        .for_component(
+            ComponentType::ResourceManager, 
+            SupervisionStrategy::RestForOne
+        )
+        .for_component(
+            ComponentType::ConfigManager, 
+            SupervisionStrategy::Escalate
+        );
     
-    supervision_tree.apply_policies(policies)
+    supervision_tree.apply_policies(policies);
 }
 ```
 
@@ -978,12 +1251,14 @@ The supervision tree manages lifecycle for [ResourceManager](component-architect
 Integration with [ConfigurationManager](component-architecture.md#44-configuration-management) enables dynamic supervision tuning:
 
 ```rust
-// Supervision configuration watching
-ConfigurationManager::watch_config<SupervisionConfig>(|new_config| {
-    supervision_tree.update_policies(new_config.policies)
-    supervision_tree.update_thresholds(new_config.thresholds)
-    supervision_tree.update_timeouts(new_config.timeouts)
-})
+// Dynamic supervision configuration updates
+ConfigurationManager::watch_config::<SupervisionConfig>(
+    |new_config| {
+        supervision_tree.update_policies(new_config.policies);
+        supervision_tree.update_thresholds(new_config.thresholds);
+        supervision_tree.update_timeouts(new_config.timeouts);
+    }
+);
 ```
 
 ### Bidirectional Dependencies
@@ -1020,32 +1295,29 @@ ConfigurationManager::watch_config<SupervisionConfig>(|new_config| {
 
 ---
 
-## Implementation Readiness Notes
+## Summary
 
-### Production-Ready Components
+This specification defines comprehensive supervision tree patterns for the Mister Smith framework:
 
-- Core supervision trait and hierarchy structure
-- Basic supervision strategies (OneForOne, OneForAll, RestForOne, Escalate)
-- Heartbeat-based failure detection
-- Circuit breaker implementation
+### Core Patterns
+- Hierarchical supervision with multiple strategies
+- Hub-and-spoke routing for centralized control
+- Adaptive failure detection (Phi Accrual)
+- Circuit breaker protection
 
-### Components Requiring Concrete Implementation
+### Advanced Patterns  
+- Error boundaries and recovery coordination
+- State reconstruction with Byzantine tolerance
+- Bulkhead isolation for failure containment
+- Intelligent retry with backpressure control
 
-- All pseudocode sections need Rust translation
-- Error boundary specifications need trait definitions
-- Recovery coordinator needs state management implementation
-- Advanced resilience patterns need async runtime integration
+### Integration Points
+- SystemCore component supervision
+- EventBus for failure notifications
+- ResourceManager for recovery resources
+- ConfigurationManager for dynamic policies
 
-### Validation-Driven Enhancements
-
-This documentation incorporates findings from Agent 4's validation report, addressing:
-
-- Strategy selection criteria and dynamic switching
-- Comprehensive error taxonomy and boundaries
-- Advanced resilience patterns (bulkhead, retry, timeout management)
-- Byzantine fault tolerance considerations
-- Multi-node recovery coordination
-- State reconstruction mechanisms
+All patterns are designed for async Rust implementation with Tokio runtime.
 
 ---
 

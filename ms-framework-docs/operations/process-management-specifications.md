@@ -1,45 +1,27 @@
 # Process Management Specifications
 
-## Complete Process Supervision and Lifecycle Management Framework
-
-**Agent Operations Expert Deliverable**: Process Management & Systems Integration Specialist
-
-### Validation Status
-
-**Document Status**: ✅ PRODUCTION READY  
-**Validation Score**: 19/20 (95%)  
-**Last Validated**: 2025-07-05  
-**Validated By**: Agent 22 - MS Framework Validation Swarm  
-**Implementation Status**: COMPLETE
-
-#### Validation Summary
-
-- **Process Lifecycle Management**: 5/5 - Comprehensive coverage of all lifecycle phases
-- **Systemd Integration**: 5/5 - Complete service units with proper dependencies  
-- **Process State Management**: 5/5 - Robust state tracking and coordination
-- **Service Discovery**: 4/5 - NATS-based discovery (explicit registry patterns could be enhanced)
-- **Health Monitoring**: 5/5 - Multi-level health checks with comprehensive coverage
-- **Monitoring & Restart Policies**: 5/5 - Intelligent restart strategies with escalation
-- **Production Readiness**: 5/5 - Complete deployment automation and operational excellence
-
-#### Key Strengths
-
-- **Production-Ready Systemd Integration** with proper dependencies and resource limits
-- **Hierarchical Supervision Trees** with configurable restart policies
-- **CGroups v2 Integration** for dynamic resource management
-- **Multi-Level Health Monitoring** (HTTP, TCP, process, database, custom)
-- **Complete Lifecycle Management** with graceful startup/shutdown
-- **Security Hardening** through systemd security features
-
-#### Minor Enhancement Opportunity
-
-- **Service Discovery**: While NATS provides communication, explicit service registry patterns could be more detailed
+## Process Supervision and Lifecycle Management Framework
 
 ### Overview
 
-This document provides comprehensive process management specifications for the Mister Smith AI Agent Framework. It defines complete systemd integration,
-process supervision patterns, lifecycle management strategies, resource management policies, and health monitoring systems that ensure robust
-production deployment and operation.
+This document provides comprehensive process management specifications for the Mister Smith AI Agent Framework. It defines systemd integration,
+process supervision patterns, lifecycle management strategies, resource management policies, and health monitoring systems for distributed agent operations.
+
+**Related Documentation**:
+- [Configuration Management](configuration-management.md) - Configuration patterns and deployment strategies
+- [Deployment Architecture](deployment-architecture-specifications.md) - Infrastructure and deployment patterns
+- [Observability Framework](observability-monitoring-framework.md) - Monitoring and observability specifications
+- [Build Specifications](build-specifications.md) - Build and packaging specifications
+
+### Key Features
+
+- **Systemd Integration**: Native service management with proper dependencies and resource limits
+- **Hierarchical Supervision Trees**: Configurable restart policies and fault tolerance
+- **CGroups v2 Integration**: Dynamic resource management and enforcement
+- **Multi-Level Health Monitoring**: HTTP, TCP, process, database, and custom health checks
+- **Lifecycle Management**: Graceful startup/shutdown with state management
+- **Security Hardening**: Comprehensive security features through systemd
+- **Service Discovery**: NATS-based communication with service registry patterns
 
 ---
 
@@ -50,8 +32,10 @@ production deployment and operation.
 - **Systemd-First Approach**: Native integration with systemd for service management and supervision
 - **Multi-Tier Process Architecture**: Support for tier_1 (experimental), tier_2 (validation), and tier_3 (operational) process patterns
 - **Fault-Tolerant Supervision**: Hierarchical supervision trees with configurable restart policies
-- **Resource-Aware Management**: Dynamic resource allocation and enforcement
-- **Observable Lifecycle**: Complete lifecycle event tracking and monitoring
+- **Resource-Aware Management**: Dynamic resource allocation and enforcement using CGroups v2
+- **Observable Lifecycle**: Complete lifecycle event tracking and monitoring with structured logging
+- **Security-First Design**: Process isolation, privilege separation, and secure configuration management
+- **Agent-Optimized Operations**: Structured process management patterns designed for multi-agent orchestration
 
 ### 1.2 Process Management Architecture
 
@@ -3014,11 +2998,11 @@ exit 0
 
 ```bash
 #!/bin/bash
-# /usr/local/bin/setup-mister-smith-production.sh
+# /usr/local/bin/setup-mister-smith-deployment.sh
 
 set -euo pipefail
 
-echo "Setting up Mister Smith AI Agent Framework for production..."
+echo "Setting up Mister Smith AI Agent Framework deployment..."
 
 # Create system user and group
 if ! id mister-smith &>/dev/null; then
@@ -3255,11 +3239,14 @@ alerting:
 
 ### 7.3 Operational Best Practices
 
-1. **Environment Separation**: Use different configurations for tier_1, tier_2, and tier_3
-2. **Monitoring Integration**: Integrate with existing monitoring and alerting systems
-3. **Resource Planning**: Plan resource allocation based on workload requirements
-4. **Backup and Recovery**: Implement proper backup strategies for process state
+1. **Environment Separation**: Use different configurations for tier_1, tier_2, and tier_3 environments
+2. **Monitoring Integration**: Integrate with existing monitoring and alerting systems (see [Observability Framework](observability-monitoring-framework.md))
+3. **Resource Planning**: Plan resource allocation based on workload requirements and agent capabilities
+4. **Backup and Recovery**: Implement proper backup strategies for process state and configuration
 5. **Documentation**: Maintain up-to-date documentation for operational procedures
+6. **Configuration Management**: Use centralized configuration management (see [Configuration Management](configuration-management.md))
+7. **Deployment Automation**: Implement automated deployment pipelines (see [Deployment Architecture](deployment-architecture-specifications.md))
+8. **Build Integration**: Coordinate with build systems for deployment artifacts (see [Build Specifications](build-specifications.md))
 
 ## 8. Enhanced Service Discovery Patterns (Enhancement)
 

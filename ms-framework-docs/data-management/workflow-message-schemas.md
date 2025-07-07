@@ -2,19 +2,7 @@
 
 ## Task Management and Workflow Orchestration
 
-> **📊 VALIDATION STATUS: PRODUCTION READY**
->
-> | Criterion | Score | Status |
-> |-----------|-------|---------|
-> | Task Management | 5/5 | ✅ Complete |
-> | Workflow Orchestration | 5/5 | ✅ Comprehensive |
-> | Progress Tracking | 5/5 | ✅ Detailed |
-> | Integration Points | 5/5 | ✅ Well-Connected |
-> | Schema Consistency | 5/5 | ✅ Standardized |
-> | **TOTAL SCORE** | **15/15** | **✅ DEPLOYMENT APPROVED** |
->
-> *Validated: 2025-07-05 | Document Lines: 1,876 | Implementation Status: 100%*
-> **Purpose**: This document defines message schemas for task assignment, progress tracking, and multi-agent workflow coordination within the Mister Smith AI Agent Framework.
+**Purpose**: This document defines message schemas for task assignment, progress tracking, and multi-agent workflow coordination within the Mister Smith AI Agent Framework.
 
 ## Overview
 
@@ -603,6 +591,216 @@ For persistence patterns, see [Storage Operations](./persistence-operations.md).
     }
   },
   "additionalProperties": false
+}
+```
+
+## Practical Implementation Examples
+
+### Async Task Coordination with Tokio
+
+#### Task Assignment Handler
+
+```rust
+use tokio::sync::mpsc;
+use serde_json::Value;
+use std::collections::HashMap;
+use std::sync::Arc;
+
+pub struct TaskCoordinator {
+    task_senders: Arc<HashMap<String, mpsc::Sender<TaskAssignmentMessage>>>,
+    nats_client: Arc<NatsClient>,
+}
+
+impl TaskCoordinator {
+    pub async fn assign_task(&self, assignment: TaskAssignmentMessage) -> Result<(), Error> {
+        // Validate task assignment schema
+        let validation_result = self.validate_schema(&assignment).await?;
+        if !validation_result.is_valid {
+            return Err(Error::InvalidSchema(validation_result.errors));
+        }
+
+        // Find available agent
+        let agent_id = &assignment.payload.assigned_agent;
+        let sender = self.task_senders.get(agent_id)
+            .ok_or_else(|| Error::AgentNotFound(agent_id.clone()))?;
+
+        // Send task to agent with timeout
+        tokio::time::timeout(
+            std::time::Duration::from_secs(30),
+            sender.send(assignment.clone())
+        ).await
+        .map_err(|_| Error::TaskAssignmentTimeout)?
+        .map_err(|_| Error::AgentChannelClosed)?;
+
+        // Publish assignment event
+        let event_subject = format!("task.assignment.{}", assignment.payload.task_id);
+        self.nats_client.publish(&event_subject, &assignment.serialize()?).await?;
+
+        Ok(())
+    }
+
+    pub async fn handle_task_progress(&self, progress: TaskProgressMessage) -> Result<(), Error> {
+        // Update task state
+        let task_id = &progress.payload.task_id;
+        
+        // Publish progress event for interested parties
+        let progress_subject = format!("task.progress.{}", task_id);
+        self.nats_client.publish(&progress_subject, &progress.serialize()?).await?;
+
+        // Check for workflow coordination needs
+        if progress.payload.progress_percentage >= 100.0 {
+            self.coordinate_workflow_completion(task_id).await?;
+        }
+
+        Ok(())
+    }
+
+    async fn coordinate_workflow_completion(&self, task_id: &str) -> Result<(), Error> {
+        // Workflow coordination logic
+        let coordination_message = WorkflowCoordinationMessage {
+            message_type: "workflow_coordination".to_string(),
+            payload: WorkflowCoordinationPayload {
+                workflow_id: self.get_workflow_for_task(task_id).await?,
+                coordination_type: "checkpoint".to_string(),
+                participants: self.get_workflow_participants(task_id).await?,
+                // ... other fields
+            },
+            // ... base message fields
+        };
+
+        self.coordinate_workflow(coordination_message).await
+    }
+}
+```
+
+#### Multi-Agent Workflow Orchestration
+
+```rust
+use tokio::sync::{RwLock, Barrier};
+use std::sync::Arc;
+
+pub struct WorkflowOrchestrator {
+    active_workflows: Arc<RwLock<HashMap<String, WorkflowState>>>,
+    coordination_barriers: Arc<RwLock<HashMap<String, Arc<Barrier>>>>,
+}
+
+impl WorkflowOrchestrator {
+    pub async fn sync_workflow_state(&self, sync_msg: WorkflowStateSyncMessage) -> Result<(), Error> {
+        let workflow_id = &sync_msg.payload.workflow_id;
+        
+        // Acquire write lock for state update
+        let mut workflows = self.active_workflows.write().await;
+        
+        // Apply state changes with conflict resolution
+        let current_state = workflows.get(workflow_id);
+        let resolved_state = self.resolve_state_conflicts(current_state, &sync_msg).await?;
+        
+        workflows.insert(workflow_id.clone(), resolved_state);
+        
+        // Notify waiting agents
+        if let Some(barrier) = self.coordination_barriers.read().await.get(workflow_id) {
+            // Signal coordination point completion
+            barrier.wait().await;
+        }
+
+        Ok(())
+    }
+
+    pub async fn coordinate_agents(&self, coord_msg: WorkflowCoordinationMessage) -> Result<(), Error> {
+        let workflow_id = &coord_msg.payload.workflow_id;
+        let participant_count = coord_msg.payload.participants.len();
+
+        match coord_msg.payload.coordination_type.as_str() {
+            "barrier" => {
+                // Create synchronization barrier
+                let barrier = Arc::new(Barrier::new(participant_count));
+                self.coordination_barriers.write().await
+                    .insert(workflow_id.clone(), barrier.clone());
+
+                // Wait for all participants
+                tokio::time::timeout(
+                    std::time::Duration::from_millis(coord_msg.payload.timeout_ms as u64),
+                    barrier.wait()
+                ).await
+                .map_err(|_| Error::CoordinationTimeout)?;
+            },
+            "checkpoint" => {
+                self.create_workflow_checkpoint(workflow_id).await?;
+            },
+            "rollback" => {
+                self.execute_workflow_rollback(workflow_id, &coord_msg.payload.compensation_actions).await?;
+            },
+            _ => return Err(Error::UnsupportedCoordinationType)
+        }
+
+        Ok(())
+    }
+
+    async fn resolve_state_conflicts(
+        &self, 
+        current: Option<&WorkflowState>, 
+        incoming: &WorkflowStateSyncMessage
+    ) -> Result<WorkflowState, Error> {
+        match current {
+            Some(state) if state.version >= incoming.payload.state_version => {
+                // Current state is newer, keep it
+                Ok(state.clone())
+            },
+            _ => {
+                // Apply incoming state
+                Ok(WorkflowState::from_sync_message(incoming)?)
+            }
+        }
+    }
+}
+```
+
+#### Error Handling and Recovery
+
+```rust
+pub struct WorkflowErrorHandler {
+    retry_policies: HashMap<String, RetryPolicy>,
+    compensation_handlers: HashMap<String, CompensationHandler>,
+}
+
+impl WorkflowErrorHandler {
+    pub async fn handle_task_failure(&self, task_id: &str, error: TaskError) -> Result<(), Error> {
+        let retry_policy = self.retry_policies.get(&error.error_type)
+            .unwrap_or(&RetryPolicy::default());
+
+        if error.retry_count < retry_policy.max_retries {
+            // Schedule retry with backoff
+            let delay = self.calculate_backoff_delay(retry_policy, error.retry_count);
+            
+            tokio::time::sleep(delay).await;
+            
+            // Republish task assignment
+            self.republish_task_assignment(task_id).await?;
+        } else {
+            // Execute compensation
+            if let Some(handler) = self.compensation_handlers.get(&error.task_type) {
+                handler.compensate(task_id, &error).await?;
+            }
+            
+            // Mark workflow as failed
+            self.fail_workflow(task_id).await?;
+        }
+
+        Ok(())
+    }
+
+    fn calculate_backoff_delay(&self, policy: &RetryPolicy, attempt: u32) -> std::time::Duration {
+        match policy.backoff_strategy {
+            BackoffStrategy::Fixed => std::time::Duration::from_millis(policy.initial_delay_ms),
+            BackoffStrategy::Linear => {
+                std::time::Duration::from_millis(policy.initial_delay_ms * (attempt + 1) as u64)
+            },
+            BackoffStrategy::Exponential => {
+                let delay = policy.initial_delay_ms * 2_u64.pow(attempt);
+                std::time::Duration::from_millis(delay.min(policy.max_delay_ms))
+            }
+        }
+    }
 }
 ```
 

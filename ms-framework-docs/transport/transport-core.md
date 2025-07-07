@@ -10,55 +10,21 @@ permalink: ms-framework/transport/transport-core
 
 > **Modularization Note**: This document contains core transport abstractions extracted from the complete transport layer specifications.
 > For protocol-specific implementations, see companion files for NATS, gRPC, and HTTP specifics.
-> **Canonical Reference**: See `/Users/mac-main/Mister-Smith/Mister-Smith/tech-framework.md` for authoritative technology stack specifications
-
-## 🔍 VALIDATION STATUS
-
-**Implementation Readiness**: 93% ✅ - Production ready with minor enhancement opportunities
-
-**Validation Details**:
-
-- **Validator**: Agent 25 - MS Framework Validation Swarm
-- **Validation Date**: 2025-07-05
-- **Score**: 14/15 - Excellent implementation readiness
-
-**Key Findings**:
-
-- ✅ Transport abstraction layer with pluggable protocol implementations
-- ✅ Enterprise-grade connection pool architecture with resource limits
-- ✅ Protocol-specific health checkers with latency tracking
-- ✅ Circuit breaker pattern with automatic failure detection
-- ✅ Comprehensive error classification and retry strategies
-- ✅ TLS/mTLS implementation with zero-downtime key rotation
-
-**Critical Issues**: Minor gaps in integration testing guidance
-
-- Missing chaos engineering scenarios for protocol failures
-- Need end-to-end latency testing across all layers
-- Resource exhaustion testing under extreme loads needed
-
-**Minor Enhancements**:
-
-- Adaptive configuration based on load metrics
-- Enhanced routing algorithms and traffic shaping
-- Cross-protocol metrics correlation
-
-Reference: `/Users/mac-main/Mister-Smith/MisterSmith/validation-swarm/batch5-specialized-domains/agent25-transport-layer-validation.md`
-
-As stated in the canonical source:
-> "This is the authoritative source for the Claude-Flow tech stack. All implementations should reference this document."
+> **Technology Stack Reference**: See `/Users/mac-main/Mister-Smith/MisterSmith/ms-framework-docs/core-architecture/dependency-specifications.md` for authoritative dependency specifications
 
 ## Overview
 
-This document defines foundational transport patterns for agent communication using the Claude-Flow Rust Stack.
-Focus is on core abstractions, connection management, error handling, and security suitable for learning distributed systems.
+This document defines foundational transport patterns for agent communication in the MisterSmith multi-agent framework.
+Focus is on core abstractions, connection management, error handling, and security patterns that provide the foundation for protocol-specific implementations.
 
-**Technology Stack** (from tech-framework.md):
+**Core Technologies**:
 
-- async-nats 0.34
-- Tonic 0.11 (gRPC)
-- Axum 0.8 (HTTP)
-- Tokio 1.38 (async runtime)
+- **async-nats 0.34** - High-performance messaging and pub/sub
+- **Tonic 0.11** - gRPC services and streaming
+- **Axum 0.8** - HTTP/WebSocket API endpoints  
+- **Tokio 1.38** - Async runtime foundation
+
+**Document Scope**: Core transport abstractions and patterns. For protocol-specific implementations, see [transport-layer-specifications.md](./transport-layer-specifications.md).
 
 ## 1. Basic Message Transport Patterns
 
@@ -232,7 +198,7 @@ CLASS AdvancedConnectionPool {
 ### 7.2 Protocol-Specific Pool Configurations
 
 ```rust
--- NATS Connection Pool with Deadpool Pattern
+// NATS Connection Pool with Deadpool Pattern
 CLASS NatsConnectionPool IMPLEMENTS ConnectionPoolManager {
     FUNCTION create_nats_pool(config: NatsConfig) -> NatsPool {
         pool_config = {
@@ -251,7 +217,7 @@ CLASS NatsConnectionPool IMPLEMENTS ConnectionPoolManager {
     }
     
     FUNCTION configure_nats_connection(conn: NatsConnection) -> Result {
-        -- Post-connection configuration
+        // Post-connection configuration
         conn.set_subscription_capacity(1000)
         conn.configure_jetstream(js_config)
         conn.enable_heartbeat(Duration.seconds(30))
@@ -259,7 +225,7 @@ CLASS NatsConnectionPool IMPLEMENTS ConnectionPoolManager {
     }
 }
 
--- PostgreSQL Connection Pool (coordinated with data layer)
+// PostgreSQL Connection Pool (coordinated with data layer)
 CLASS PostgresConnectionPool IMPLEMENTS ConnectionPoolManager {
     FUNCTION create_postgres_pool(config: PgConfig) -> PgPool {
         pool_config = {
@@ -275,7 +241,7 @@ CLASS PostgresConnectionPool IMPLEMENTS ConnectionPoolManager {
     }
     
     FUNCTION configure_session(conn: PgConnection) -> Result {
-        -- Session-level configuration
+        // Session-level configuration
         conn.execute("SET application_name = 'agent_transport'")
         conn.execute("SET statement_timeout = '30s'")
         conn.execute("SET idle_in_transaction_session_timeout = '60s'")
@@ -283,7 +249,7 @@ CLASS PostgresConnectionPool IMPLEMENTS ConnectionPoolManager {
     }
 }
 
--- gRPC Connection Pool
+// gRPC Connection Pool
 CLASS GrpcConnectionPool IMPLEMENTS ConnectionPoolManager {
     FUNCTION create_grpc_pool(config: GrpcConfig) -> GrpcPool {
         pool_config = {
@@ -328,10 +294,10 @@ CLASS ConnectionStringManager {
     }
     
     FUNCTION build_nats_url(config: Map<String, String>) -> String {
-        -- Support multiple formats:
-        -- nats://user:pass@host:4222
-        -- nats://host1:4222,host2:4222,host3:4222 (cluster)
-        -- tls://user:pass@host:4222 (secure)
+        // Support multiple formats:
+        // nats://user:pass@host:4222
+        // nats://host1:4222,host2:4222,host3:4222 (cluster)
+        // tls://user:pass@host:4222 (secure)
         
         IF config.contains("cluster_hosts") THEN
             hosts = config.get("cluster_hosts").split(",")
@@ -345,10 +311,10 @@ CLASS ConnectionStringManager {
     }
     
     FUNCTION build_postgres_url(config: Map<String, String>) -> String {
-        -- Support multiple formats:
-        -- postgres://user:pass@host:port/database
-        -- postgres://%2Fvar%2Frun%2Fpostgresql/database (Unix socket)
-        -- postgres://host/db?application_name=agent&sslmode=require
+        // Support multiple formats:
+        // postgres://user:pass@host:port/database
+        // postgres://%2Fvar%2Frun%2Fpostgresql/database (Unix socket)
+        // postgres://host/db?application_name=agent&sslmode=require
         
         IF config.contains("socket_path") THEN
             encoded_path = url_encode(config.get("socket_path"))
@@ -364,7 +330,7 @@ CLASS ConnectionStringManager {
     }
 }
 
--- Environment-based configuration loading
+// Environment-based configuration loading
 CLASS EnvironmentConfigLoader {
     FUNCTION load_nats_config() -> Map<String, String> {
         config = Map()
@@ -424,7 +390,7 @@ CLASS AdvancedHealthMonitor {
         }
         
         FUNCTION recover_connection() -> RecoveryResult {
-            -- Implement exponential backoff reconnection
+            // Implement exponential backoff reconnection
             attempts = 0
             max_attempts = 5
             backoff = Duration.millis(100)
@@ -455,7 +421,7 @@ CLASS AdvancedHealthMonitor {
                 result = connection.execute("SELECT 1")
                 latency = now() - start_time
                 
-                -- Check for slow queries
+                // Check for slow queries
                 IF latency > Duration.millis(100) THEN
                     RETURN HealthStatus.DEGRADED
                 ELSE
@@ -468,12 +434,12 @@ CLASS AdvancedHealthMonitor {
     }
 }
 
--- Circuit breaker pattern for connection management
+// Circuit breaker pattern for connection management
 CLASS ConnectionCircuitBreaker {
     ENUM CircuitState {
-        CLOSED,     -- Normal operation
-        OPEN,       -- Failing fast, not attempting connections
-        HALF_OPEN   -- Testing if service has recovered
+        CLOSED,     // Normal operation
+        OPEN,       // Failing fast, not attempting connections
+        HALF_OPEN   // Testing if service has recovered
     }
     
     PRIVATE state: CircuitState = CLOSED
@@ -535,22 +501,22 @@ CLASS ResourceLimitManager {
         FUNCTION handle_backpressure(request: ConnectionRequest) -> BackpressureAction {
             current_metrics = collect_current_metrics()
             
-            -- Check memory usage
+            // Check memory usage
             IF current_metrics.memory_usage > resource_limits.max_memory_usage * 0.9 THEN
                 RETURN BackpressureAction.REJECT_REQUEST
             END IF
             
-            -- Check connection queue size
+            // Check connection queue size
             IF current_metrics.queue_size > resource_limits.max_connection_queue_size THEN
                 RETURN BackpressureAction.QUEUE_FULL
             END IF
             
-            -- Check pending request count
+            // Check pending request count
             IF current_metrics.pending_requests > resource_limits.max_pending_requests THEN
                 RETURN BackpressureAction.THROTTLE_REQUEST
             END IF
             
-            -- Apply adaptive throttling based on success rate
+            // Apply adaptive throttling based on success rate
             IF current_metrics.success_rate < 0.95 THEN
                 throttle_delay = adaptive_throttling.calculate_delay(current_metrics)
                 RETURN BackpressureAction.DELAY_REQUEST(throttle_delay)
@@ -570,13 +536,13 @@ CLASS ResourceLimitManager {
         }
     }
     
-    -- Protocol-specific backpressure handling
+    // Protocol-specific backpressure handling
     CLASS NatsBackpressureHandler {
         FUNCTION handle_slow_consumer() {
-            -- NATS built-in slow consumer protection
+            // NATS built-in slow consumer protection
             subscription.set_pending_limits(1000, 50_MB)
             
-            -- Custom overflow handling
+            // Custom overflow handling
             IF subscription.pending_messages() > 800 THEN
                 log_warning("Approaching NATS subscription limit")
                 trigger_load_shedding()
@@ -584,9 +550,9 @@ CLASS ResourceLimitManager {
         }
         
         FUNCTION trigger_load_shedding() {
-            -- Drop non-critical messages
-            -- Increase processing parallelism
-            -- Signal upstream producers to slow down
+            // Drop non-critical messages
+            // Increase processing parallelism
+            // Signal upstream producers to slow down
         }
     }
 }
@@ -628,25 +594,25 @@ CLASS ConnectionPerformanceMonitor {
     FUNCTION monitor_thresholds() {
         metrics = collect_metrics()
         
-        -- Connection pool utilization alerts
+        // Connection pool utilization alerts
         utilization = metrics.active_connections / metrics.pool_size
         IF utilization > 0.9 THEN
             alert_manager.trigger_alert(AlertType.HIGH_POOL_UTILIZATION, utilization)
         END IF
         
-        -- Acquisition time alerts
+        // Acquisition time alerts
         p95_acquisition_time = metrics.acquisition_time_histogram.percentile(95)
         IF p95_acquisition_time > Duration.seconds(5) THEN
             alert_manager.trigger_alert(AlertType.SLOW_ACQUISITION, p95_acquisition_time)
         END IF
         
-        -- Failed acquisition rate alerts
+        // Failed acquisition rate alerts
         failure_rate = metrics.failed_acquisitions / metrics.total_acquisitions
         IF failure_rate > 0.05 THEN
             alert_manager.trigger_alert(AlertType.HIGH_FAILURE_RATE, failure_rate)
         END IF
         
-        -- Health check alerts
+        // Health check alerts
         IF metrics.health_check_success_rate < 0.95 THEN
             alert_manager.trigger_alert(AlertType.HEALTH_CHECK_FAILURES, 
                                       metrics.health_check_success_rate)
@@ -654,7 +620,7 @@ CLASS ConnectionPerformanceMonitor {
     }
     
     FUNCTION export_metrics_for_prometheus() -> PrometheusMetrics {
-        -- Export metrics in Prometheus format for monitoring
+        // Export metrics in Prometheus format for monitoring
         metrics = collect_metrics()
         
         prometheus_metrics = PrometheusMetrics()
@@ -1298,51 +1264,34 @@ SECURITY_CONSTRAINTS: {
 }
 ```
 
-### 17.2 Binary Serialization (Protocol Buffers)
+### 17.2 Binary Serialization Patterns
 
-```protobuf
-syntax = "proto3";
-package mister_smith.serialization;
-
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/any.proto";
-
-// Base message wrapper for all protocol buffer messages
-message BaseMessage {
-  string message_id = 1;
-  google.protobuf.Timestamp timestamp = 2;
-  string version = 3;
-  string correlation_id = 4;
-  string trace_id = 5;
-  google.protobuf.Any payload = 6;
-  map<string, string> metadata = 7;
-}
-
-// Performance optimized message for high-frequency data
-message CompactMessage {
-  bytes message_id = 1;  // 16-byte UUID as bytes
-  int64 timestamp_unix = 2;  // Unix timestamp in nanoseconds
-  bytes payload = 3;  // Compressed payload
-  uint32 checksum = 4;  // CRC32 checksum
-}
-
-// Message envelope for batch processing
-message MessageBatch {
-  repeated BaseMessage messages = 1;
-  uint32 batch_size = 2;
-  string batch_id = 3;
-  google.protobuf.Timestamp created_at = 4;
-  CompressionType compression = 5;
-}
-
-enum CompressionType {
-  COMPRESSION_TYPE_UNSPECIFIED = 0;
-  NONE = 1;
-  GZIP = 2;
-  LZ4 = 3;
-  SNAPPY = 4;
-}
+```rust
+BINARY_SERIALIZATION_APPROACH:
+    Protocol Buffers (protobuf):
+        - Compact binary format
+        - Schema evolution support
+        - Language-neutral definitions
+        - High performance serialization
+        
+    MessagePack:
+        - JSON-like structure, binary encoding
+        - Smaller than JSON
+        - Faster than JSON parsing
+        
+    Bincode:
+        - Rust-native binary serialization
+        - Maximum performance for Rust-to-Rust
+        - Minimal overhead
+        
+USAGE_PATTERNS:
+    High-frequency messages: Use protobuf CompactMessage
+    Batch operations: Use protobuf MessageBatch
+    Inter-service: Use protobuf BaseMessage
+    Internal agent: Use bincode for performance
 ```
+
+**Complete Protocol Buffer Definitions**: See [transport-layer-specifications.md](./transport-layer-specifications.md) Section 17.2
 
 ### 17.3 Serialization Performance Configuration
 
@@ -1409,48 +1358,73 @@ Agents should implement these patterns incrementally, starting with basic abstra
 
 ## Navigation
 
-### Protocol-Specific Implementations
+### Document Relationship
 
-This core document provides foundational patterns implemented by:
+**This Document** (`transport-core.md`):
+- Core transport abstractions and patterns
+- Connection management foundations
+- Error handling patterns
+- Security fundamentals
+- Implementation guidelines
 
-- **[NATS Transport](./nats-transport.md)** - High-throughput messaging and pub/sub patterns
-  - Implements connection pooling from Section 7.2
-  - Uses security patterns from Section 9
-  - Follows error handling standards from Section 8
-  
-- **[gRPC Transport](./grpc-transport.md)** - RPC communication and streaming protocols
-  - Implements connection pooling from Section 7.2
-  - Uses TLS/mTLS patterns from Section 9
-  - Follows transport abstraction from Section 5
-  
-- **[HTTP Transport](./http-transport.md)** - RESTful APIs and WebSocket communication  
-  - Uses authentication patterns from Section 9
-  - Follows error handling standards from Section 8
-  - Implements transport abstraction from Section 5
+**Companion Document** ([`transport-layer-specifications.md`](./transport-layer-specifications.md)):
+- Complete protocol implementations (NATS, gRPC, HTTP)
+- Detailed service definitions and schemas
+- Configuration specifications
+- Performance benchmarks
+- Production deployment patterns
+
+### Protocol-Specific Transport Files
+
+- **[NATS Transport](./nats-transport.md)** - NATS-specific implementation details
+- **[gRPC Transport](./grpc-transport.md)** - gRPC service and streaming implementations  
+- **[HTTP Transport](./http-transport.md)** - HTTP/WebSocket API implementations
+- **[Transport Specifications](./transport-layer-specifications.md)** - Complete protocol specifications
 
 ### Framework Integration Points
 
-- **[Core Architecture](../core-architecture/)** - System integration and async patterns
-- **[Security](../security/)** - Authentication, authorization, and transport security
-- **[Data Management](../data-management/)** - Message schemas and persistence patterns
+**Core Architecture**:
+- **[Async Patterns](../core-architecture/async-patterns.md)** - Tokio runtime integration
+- **[Component Architecture](../core-architecture/component-architecture.md)** - Transport layer positioning
+- **[Integration Patterns](../core-architecture/integration-patterns.md)** - Cross-system communication
+- **[System Architecture](../core-architecture/system-architecture.md)** - Overall system design
 
-### External References
+**Data Management**:
+- **[Message Schemas](../data-management/message-schemas.md)** - Transport message formats
+- **[Agent Communication](../data-management/agent-communication.md)** - Agent messaging patterns
+- **[Connection Management](../data-management/connection-management.md)** - Data layer coordination
+- **[JetStream KV](../data-management/jetstream-kv.md)** - NATS persistence patterns
 
-- **Technology Stack**: `/tech-framework.md` - Canonical technology specifications
-- **Transport CLAUDE.md**: `./CLAUDE.md` - Transport module navigation guide
+**Security Integration**:
+- **[Authentication Specifications](../security/authentication-specifications.md)** - Transport authentication
+- **[Security Patterns](../security/security-patterns.md)** - Transport security implementation
+- **[Security Framework](../security/security-framework.md)** - Overall security architecture
 
-### Document Organization
+**Operations**:
+- **[Configuration Management](../operations/configuration-management.md)** - Transport configuration
+- **[Observability Framework](../operations/observability-monitoring-framework.md)** - Transport monitoring
+- **[Deployment Architecture](../operations/deployment-architecture-specifications.md)** - Production deployment
 
-This document contains **16 major sections** covering:
+### Related Documentation
 
-- **Sections 1-6**: Basic patterns and agent communication
-- **Sections 7-9**: Connection management and security
-- **Sections 10-16**: Advanced features, configuration, and serialization
+- **[Dependency Specifications](../core-architecture/dependency-specifications.md)** - Technology stack details
+- **[Testing Framework](../testing/testing-framework.md)** - Transport testing patterns
+- **[Agent Domains Analysis](../agent-domains/SPECIALIZED_AGENT_DOMAINS_ANALYSIS.md)** - Agent communication requirements
 
-**File Size Note**: At 1,386 lines, this document serves as the comprehensive foundation for all transport protocols.
-Protocol-specific details have been extracted to companion files to improve navigability while maintaining complete core specifications.
+### Implementation Guidance
+
+**Start Here** (transport-core.md):
+1. Understand basic messaging patterns (Sections 1-4)
+2. Choose appropriate transport abstraction (Section 5)
+3. Implement error handling (Section 8)
+4. Add security layer (Section 9)
+
+**Then Reference** (transport-layer-specifications.md):
+1. Protocol-specific configurations
+2. Service definitions and schemas
+3. Performance optimization
+4. Production deployment
 
 ---
 
-*Transport Core - Foundation Patterns for Agent Communication*
-*Modularized from complete transport layer specifications*
+*Transport Core - Foundation patterns and abstractions for MisterSmith agent communication*

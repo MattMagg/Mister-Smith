@@ -7,13 +7,16 @@ building on the security framework foundation and integrating with transport lay
 
 **Integration Points**:
 
-- Security Framework: `/ms-framework-docs/security/security-framework.md`
-- Transport Layer: `/ms-framework-docs/transport/` - Modular transport specifications
+- **Security Framework**: [`security-framework.md`](security-framework.md) - Core security patterns and configurations
+- **Authentication Implementation**: [`authentication-implementation.md`](authentication-implementation.md) - Certificate + JWT implementation
+- **Authorization Specifications**: [`authorization-specifications.md`](authorization-specifications.md) - RBAC and permission patterns
+- **Security Integration**: [`security-integration.md`](security-integration.md) - NATS and hook security patterns
+- **Transport Layer**: [`../transport/`](../transport/) - Modular transport specifications
   - [Transport Core](../transport/transport-core.md) - Core patterns and security foundations
   - [NATS Transport](../transport/nats-transport.md) - Messaging security
   - [gRPC Transport](../transport/grpc-transport.md) - RPC security with TLS/mTLS
   - [HTTP Transport](../transport/http-transport.md) - API security and authentication
-- Deployment Architecture: `/ms-framework-docs/operations/deployment-architecture-specifications.md`
+- **Deployment Architecture**: [`../operations/deployment-architecture-specifications.md`](../operations/deployment-architecture-specifications.md)
 
 ## 1. JWT Token Structure and Claims
 
@@ -1470,58 +1473,90 @@ async fn setup_secure_nats() -> Result<Client, Error> {
 
 ### Token Security
 
-- Use RS256 or ES256 for JWT signing (asymmetric algorithms)
-- Implement proper key rotation procedures
-- Store refresh tokens securely (hashed in database)
-- Implement token revocation mechanisms
-- Use short-lived access tokens (15-30 minutes)
+- **Algorithm Selection**: Use RS256 or ES256 for JWT signing (asymmetric algorithms)
+- **Key Management**: Implement proper key rotation procedures with overlap periods
+- **Storage Security**: Store refresh tokens securely (hashed in database)
+- **Revocation**: Implement token revocation mechanisms with blacklisting
+- **Token Lifetime**: Use short-lived access tokens (15-30 minutes)
+- **Validation**: Implement JTI (JWT ID) tracking for replay protection
 
 ### Network Security
 
-- Enforce TLS 1.3 minimum for all connections
-- Implement certificate pinning for critical services
-- Use mTLS for service-to-service communication
-- Implement proper SNI validation
+- **TLS Version**: Enforce TLS 1.3 minimum for all connections
+- **Certificate Management**: Implement certificate pinning for critical services
+- **Service Communication**: Use mTLS for service-to-service communication
+- **SNI Validation**: Implement proper SNI validation
+- **OCSP Stapling**: Enable OCSP stapling for real-time certificate validation
 
 ### Implementation Security
 
-- Use constant-time comparison for token validation
-- Implement rate limiting at multiple layers
-- Log authentication events for audit
-- Monitor for suspicious patterns
-- Implement account lockout policies
+- **Timing Attacks**: Use constant-time comparison for token validation
+- **Rate Limiting**: Implement rate limiting at multiple layers (IP, user, endpoint)
+- **Audit Logging**: Log authentication events for audit with structured format
+- **Monitoring**: Monitor for suspicious patterns and implement alerting
+- **Account Protection**: Implement account lockout policies with exponential backoff
+- **Session Security**: Implement session binding and device fingerprinting
 
 ## Performance Optimizations
 
 ### Caching Strategy
 
-- Cache validated tokens for 30 seconds
-- Cache JWKS for 1 hour
-- Cache OAuth2 provider metadata for 24 hours
-- Use Redis for distributed session storage
+- **Token Caching**: Cache validated tokens for 30 seconds (balance security/performance)
+- **JWKS Caching**: Cache JWKS for 1 hour with background refresh
+- **Provider Metadata**: Cache OAuth2 provider metadata for 24 hours
+- **Session Storage**: Use Redis for distributed session storage with clustering
+- **Certificate Caching**: Cache parsed certificates for 5 minutes
 
 ### Connection Pooling
 
-- Maintain persistent connections to IdPs
-- Pool database connections for auth queries
-- Reuse TLS sessions where possible
+- **IdP Connections**: Maintain persistent connections to IdPs with keep-alive
+- **Database Pooling**: Pool database connections for auth queries (min 5, max 20)
+- **TLS Session Reuse**: Reuse TLS sessions where possible
+- **Connection Limits**: Configure appropriate connection limits per service
+
+### Async Processing
+
+- **Background Tasks**: Process MFA enrollment and key rotation asynchronously
+- **Batch Operations**: Batch token validation for high-throughput scenarios
+- **Non-blocking I/O**: Use non-blocking I/O for all network operations
 
 ## Monitoring and Metrics
 
 ### Key Metrics
 
-- Authentication success/failure rates
-- Token validation latency
-- MFA adoption rates
-- Session duration distribution
-- API key usage patterns
+- **Authentication Metrics**:
+  - Success/failure rates by authentication method
+  - Token validation latency (p50, p95, p99)
+  - MFA adoption rates and success rates
+  - Session duration distribution
+  - API key usage patterns and quotas
+
+- **Security Metrics**:
+  - Failed authentication attempts per IP/user
+  - Suspicious login patterns (location, device changes)
+  - Token revocation events
+  - Certificate expiration timeline
+  - Rate limit violations by endpoint
 
 ### Alerts
 
-- High authentication failure rate
-- Unusual token refresh patterns
-- Certificate expiration warnings
-- Rate limit violations
+- **Critical Alerts**:
+  - High authentication failure rate (>5% in 5 minutes)
+  - Certificate expiration warnings (30, 7, 1 days)
+  - Token blacklist growth rate
+  - Multiple failed MFA attempts
+
+- **Warning Alerts**:
+  - Unusual token refresh patterns
+  - Rate limit violations
+  - New device/location logins
+  - Extended session durations
+
+### Dashboard Integration
+
+- **Real-time Monitoring**: Integration with Grafana/Prometheus for real-time auth metrics
+- **Security Dashboard**: Dedicated security dashboard for authentication events
+- **Audit Trails**: Comprehensive audit logging for compliance and forensics
 
 ---
 

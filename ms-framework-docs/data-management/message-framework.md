@@ -1,22 +1,15 @@
 # Message Framework
 
-## Validation, Serialization, and Framework Specifications
+## Technical Specifications for Message Validation, Serialization, and Routing
 
-> **📊 VALIDATION STATUS: PRODUCTION READY**
->
-> | Criterion | Score | Status |
-> |-----------|-------|---------|
-> | Validation Framework | 5/5 | ✅ Multi-Level |
-> | Serialization Support | 5/5 | ✅ Multi-Format |
-> | Event Correlation | 5/5 | ✅ Comprehensive |
-> | Version Management | 5/5 | ✅ Robust |
-> | Security Framework | 5/5 | ✅ Enterprise-Grade |
-> | **TOTAL SCORE** | **15/15** | **✅ DEPLOYMENT APPROVED** |
->
-> *Validated: 2025-07-05 | Document Lines: 3,672 | Implementation Status: 100%*
-> **Purpose**: This document defines the validation framework, serialization specifications, event correlation logic,
-> transformation patterns, version management, implementation guidelines, security considerations, and performance
-> optimizations for the message schema system.
+**🔍 AGENT OPTIMIZATION STATUS**
+- **Agent**: Agent 7, Team Beta  
+- **Optimization Date**: 2025-07-07
+- **Target**: Remove business content, improve technical accuracy
+- **Status**: OPTIMIZING
+- **Focus**: Message routing, validation, and delivery patterns
+
+**Purpose**: This document defines the technical implementation patterns for message validation, serialization, routing, and correlation within the Mister Smith AI Agent Framework.
 
 ## Overview
 
@@ -334,6 +327,18 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+#[derive(Debug, thiserror::Error)]
+pub enum DiscoveryError {
+    #[error("Discovery timeout: {0}")]
+    Timeout(String),
+    #[error("Registry query failed: {0}")]
+    RegistryError(String),
+    #[error("Route creation failed: {0}")]
+    RouteCreationError(String),
+    #[error("Too many routes: limit {limit} exceeded")]
+    TooManyRoutes { limit: usize },
+}
+
 #[derive(Debug, Clone)]
 pub struct RouteDiscovery {
     registry: Arc<RwLock<RouteRegistry>>,
@@ -353,14 +358,27 @@ pub struct DiscoveredRoute {
 
 impl RouteDiscovery {
     pub async fn discover_routes(&self) -> Result<Vec<DiscoveredRoute>, DiscoveryError> {
-        // Query agent registry for active agents
-        let agents = self.query_agent_registry().await?;
+        // Query agent registry for active agents with timeout
+        let agents = tokio::time::timeout(
+            std::time::Duration::from_secs(30),
+            self.query_agent_registry()
+        ).await
+        .map_err(|_| DiscoveryError::Timeout("Agent registry query timed out".to_string()))?
+        .map_err(DiscoveryError::from)?;
         
-        // Build routes based on agent capabilities
+        // Build routes based on agent capabilities with bounds checking
         let mut routes = Vec::new();
+        const MAX_ROUTES_PER_DISCOVERY: usize = 10_000;
+        
         for agent in agents {
-            // Create capability-based routes
+            // Create capability-based routes with limits
             for capability in &agent.capabilities {
+                if routes.len() >= MAX_ROUTES_PER_DISCOVERY {
+                    return Err(DiscoveryError::TooManyRoutes { 
+                        limit: MAX_ROUTES_PER_DISCOVERY 
+                    });
+                }
+                
                 routes.push(DiscoveredRoute {
                     pattern: format!("capability.{}.request", capability),
                     endpoints: vec![agent.endpoint.clone()],
@@ -371,7 +389,13 @@ impl RouteDiscovery {
                 });
             }
             
-            // Create direct agent routes
+            // Create direct agent routes with bounds check
+            if routes.len() >= MAX_ROUTES_PER_DISCOVERY {
+                return Err(DiscoveryError::TooManyRoutes { 
+                    limit: MAX_ROUTES_PER_DISCOVERY 
+                });
+            }
+            
             routes.push(DiscoveredRoute {
                 pattern: format!("agent.{}.direct", agent.id),
                 endpoints: vec![agent.endpoint.clone()],
@@ -557,6 +581,19 @@ Advanced routing based on message content inspection for:
 ```rust
 use serde_json::Value;
 use regex::Regex;
+use lru::LruCache;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
+#[derive(Debug, thiserror::Error)]
+pub enum RoutingError {
+    #[error("Invalid routing condition: {0}")]
+    InvalidCondition(String),
+    #[error("Field extraction failed: {0}")]
+    FieldExtraction(String),
+    #[error("Transformation failed: {0}")]
+    TransformationError(String),
+}
 
 #[derive(Debug, Clone)]
 pub struct ContentRouter {
@@ -586,7 +623,52 @@ pub enum Condition {
     Not(Box<Condition>),
 }
 
+#[derive(Debug, Clone)]
+pub enum Transformation {
+    AddField { path: String, value: Value },
+    RemoveField { path: String },
+    ModifyField { path: String, operation: String },
+    SetPriority { priority: u8 },
+}
+
 impl ContentRouter {
+    pub fn new() -> Self {
+        Self {
+            rules: Vec::new(),
+            default_route: "default".to_string(),
+            performance_cache: LruCache::new(1000),
+        }
+    }
+    
+    /// Generate a hash for message content to enable caching
+    fn hash_message_content(&self, message: &Value) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        
+        // Hash key fields for cache key generation
+        if let Some(msg_type) = message.get("message_type") {
+            msg_type.hash(&mut hasher);
+        }
+        if let Some(source) = message.get("source_agent_id") {
+            source.hash(&mut hasher);
+        }
+        if let Some(target) = message.get("target_agent_id") {
+            target.hash(&mut hasher);
+        }
+        
+        // Hash a portion of the payload for differentiation
+        if let Some(payload) = message.get("payload") {
+            let payload_str = serde_json::to_string(payload).unwrap_or_default();
+            let hash_slice = if payload_str.len() > 1000 {
+                &payload_str[..1000] // Only hash first 1KB for performance
+            } else {
+                &payload_str
+            };
+            hash_slice.hash(&mut hasher);
+        }
+        
+        hasher.finish()
+    }
+    
     pub fn route_message(&mut self, message: &Value) -> Result<String, RoutingError> {
         // Check performance cache first
         let cache_key = self.hash_message_content(message);
@@ -601,7 +683,7 @@ impl ContentRouter {
         for rule in rules {
             if self.evaluate_conditions(&rule.conditions, message)? {
                 // Apply transformations if specified
-                let transformed = self.apply_transformations(
+                let _transformed = self.apply_transformations(
                     message,
                     &rule.transformations
                 )?;
@@ -616,12 +698,27 @@ impl ContentRouter {
         Ok(self.default_route.clone())
     }
     
+    /// Extract field value from message using JSON path notation
+    fn extract_field(&self, message: &Value, path: &str) -> Result<&Value, RoutingError> {
+        let path_parts: Vec<&str> = path.split('.').collect();
+        let mut current = message;
+        
+        for part in path_parts {
+            current = current.get(part)
+                .ok_or_else(|| RoutingError::FieldExtraction(
+                    format!("Field '{}' not found in path '{}'", part, path)
+                ))?;
+        }
+        
+        Ok(current)
+    }
+    
     fn evaluate_conditions(&self, conditions: &[Condition], message: &Value) -> Result<bool, RoutingError> {
         for condition in conditions {
             match condition {
                 Condition::FieldEquals { path, value } => {
                     let field_value = self.extract_field(message, path)?;
-                    if field_value != *value {
+                    if field_value != value {
                         return Ok(false);
                     }
                 }
@@ -657,10 +754,45 @@ impl ContentRouter {
         }
         Ok(true)
     }
+    
+    /// Apply message transformations for content-based routing
+    fn apply_transformations(&self, message: &Value, transformations: &[Transformation]) -> Result<Value, RoutingError> {
+        let mut result = message.clone();
+        
+        for transformation in transformations {
+            match transformation {
+                Transformation::AddField { path, value } => {
+                    // Simple implementation for demonstration
+                    if let Some(obj) = result.as_object_mut() {
+                        obj.insert(path.clone(), value.clone());
+                    }
+                }
+                Transformation::RemoveField { path } => {
+                    if let Some(obj) = result.as_object_mut() {
+                        obj.remove(path);
+                    }
+                }
+                Transformation::ModifyField { path, operation: _ } => {
+                    // Placeholder for field modification logic
+                    // In practice, this would implement specific operations
+                    log::debug!("Field modification requested for path: {}", path);
+                }
+                Transformation::SetPriority { priority } => {
+                    if let Some(obj) = result.as_object_mut() {
+                        obj.insert("priority".to_string(), serde_json::json!(*priority));
+                    }
+                }
+            }
+        }
+        
+        Ok(result)
+    }
 }
 
 // Example content routing rules configuration
 pub fn example_content_routing_rules() -> Vec<ContentRoutingRule> {
+    use serde_json::json;
+    
     vec![
         ContentRoutingRule {
             name: "high_priority_tasks".to_string(),
@@ -959,6 +1091,15 @@ The framework provides comprehensive correlation ID management for tracing messa
 use uuid::Uuid;
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
+use rand::Rng;
+
+/// Generate a 16-character hexadecimal span ID for distributed tracing
+/// Compatible with OpenTelemetry and Jaeger tracing standards
+fn generate_span_id() -> String {
+    let mut rng = rand::thread_rng();
+    let span_id: u64 = rng.gen();
+    format!("{:016x}", span_id)
+}
 
 #[derive(Debug, Clone)]
 pub struct CorrelationContext {
@@ -995,6 +1136,27 @@ impl CorrelationContext {
             ttl_seconds: self.ttl_seconds,
         }
     }
+    
+    /// Add size limits and cleanup for baggage data
+    pub fn add_baggage(&mut self, key: String, value: String) -> Result<(), &'static str> {
+        const MAX_BAGGAGE_SIZE: usize = 8192; // 8KB limit
+        const MAX_BAGGAGE_ITEMS: usize = 64;
+        
+        if self.baggage.len() >= MAX_BAGGAGE_ITEMS {
+            return Err("Maximum baggage items exceeded");
+        }
+        
+        let total_size: usize = self.baggage.iter()
+            .map(|(k, v)| k.len() + v.len())
+            .sum::<usize>() + key.len() + value.len();
+            
+        if total_size > MAX_BAGGAGE_SIZE {
+            return Err("Maximum baggage size exceeded");
+        }
+        
+        self.baggage.insert(key, value);
+        Ok(())
+    }
 }
 
 // High-performance correlation tracking
@@ -1002,6 +1164,77 @@ pub struct CorrelationTracker {
     active_correlations: HashMap<Uuid, CorrelationContext>,
     correlation_chains: HashMap<Uuid, Vec<Uuid>>, // parent -> children
     expiry_queue: BTreeMap<DateTime<Utc>, Vec<Uuid>>,
+}
+
+impl CorrelationTracker {
+    pub fn new() -> Self {
+        Self {
+            active_correlations: HashMap::new(),
+            correlation_chains: HashMap::new(),
+            expiry_queue: BTreeMap::new(),
+        }
+    }
+    
+    /// Add a correlation context with automatic cleanup scheduling
+    pub fn add_correlation(&mut self, context: CorrelationContext) {
+        let correlation_id = context.correlation_id;
+        let expiry_time = context.created_at + chrono::Duration::seconds(context.ttl_seconds as i64);
+        
+        // Add to expiry queue for cleanup
+        self.expiry_queue
+            .entry(expiry_time)
+            .or_insert_with(Vec::new)
+            .push(correlation_id);
+            
+        // Track parent-child relationships
+        if let Some(parent_id) = context.parent_correlation_id {
+            self.correlation_chains
+                .entry(parent_id)
+                .or_insert_with(Vec::new)
+                .push(correlation_id);
+        }
+        
+        self.active_correlations.insert(correlation_id, context);
+    }
+    
+    /// Clean up expired correlations to prevent memory leaks
+    pub fn cleanup_expired(&mut self) {
+        let now = chrono::Utc::now();
+        let expired_times: Vec<DateTime<Utc>> = self.expiry_queue
+            .range(..=now)
+            .map(|(time, _)| *time)
+            .collect();
+            
+        for expired_time in expired_times {
+            if let Some(expired_ids) = self.expiry_queue.remove(&expired_time) {
+                for correlation_id in expired_ids {
+                    self.active_correlations.remove(&correlation_id);
+                    
+                    // Clean up correlation chains
+                    if let Some(children) = self.correlation_chains.remove(&correlation_id) {
+                        for child_id in children {
+                            self.active_correlations.remove(&child_id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /// Get correlation context with automatic expiry check
+    pub fn get_correlation(&mut self, correlation_id: &Uuid) -> Option<&CorrelationContext> {
+        // Check if expired first
+        if let Some(context) = self.active_correlations.get(correlation_id) {
+            let expiry_time = context.created_at + chrono::Duration::seconds(context.ttl_seconds as i64);
+            if chrono::Utc::now() > expiry_time {
+                // Remove expired context
+                self.active_correlations.remove(correlation_id);
+                return None;
+            }
+        }
+        
+        self.active_correlations.get(correlation_id)
+    }
 }
 ```
 
@@ -1798,9 +2031,50 @@ impl MessageValidator {
     }
     
     fn validate_essential_fields(&self, message: &Value) -> Result<(), Vec<ValidationError>> {
-        // Optimized validation for production use
-        // Only validate critical fields for performance
-        Ok(())
+        // Optimized validation for production use - validates critical fields only
+        let mut errors = Vec::new();
+        
+        // Validate required base message fields
+        if message.get("message_id").is_none() {
+            errors.push(ValidationError::custom("Missing required field: message_id"));
+        }
+        
+        if message.get("timestamp").is_none() {
+            errors.push(ValidationError::custom("Missing required field: timestamp"));
+        }
+        
+        if message.get("message_type").is_none() {
+            errors.push(ValidationError::custom("Missing required field: message_type"));
+        }
+        
+        // Validate message_id format (UUID)
+        if let Some(msg_id) = message.get("message_id").and_then(|v| v.as_str()) {
+            if uuid::Uuid::parse_str(msg_id).is_err() {
+                errors.push(ValidationError::custom("Invalid message_id format: must be UUID"));
+            }
+        }
+        
+        // Validate timestamp format (ISO 8601)
+        if let Some(timestamp) = message.get("timestamp").and_then(|v| v.as_str()) {
+            if chrono::DateTime::parse_from_rfc3339(timestamp).is_err() {
+                errors.push(ValidationError::custom("Invalid timestamp format: must be ISO 8601"));
+            }
+        }
+        
+        // Validate message size constraints
+        let serialized_size = serde_json::to_string(message)
+            .map(|s| s.len())
+            .unwrap_or(0);
+            
+        if serialized_size > 1_048_576 { // 1MB limit
+            errors.push(ValidationError::custom("Message exceeds maximum size limit"));
+        }
+        
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
     }
 }
 ```
@@ -2037,6 +2311,84 @@ impl FastPathValidator {
 - **Storage Systems**: [Persistence Operations](./persistence-operations.md), [Storage Patterns](./storage-patterns.md)
 - **Transport Systems**: [NATS Transport](../transport/nats-transport.md), [gRPC Transport](../transport/grpc-transport.md)
 - **Security Systems**: [Security Patterns](../security/security-patterns.md)
+
+## Framework Integration with System Messages
+
+### Integration with System Message Schemas
+
+This framework directly supports all message types defined in [System Message Schemas](./system-message-schemas.md):
+
+| Message Type | Framework Components Used | Routing Pattern |
+|-------------|---------------------------|-----------------|
+| **[Hook Event Message](./system-message-schemas.md#hook-event-message)** | Validation (essential fields), Correlation (session tracking), Content routing (hook type) | `cli.hooks.{hook_type}.{agent_id}` |
+| **[Hook Response Message](./system-message-schemas.md#hook-response-message)** | Transformation (CLI formatting), Circuit breaker (timeout handling) | `cli.responses.{agent_id}` |
+| **[System Alert Message](./system-message-schemas.md#system-alert-message)** | Event correlation (causality tracking), Content routing (severity-based) | `system.alerts.{severity}` |
+| **[System Health Check](./system-message-schemas.md#system-health-check-message)** | Performance optimization (high-frequency), Aggregation (metrics collection) | `system.health.{component}` |
+
+### NATS Subject Pattern Integration
+
+Framework routing rules implement the [NATS subject patterns](./system-message-schemas.md#nats-subject-pattern-schemas):
+
+```rust
+// Hook event routing example
+pub fn create_hook_routing_rules() -> Vec<ContentRoutingRule> {
+    use serde_json::json;
+    
+    vec![
+        ContentRoutingRule {
+            name: "pre_task_hooks".to_string(),
+            priority: 100,
+            conditions: vec![
+                Condition::FieldEquals {
+                    path: "message_type".to_string(),
+                    value: json!("hook_event"),
+                },
+                Condition::FieldEquals {
+                    path: "payload.hook_type".to_string(),
+                    value: json!("pre_task"),
+                },
+            ],
+            destination: "cli.hooks.pre_task".to_string(),
+            transformations: vec![
+                Transformation::AddField {
+                    path: "routing_metadata.correlation_required".to_string(),
+                    value: json!(true),
+                },
+            ],
+        },
+        ContentRoutingRule {
+            name: "critical_system_alerts".to_string(),
+            priority: 95,
+            conditions: vec![
+                Condition::FieldEquals {
+                    path: "message_type".to_string(),
+                    value: json!("system_alert"),
+                },
+                Condition::FieldEquals {
+                    path: "payload.severity".to_string(),
+                    value: json!("critical"),
+                },
+            ],
+            destination: "system.alerts.critical".to_string(),
+            transformations: vec![
+                Transformation::SetPriority { priority: 10 },
+                Transformation::AddField {
+                    path: "escalation.immediate".to_string(),
+                    value: json!(true),
+                },
+            ],
+        },
+    ]
+}
+```
+
+### Message Correlation Strategies
+
+Framework correlation patterns support [system message correlation](./system-message-schemas.md#message-correlation-strategies):
+
+- **Hook Event-Response Correlation**: Track CLI hook lifecycle using correlation_id
+- **System Health Monitoring**: Aggregate health check messages by component
+- **Alert Escalation Chains**: Maintain causality links for alert root cause analysis
 
 ## Navigation
 
