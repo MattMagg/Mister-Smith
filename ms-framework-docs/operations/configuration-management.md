@@ -5,6 +5,7 @@
 ### Cross-Reference Integration
 
 **Related Documentation**:
+
 - [Configuration & Deployment Specifications](configuration-deployment-specifications.md) - Deployment patterns and infrastructure integration
 - [System Architecture](../core-architecture/system-architecture.md) - Overall framework architecture
 - [Agent Lifecycle](../data-management/agent-lifecycle.md) - Agent initialization and configuration loading
@@ -2216,6 +2217,7 @@ and operational practices. The Infrastructure-as-Code integration ensures seamle
 **Implementation Integration**: Use these configuration specifications with the deployment patterns defined in [Configuration & Deployment Specifications](configuration-deployment-specifications.md) for complete system deployment.
 
 **Related Specifications**:
+
 - [Container Bootstrap Patterns](configuration-deployment-specifications.md#54-container-bootstrap-sequence-pattern) - Container initialization using these configurations
 - [Resource Management Patterns](configuration-deployment-specifications.md#6-scaling-and-resource-management-patterns) - Scaling configurations implementation
 - [Secret Management Patterns](configuration-deployment-specifications.md#2-secret-management-patterns) - Secret handling in deployment contexts

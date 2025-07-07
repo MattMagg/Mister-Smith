@@ -10,15 +10,18 @@ The implementation is structured in phases that build upon each other while main
 ### Framework Integration Points
 
 **Core Architecture Dependencies**:
+
 - [`ms-framework-docs/core-architecture/system-architecture.md`](../core-architecture/system-architecture.md) - System component integration
 - [`ms-framework-docs/core-architecture/supervision-trees.md`](../core-architecture/supervision-trees.md) - Process supervision patterns
 - [`ms-framework-docs/core-architecture/tokio-runtime.md`](../core-architecture/tokio-runtime.md) - Async runtime integration
 
 **Transport Layer Dependencies**:
+
 - [`ms-framework-docs/transport/nats-transport.md`](../transport/nats-transport.md) - NATS messaging patterns
 - [`ms-framework-docs/transport/message-routing.md`](../transport/message-routing.md) - Message routing specifications
 
 **Agent Management Dependencies**:
+
 - [`ms-framework-docs/data-management/agent-orchestration.md`](../data-management/agent-orchestration.md) - Agent lifecycle management
 - [`ms-framework-docs/data-management/agent-communication.md`](../data-management/agent-communication.md) - Inter-agent communication patterns
 
@@ -1118,17 +1121,20 @@ Implement advanced coordination patterns and performance optimizations.
 ### Resource Requirements
 
 #### System Resources
+
 - **Memory**: 8-16GB system memory (2-4GB for framework, 4-12GB for Claude CLI agents)
 - **CPU**: 4-8 CPU cores (concurrent agent processing)
 - **Storage**: 1-2GB for logs, configurations, and temporary files
 - **Network**: Stable internet connectivity for Anthropic API calls
 
 #### Framework Integration Resources
+
 - **NATS Server**: Minimum 1GB memory, 2 CPU cores
 - **PostgreSQL**: 2-4GB memory for agent state persistence
 - **Tokio Runtime**: Configured for async I/O intensive workloads
 
 #### Performance Targets
+
 - **Agent Spawn Time**: < 5 seconds per agent
 - **Hook Response Time**: < 100ms for framework integration
 - **Message Throughput**: 1000+ messages/second NATS capacity

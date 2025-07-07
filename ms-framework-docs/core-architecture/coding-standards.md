@@ -7,7 +7,6 @@ Focused on Rust best practices, agent-specific patterns, and security requiremen
 
 ---
 
-
 ## 1. Core Principles
 
 ### 1.1 Core Requirements
@@ -822,7 +821,6 @@ pub enum RuntimeError {
     },
 }
 ```
-
 
 ---
 

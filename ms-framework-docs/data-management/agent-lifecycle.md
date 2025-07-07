@@ -691,7 +691,7 @@ pub enum ComparisonOperator {
 > **Validation Enhancement**: For distributed scenarios, consider implementing consensus mechanisms for state transitions to ensure consistency across nodes.
 
 /// Agent lifecycle state transition rules
-#[derive(Debug, Clone, Serialize, Deserialize)]
+# [derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StateTransitionRules {
     pub allowed_transitions: HashMap<AgentState, Vec<AgentState>>,
     pub transition_conditions: HashMap<(AgentState, AgentState), Vec<TransitionCondition>>,
@@ -699,7 +699,7 @@ pub struct StateTransitionRules {
 }
 
 /// Transition condition definition
-#[derive(Debug, Clone, Serialize, Deserialize)]
+# [derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransitionCondition {
     pub condition_type: ConditionType,
     pub parameters: HashMap<String, serde_json::Value>,
@@ -707,7 +707,7 @@ pub struct TransitionCondition {
 }
 
 /// Condition types for state transitions
-#[derive(Debug, Clone, Serialize, Deserialize)]
+# [derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ConditionType {
     ResourceAvailable,
     DependencyReady,
@@ -727,7 +727,7 @@ pub struct AgentLifecycle {
 }
 
 /// Complete agent state information
-#[derive(Debug, Clone, Serialize, Deserialize)]
+# [derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentStateInfo {
     pub current_state: AgentState,
     pub previous_state: Option<AgentState>,
@@ -737,7 +737,7 @@ pub struct AgentStateInfo {
 }
 
 /// State transition record
-#[derive(Debug, Clone, Serialize, Deserialize)]
+# [derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StateTransition {
     pub from_state: AgentState,
     pub to_state: AgentState,
@@ -749,7 +749,7 @@ pub struct StateTransition {
 }
 
 /// State consensus manager trait
-#[async_trait::async_trait]
+# [async_trait::async_trait]
 pub trait StateConsensusManager: Send + Sync {
     async fn propose_transition(
         &self,
@@ -760,7 +760,7 @@ pub trait StateConsensusManager: Send + Sync {
 }
 
 /// Consensus result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+# [derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsensusResult {
     pub approved: bool,
     pub votes: Vec<Vote>,
@@ -768,7 +768,7 @@ pub struct ConsensusResult {
 }
 
 /// Vote in consensus process
-#[derive(Debug, Clone, Serialize, Deserialize)]
+# [derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Vote {
     pub voter_id: String,
     pub approval: bool,
@@ -777,7 +777,7 @@ pub struct Vote {
 }
 
 /// State observer trait
-#[async_trait::async_trait]
+# [async_trait::async_trait]
 pub trait StateObserver: Send + Sync {
     async fn on_state_change(&self, transition: &StateTransition) -> Result<(), AgentError>;
 }
@@ -966,6 +966,7 @@ impl AgentLifecycle {
         self.transition_history.read().unwrap().clone()
     }
 }
+
 ```
 
 ## 2. Supervision Patterns
@@ -1660,6 +1661,7 @@ impl RestartPolicyManager {
 ### 3.1 Initialization Pipeline
 
 // This section has been replaced with comprehensive implementation above
+
 ```
 
 ### 3.2 Resource Allocation
@@ -1828,6 +1830,7 @@ enum HealthLevel {
     Unhealthy(String),
     Critical(String),
 }
+
 ```
 
 ### 4.2 Metrics Collection
@@ -2677,6 +2680,7 @@ impl SupervisedCodeAgent {
 ### Related Documents
 
 #### Core Data Management
+
 - **[Agent Communication](agent-communication.md)** - Message passing, task distribution, coordination patterns, and inter-agent communication protocols
 - **[Agent Operations](agent-operations.md)** - Discovery, workflow management, and operational patterns  
 - **[Agent Integration](agent-integration.md)** - Resource management, tool bus integration, and extension patterns
@@ -2685,22 +2689,26 @@ impl SupervisedCodeAgent {
 - **[State Management](state-management.md)** - Distributed state synchronization and consistency patterns
 
 #### Core Architecture References
+
 - **[Supervision Trees](../core-architecture/supervision-trees.md)** - Supervision hierarchy patterns and fault tolerance
 - **[Async Patterns](../core-architecture/async-patterns.md)** - Tokio runtime patterns and async task management
 - **[Type Definitions](../core-architecture/type-definitions.md)** - Core type system and trait definitions
 - **[Error Handling](../core-architecture/error-handling.md)** - Comprehensive error management strategies
 
 #### Security Integration
+
 - **[Security Framework](../security/security-framework.md)** - Agent authentication and authorization
 - **[Authentication](../security/authentication-specifications.md)** - Detailed auth patterns and token management
 - **[Authorization](../security/authorization-specifications.md)** - RBAC implementation and permission models
 
 #### Operations & Monitoring
+
 - **[Health Monitoring](../operations/health-monitoring.md)** - System health checks and metrics collection
 - **[Performance Monitoring](../operations/performance-monitoring.md)** - Agent performance tracking and optimization
 - **[Deployment Patterns](../operations/deployment-patterns.md)** - Production deployment strategies
 
 #### Transport & Communication
+
 - **[Transport Layer](../transport/transport-layer.md)** - Network communication protocols and patterns
 - **[Message Routing](../transport/message-routing.md)** - Advanced routing strategies and load balancing
 

@@ -317,6 +317,7 @@ Format: `<action>:<resource>:<scope>`
 ### Permission Examples
 
 #### Basic CRUD Operations
+
 ```yaml
 # Read permissions
 "read:document:tenant"      # Read all documents in tenant
@@ -340,6 +341,7 @@ Format: `<action>:<resource>:<scope>`
 ```
 
 #### Advanced Permission Patterns
+
 ```yaml
 # Time-based permissions
 "execute:maintenance:all[business_hours]"
@@ -1803,18 +1805,21 @@ This authorization specification provides a complete technical blueprint for imp
 ### Cross-References
 
 #### Core Security Components
+
 - **[Authentication Implementation](authentication-implementation.md)** - User authentication and token management
 - **[Security Framework](security-framework.md)** - Complete security architecture overview
 - **[Security Patterns](security-patterns.md)** - Security design patterns and best practices
 - **[Security Integration](security-integration.md)** - NATS and hook security implementation
 
 #### Framework Integration
+
 - **[Transport Security](../transport/security.md)** - Transport layer security protocols
 - **[NATS Transport](../transport/nats-transport.md)** - NATS messaging security
 - **[Data Management](../data-management/)** - Secure data handling patterns
 - **[Agent Communication](../data-management/agent-communication.md)** - Secure agent messaging
 
 #### Implementation Guides
+
 - **[Authorization Implementation](authorization-implementation.md)** - Complete RBAC and audit code implementation
 - **[Integration Patterns](../core-architecture/integration-patterns.md)** - Security integration patterns
 - **[System Architecture](../core-architecture/system-architecture.md)** - Overall system security design

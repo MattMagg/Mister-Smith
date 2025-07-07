@@ -22,6 +22,7 @@ As stated in the canonical framework: "Agents: use this framework as the canonic
 This document provides foundational security patterns for the MisterSmith framework, covering authentication, authorization, TLS configuration, and secure communication patterns. All patterns are designed for systematic implementation by agents.
 
 **Related Documentation:**
+
 - [Security Patterns](./security-patterns.md) - Essential security patterns, guidelines, and configurations
 - [Security Checklist](./security-patterns.md#security-checklist-for-agents) - Complete security implementation checklist
 - [Configuration Templates](./security-patterns.md#configuration-templates) - Ready-to-use security configurations

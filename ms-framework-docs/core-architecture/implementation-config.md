@@ -15,7 +15,6 @@ Focused on practical configuration, validation, and module organization.
 
 ---
 
-
 ## 1. Agent Implementation Configuration
 
 ### 1.1 Core Agent Configuration

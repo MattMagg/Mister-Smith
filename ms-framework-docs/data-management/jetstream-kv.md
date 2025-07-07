@@ -9,6 +9,7 @@ tags:
 ## JetStream KV Storage Patterns & Configuration
 
 **Key Technologies**:
+
 - NATS JetStream 2.9+ with KV store buckets
 - async-nats 0.34+ Rust client
 - SQLx 0.7+ for PostgreSQL integration
@@ -1030,18 +1031,21 @@ pub async fn example_usage() -> Result<(), Box<dyn std::error::Error + Send + Sy
 ### Integration Summary
 
 **Core Components**:
+
 - **JetStream KV Store**: Fast distributed state cache with TTL management
 - **StateManager**: Conflict resolution and concurrency control
 - **Application-level Integration**: Coordinated SQL+NATS operations
 - **Error Handling**: Comprehensive timeout and retry patterns
 
 **Key Patterns**:
+
 1. **Dual-Store Architecture**: KV cache + PostgreSQL persistence
 2. **Async Operations**: Non-blocking I/O with proper error handling
 3. **Conflict Resolution**: Timestamp-based and last-write-wins strategies
 4. **State Lifecycle**: Coordinated hydration and flushing
 
 **Dependencies**:
+
 - async-nats 0.34+ (NATS JetStream client)
 - sqlx 0.7+ (PostgreSQL integration)
 - tokio 1.38+ (async runtime)
