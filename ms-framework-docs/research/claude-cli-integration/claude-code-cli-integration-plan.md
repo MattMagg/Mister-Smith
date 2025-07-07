@@ -7,6 +7,7 @@
 This document provides technical integration specifications for incorporating Claude Code CLI capabilities into the Mister Smith multi-agent framework. The integration leverages existing framework architecture while adding minimal new components.
 
 **Cross-References:**
+
 - [System Architecture](../../core-architecture/system-architecture.md)
 - [Agent Orchestration](../../data-management/agent-orchestration.md)
 - [NATS Transport](../../transport/nats-transport.md)
@@ -66,6 +67,7 @@ User Request → Framework → Claude CLI Controller → Claude CLI Instance
 **Purpose**: Manage Claude CLI instance lifecycle and resource allocation
 
 **Integration Points:**
+
 - [Agent Orchestration](../../data-management/agent-orchestration.md)
 - [Supervision Trees](../../core-architecture/supervision-trees.md)
 - [NATS Transport](../../transport/nats-transport.md)
@@ -115,6 +117,7 @@ impl ClaudeCliController {
 **Purpose**: Bridge Claude Code hooks to NATS messaging system
 
 **Integration Points:**
+
 - [NATS Transport](../../transport/nats-transport.md)
 - [Message Schemas](../../data-management/message-schemas.md)
 - [Connection Management](../../data-management/connection-management.md)
@@ -158,6 +161,7 @@ impl HookBridge {
 **Purpose**: Parse Claude CLI task output and route to NATS subjects
 
 **Integration Points:**
+
 - [Message Framework](../../data-management/message-framework.md)
 - [Data Integration Patterns](../../data-management/data-integration-patterns.md)
 - [Agent Communication](../../data-management/agent-communication.md)
@@ -203,6 +207,7 @@ impl TaskOutputParser {
 #### A. Agent Orchestration Enhancement
 
 **Integration Points:**
+
 - [Agent Orchestration](../../data-management/agent-orchestration.md)
 - [Agent Lifecycle](../../data-management/agent-lifecycle.md)
 - [Supervision Trees](../../core-architecture/supervision-trees.md)
@@ -240,6 +245,7 @@ impl AgentOrchestrator {
 #### B. Transport Layer Enhancement
 
 **Integration Points:**
+
 - [NATS Transport](../../transport/nats-transport.md)
 - [Message Schemas](../../data-management/message-schemas.md)
 - [Connection Management](../../data-management/connection-management.md)
@@ -583,6 +589,7 @@ const PERFORMANCE_TARGETS: PerformanceTargets = PerformanceTargets {
 ```
 
 **Monitoring Integration:**
+
 - [Observability Framework](../../operations/observability-monitoring-framework.md)
 - [Performance Monitoring](../../operations/performance-monitoring.md)
 - [Health Checks](../../operations/health-checks.md)
@@ -600,6 +607,7 @@ const RELIABILITY_TARGETS: ReliabilityTargets = ReliabilityTargets {
 ```
 
 **Error Handling Integration:**
+
 - [Error Handling](../../core-architecture/error-handling.md)
 - [Supervision Trees](../../core-architecture/supervision-trees.md)
 - [Recovery Patterns](../../core-architecture/recovery-patterns.md)
@@ -617,6 +625,7 @@ const INTEGRATION_REQUIREMENTS: IntegrationRequirements = IntegrationRequirement
 ```
 
 **Framework Integration:**
+
 - [System Architecture](../../core-architecture/system-architecture.md)
 - [Component Architecture](../../core-architecture/component-architecture.md)
 - [Integration Patterns](../../core-architecture/integration-patterns.md)
@@ -634,6 +643,7 @@ const SECURITY_REQUIREMENTS: SecurityRequirements = SecurityRequirements {
 ```
 
 **Security Integration:**
+
 - [Security Framework](../../security/security-framework.md)
 - [Authentication](../../security/authentication.md)
 - [Authorization](../../security/authorization.md)
@@ -673,6 +683,7 @@ cargo run --bin load-test -- --agents 25 --duration 300
 ```
 
 **Testing Integration:**
+
 - [Testing Framework](../../testing/testing-framework.md)
 - [Integration Tests](../../testing/integration-tests.md)
 - [Load Testing](../../testing/load-testing.md)

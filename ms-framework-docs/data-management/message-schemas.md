@@ -35,6 +35,7 @@ to enable type-safe, performant agent communication.
 ## Integration References
 
 This message schema specification integrates with:
+
 - [Core Message Schemas](./core-message-schemas.md) - Essential message patterns
 - [Transport Layer](../transport/) - NATS and gRPC implementations
 - [Agent Orchestration](../core-architecture/) - Agent lifecycle and supervision

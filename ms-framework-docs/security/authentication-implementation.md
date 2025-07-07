@@ -5,6 +5,7 @@
 This document provides complete implementation patterns for certificate management and JWT authentication in the Mister Smith Framework. It includes production-ready code for certificate lifecycle management, JWT token operations, and authentication middleware.
 
 **Key Features**:
+
 - **Certificate Management**: Complete CA setup and certificate lifecycle management
 - **JWT Authentication**: ES384-based token generation and verification
 - **Session Management**: Secure session handling with refresh token rotation
@@ -22,11 +23,13 @@ This document provides complete implementation patterns for certificate manageme
 ## Implementation Requirements
 
 **TLS Standards**: This implementation enforces TLS 1.3 minimum across the entire framework:
+
 - Ensures consistent security posture across all components
 - Provides modern cryptographic protection for all connections
 - Meets current security best practices and compliance requirements
 
 **Security Features**:
+
 - **mTLS**: Mutual TLS authentication for service-to-service communication
 - **JWT**: ES384-based token authentication with role-based claims
 - **Session Management**: Secure session handling with refresh token rotation
@@ -1222,6 +1225,7 @@ async fn generate_nats_jwt() -> Result<String, JwtError> {
 ### Security Testing Requirements
 
 **Certificate Testing**:
+
 ```bash
 # Test certificate chain validation
 openssl verify -CAfile ca/ca-cert.pem server/server-cert.pem
@@ -1235,6 +1239,7 @@ nmap --script ssl-enum-ciphers -p 8443 localhost
 ```
 
 **Authentication Testing**:
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -1288,6 +1293,7 @@ mod tests {
 ### Configuration Management
 
 **TLS Configuration**:
+
 ```rust
 // TLS configuration with version enforcement
 #[derive(Debug, Clone)]
@@ -1320,6 +1326,7 @@ impl Default for TlsConfig {
 ### Security Monitoring
 
 **Audit Logging**:
+
 ```rust
 // Structured audit logging for security events
 #[derive(Debug, Serialize)]

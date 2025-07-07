@@ -819,6 +819,7 @@ This document provides async Rust implementations for agent operational patterns
 ### Supervision Tree Integration
 
 Operational patterns coordinate with supervision hierarchies through:
+
 ```rust
 // Supervision events sent from operations to orchestration layer
 pub enum SupervisionEvent {

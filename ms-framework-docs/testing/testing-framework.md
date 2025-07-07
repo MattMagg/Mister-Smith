@@ -5,6 +5,7 @@
 ## RELATED DOCUMENTS
 
 ### Core Architecture
+
 - [System Architecture](../core-architecture/system-architecture.md) - Overall system design and component integration
 - [Component Architecture](../core-architecture/component-architecture.md) - Service and module organization
 - [Integration Implementation](../core-architecture/integration-implementation.md) - Contract-based testing framework and integration test harness
@@ -13,6 +14,7 @@
 - [Type Definitions](../core-architecture/type-definitions.md) - Type-safe testing patterns and validation schemas
 
 ### Data Management
+
 - [Message Framework](../data-management/message-framework.md) - Message validation and serialization testing
 - [Core Message Schemas](../data-management/core-message-schemas.md) - Schema validation and compatibility testing
 - [Agent Communication](../data-management/agent-communication.md) - Communication protocol testing patterns
@@ -21,22 +23,26 @@
 - [Data Persistence](../data-management/data-persistence.md) - Persistence layer testing and data integrity validation
 
 ### Security
+
 - [Security Framework](../security/security-framework.md) - Security testing patterns and vulnerability assessment
 - [Authentication Specifications](../security/authentication-specifications.md) - Authentication flow testing
 - [Authorization Specifications](../security/authorization-specifications.md) - Authorization policy testing and access control validation
 
 ### Transport Layer
+
 - [Transport Core](../transport/transport-core.md) - Transport protocol testing and network simulation
 - [NATS Transport](../transport/nats-transport.md) - NATS integration testing and message delivery validation
 - [gRPC Transport](../transport/grpc-transport.md) - gRPC service testing and contract validation
 - [HTTP Transport](../transport/http-transport.md) - HTTP API testing and endpoint validation
 
 ### Operations
+
 - [Configuration Management](../operations/configuration-management.md) - Configuration validation and environment testing
 - [Observability Monitoring](../operations/observability-monitoring-framework.md) - Monitoring and metrics validation
 - [Process Management](../operations/process-management-specifications.md) - Process lifecycle and resource management testing
 
 ### Testing Resources
+
 - [Test Schemas](test-schemas.md) - Test data structures and message schemas
 - [Testing CLAUDE Guide](CLAUDE.md) - Testing directory navigation and instructions
 
@@ -68,30 +74,35 @@ P4: Compatibility and Regression Tests
 Testing patterns specifically designed for multi-agent system validation:
 
 #### Contract-Based Testing
+
 - Consumer-driven contract testing for agent communication protocols
 - Service boundary validation between agent types
 - Message schema contract verification across agent domains
 - Protocol compliance testing for transport layers
 
 #### Chaos Engineering for Agent Systems
+
 - Failure injection patterns for agent resilience testing
 - Network partition simulation between agent clusters
 - Service degradation testing under load
 - Agent isolation and recovery testing
 
 #### Performance Monitoring for Agent Operations
+
 - Continuous performance regression detection for agent workflows
 - Benchmark result analysis and trending for multi-agent scenarios
 - Resource utilization tracking across agent populations
 - Scalability testing for agent orchestration patterns
 
 #### Security Validation for Agent Communications
+
 - Automated vulnerability scanning for agent-to-agent communications
 - Authentication/authorization flow testing for agent identity systems
 - Secure transport verification for agent message passing
 - Agent privilege escalation and access control testing
 
 #### Test Analytics for Agent Systems
+
 - Test result aggregation and analysis across agent domains
 - Trend detection and reporting for multi-agent system health
 - Quality gate enforcement for agent deployment readiness
@@ -1810,24 +1821,28 @@ impl TestReporter {
 ### Core Testing Infrastructure Requirements
 
 #### Test Environment Setup
+
 - Tokio runtime configuration for async testing
 - Testcontainer infrastructure for service dependencies
 - Mock framework integration with mockall crate
 - Property-based testing with proptest integration
 
 #### Performance Testing Infrastructure
+
 - Criterion benchmarking framework setup
 - Custom performance metrics collection
 - Regression detection and alerting systems
 - Resource utilization monitoring during tests
 
 #### Security Testing Infrastructure
+
 - Automated vulnerability scanning integration
 - Authentication and authorization testing frameworks
 - Secure transport validation tools
 - Agent privilege and access control testing
 
 #### Quality Assurance Systems
+
 - Coverage reporting and threshold enforcement
 - Test result aggregation and analysis
 - Automated quality gate validation
@@ -1836,24 +1851,28 @@ impl TestReporter {
 ### Multi-Agent System Testing Standards
 
 #### Agent Lifecycle Testing
+
 - State transition validation across agent types
 - Lifecycle event handling and error recovery
 - Agent spawn and termination testing
 - Resource cleanup and memory management validation
 
 #### Inter-Agent Communication Testing
+
 - Message passing reliability and ordering
 - Protocol compliance across transport layers
 - Network partition and failure recovery testing
 - Message serialization and deserialization validation
 
 #### Agent Orchestration Testing
+
 - Workflow execution and coordination patterns
 - Task distribution and load balancing validation
 - Agent cluster formation and management
 - Service discovery and registration testing
 
 #### System Integration Testing
+
 - End-to-end workflow validation
 - Cross-component interaction testing
 - Database integration and migration testing
