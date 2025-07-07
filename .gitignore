@@ -22,7 +22,8 @@
 # src/
 # lib/
 # core/
-# target/
+target/
+.cargo/
 # Cargo.toml
 # Cargo.lock
 
