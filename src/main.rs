@@ -60,7 +60,7 @@ impl Phase2Verifier {
         
         // Try to connect to NATS (optional for basic testing)
         let nats_transport = match NatsTransport::new("nats://localhost:4222").await {
-            Ok(transport) => {
+            Ok(mut transport) => {
                 info!("✅ NATS connection established");
                 transport.setup_handlers(agent_pool.clone()).await?;
                 Some(transport)

@@ -307,3 +307,21 @@ pub enum SupervisionError {
     #[error("Supervision operation failed: {0}")]
     OperationFailed(String),
 }
+
+/// Health check result for supervised components
+#[derive(Debug, Clone)]
+pub enum HealthResult {
+    /// Component is healthy
+    Healthy,
+    /// Component is degraded but functional
+    Degraded(String),
+    /// Component is unhealthy
+    Unhealthy(String),
+}
+
+/// Health check trait for supervised components
+#[async_trait::async_trait]
+pub trait HealthCheck: Send + Sync {
+    /// Check the health of the component
+    async fn check_health(&self) -> HealthResult;
+}

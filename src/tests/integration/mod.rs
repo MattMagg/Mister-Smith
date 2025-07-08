@@ -12,3 +12,5 @@ pub mod concurrent_agents;
 pub mod error_scenarios;
 #[cfg(test)]
 pub mod claude_executor_test;
+#[cfg(test)]
+pub mod supervision_pool_integration;

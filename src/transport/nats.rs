@@ -11,7 +11,54 @@ use tokio::sync::mpsc;
 use tracing::{info, warn, error};
 
 use crate::message::{MessageRouter, AgentMessageHandler, SystemMessageHandler};
-use crate::agent::AgentPool;
+use crate::agent::{AgentPool, AgentState};
+use crate::transport::supervision_events::{
+    SupervisionEventPublisher, SupervisionEventSubscriber,
+    SupervisionDecisionHandler, LifecycleEventType, LifecycleMetadata,
+};
+
+/// Subject hierarchy patterns for Phase 3
+pub mod subjects {
+    /// Agent communication subjects
+    pub mod agents {
+        pub const COMMANDS: &str = "agents.{}.commands.{}";
+        pub const STATUS: &str = "agents.{}.status.{}";
+        pub const HEARTBEAT: &str = "agents.{}.heartbeat";
+        pub const CAPABILITIES: &str = "agents.{}.capabilities";
+        pub const METRICS: &str = "agents.{}.metrics.{}";
+        pub const EVENTS: &str = "agents.{}.events.{}";
+        
+        // Legacy compatibility
+        pub const LEGACY_COMMAND: &str = "agent.command";
+    }
+    
+    /// Task distribution subjects
+    pub mod tasks {
+        pub const ASSIGNMENT: &str = "tasks.{}.assignment";
+        pub const QUEUE: &str = "tasks.{}.queue.{}";
+        pub const PROGRESS: &str = "tasks.{}.progress";
+        pub const RESULT: &str = "tasks.{}.result";
+    }
+    
+    /// System management subjects
+    pub mod system {
+        pub const CONTROL: &str = "system.control.{}";
+        pub const DISCOVERY: &str = "system.discovery.{}";
+        pub const HEALTH: &str = "system.health.{}";
+        pub const CONFIG: &str = "system.config.{}.{}";
+        
+        // Legacy compatibility
+        pub const LEGACY_CONTROL: &str = "system.control";
+    }
+    
+    /// Agent discovery subjects
+    pub mod discovery {
+        pub const ANNOUNCE: &str = "agents.discovery.announce";
+        pub const QUERY: &str = "agents.discovery.query";
+        pub const RESPONSE: &str = "agents.discovery.response";
+        pub const DEPARTING: &str = "agents.discovery.departing";
+    }
+}
 
 /// NATS transport client for agent communication
 #[derive(Debug, Clone)]
@@ -20,6 +67,12 @@ pub struct NatsTransport {
     client: Client,
     /// Message router
     router: Arc<MessageRouter>,
+    /// Supervision event publisher
+    event_publisher: Option<Arc<SupervisionEventPublisher>>,
+    /// Supervision event subscriber
+    event_subscriber: Option<Arc<SupervisionEventSubscriber>>,
+    /// Enable Phase 3 features
+    phase3_enabled: bool,
 }
 
 impl NatsTransport {
@@ -67,16 +120,20 @@ impl NatsTransport {
         Ok(Self {
             client,
             router,
+            event_publisher: None,
+            event_subscriber: None,
+            phase3_enabled: config.enable_phase3_features,
         })
     }
     
     /// Set up message handlers and subscriptions
-    pub async fn setup_handlers(&self, agent_pool: Arc<AgentPool>) -> Result<(), TransportError> {
-        info!("Setting up NATS message handlers");
+    pub async fn setup_handlers(&mut self, agent_pool: Arc<AgentPool>) -> Result<(), TransportError> {
+        info!("Setting up NATS message handlers (Phase {} mode)", 
+            if self.phase3_enabled { "3" } else { "2" });
         
         // Create handlers
         let agent_handler = AgentMessageHandler::new(agent_pool.clone(), self.client.clone());
-        let system_handler = SystemMessageHandler::new(agent_pool, self.client.clone());
+        let system_handler = SystemMessageHandler::new(agent_pool.clone(), self.client.clone());
         
         // Subscribe to agent commands
         self.router.subscribe(
@@ -102,7 +159,57 @@ impl NatsTransport {
         ).await
         .map_err(|e| TransportError::SubscriptionFailed(e.to_string()))?;
         
+        // Set up Phase 3 supervision events if enabled
+        if self.phase3_enabled {
+            self.setup_supervision_events(agent_pool).await?;
+        }
+        
         info!("Message handlers set up successfully");
+        Ok(())
+    }
+    
+    /// Set up Phase 3 supervision event system
+    async fn setup_supervision_events(&mut self, agent_pool: Arc<AgentPool>) -> Result<(), TransportError> {
+        info!("Setting up Phase 3 supervision event system");
+        
+        // Create event publisher
+        let publisher = Arc::new(SupervisionEventPublisher::new(
+            self.client.clone(),
+            agent_pool.clone(),
+        ));
+        self.event_publisher = Some(publisher.clone());
+        
+        // Create event subscriber
+        let subscriber = Arc::new(SupervisionEventSubscriber::new(self.client.clone()));
+        self.event_subscriber = Some(subscriber.clone());
+        
+        // Create decision handler
+        let decision_handler = Arc::new(SupervisionDecisionHandler::new(
+            agent_pool.clone(),
+            (*publisher).clone(),
+        ));
+        
+        // Subscribe to lifecycle events
+        let handler = decision_handler.clone();
+        subscriber.subscribe_lifecycle_events(move |event| {
+            let handler = handler.clone();
+            tokio::spawn(async move {
+                handler.handle_lifecycle_change(event).await;
+            });
+        }).await
+        .map_err(|e| TransportError::SubscriptionFailed(e.to_string()))?;
+        
+        // Subscribe to health events
+        let handler = decision_handler.clone();
+        subscriber.subscribe_health_events(None, move |event| {
+            let handler = handler.clone();
+            tokio::spawn(async move {
+                handler.handle_health_degradation(event).await;
+            });
+        }).await
+        .map_err(|e| TransportError::SubscriptionFailed(e.to_string()))?;
+        
+        info!("Supervision event system initialized");
         Ok(())
     }
     
@@ -123,6 +230,60 @@ impl NatsTransport {
         true
     }
     
+    /// Subscribe with queue group for load balancing (Phase 3)
+    pub async fn queue_subscribe(
+        &self,
+        subject: &str,
+        queue_group: &str,
+    ) -> Result<async_nats::Subscriber, TransportError> {
+        if !self.phase3_enabled {
+            return Err(TransportError::ConfigError(
+                "Queue groups require Phase 3 features to be enabled".to_string()
+            ));
+        }
+        
+        self.client
+            .queue_subscribe(subject.to_string(), queue_group.to_string())
+            .await
+            .map_err(|e| TransportError::SubscriptionFailed(e.to_string()))
+    }
+    
+    /// Build a hierarchical subject (Phase 3)
+    pub fn build_subject(pattern: &str, components: &[&str]) -> String {
+        let mut subject = pattern.to_string();
+        for component in components {
+            subject = subject.replacen("{}", component, 1);
+        }
+        subject
+    }
+    
+    /// Publish agent lifecycle event (Phase 3)
+    pub async fn publish_lifecycle_event(
+        &self,
+        agent_id: &str,
+        event_type: LifecycleEventType,
+        previous_state: AgentState,
+        new_state: AgentState,
+        trigger: String,
+    ) -> Result<(), TransportError> {
+        if let Some(publisher) = &self.event_publisher {
+            publisher.publish_lifecycle_event(
+                agent_id,
+                event_type,
+                previous_state,
+                new_state,
+                LifecycleMetadata {
+                    trigger,
+                    supervisor_id: None,
+                    related_task_id: None,
+                    error_details: None,
+                },
+            ).await
+            .map_err(|e| TransportError::PublishFailed(e.to_string()))?;
+        }
+        Ok(())
+    }
+    
     /// Get transport statistics
     pub async fn get_stats(&self) -> TransportStats {
         let router_stats = self.router.get_stats().await;
@@ -130,9 +291,15 @@ impl NatsTransport {
         
         TransportStats {
             connected,
-            server_info: if connected { Some(format!("Connected to NATS")) } else { None },
+            server_info: if connected { 
+                Some(format!("Connected to NATS (Phase {} mode)", 
+                    if self.phase3_enabled { "3" } else { "2" }))
+            } else { 
+                None 
+            },
             active_subscriptions: router_stats.active_subscriptions,
             registered_handlers: router_stats.registered_handlers,
+            phase3_enabled: self.phase3_enabled,
         }
     }
     
@@ -160,6 +327,8 @@ pub struct NatsConfig {
     pub connect_timeout: Duration,
     /// Request timeout
     pub request_timeout: Duration,
+    /// Enable Phase 3 features (hierarchical subjects, supervision events)
+    pub enable_phase3_features: bool,
 }
 
 impl Default for NatsConfig {
@@ -169,6 +338,7 @@ impl Default for NatsConfig {
             max_reconnects: Some(10),
             connect_timeout: Duration::from_secs(10),
             request_timeout: Duration::from_secs(30),
+            enable_phase3_features: false, // Default to Phase 2 for backward compatibility
         }
     }
 }
@@ -180,6 +350,7 @@ pub struct TransportStats {
     pub server_info: Option<String>,
     pub active_subscriptions: usize,
     pub registered_handlers: usize,
+    pub phase3_enabled: bool,
 }
 
 /// Transport-specific errors

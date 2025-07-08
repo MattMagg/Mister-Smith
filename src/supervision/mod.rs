@@ -47,6 +47,7 @@ mod node;
 mod failure_detector;
 mod supervisors;
 mod circuit_breaker;
+mod agent_pool_supervisor;
 
 #[cfg(test)]
 mod test_compile;
@@ -58,6 +59,7 @@ pub use node::SupervisorNode;
 pub use failure_detector::{FailureDetector, FailureDetectorConfig, FailureEvent};
 pub use supervisors::{RootSupervisor, AgentSupervisor, DynamicSupervisor, ChildSpec};
 pub use circuit_breaker::{CircuitBreaker, CircuitBreakerConfig, CircuitState, CircuitBreakerError};
+pub use agent_pool_supervisor::AgentPoolSupervisor;
 
 /// Prelude for common supervision imports
 pub mod prelude {

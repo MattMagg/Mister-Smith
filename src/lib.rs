@@ -14,6 +14,7 @@ pub mod transport;
 // pub mod security;
 pub mod supervision;
 pub mod metrics;
+pub mod persistence;
 
 // Re-export core types for convenience
 pub use agent::{Agent, AgentId, AgentState, AgentConfig, AgentPool};
