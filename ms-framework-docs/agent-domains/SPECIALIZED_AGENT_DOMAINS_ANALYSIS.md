@@ -16,6 +16,7 @@ use crate::observability::metrics::MetricsCollector;
 ```
 
 **Cross-Reference Links**:
+
 - [Core Architecture](../core-architecture/system-architecture.md)
 - [Message Framework](../data-management/message-framework.md)
 - [Transport Layer](../transport/transport-layer.md)
@@ -721,18 +722,21 @@ The Mister Smith framework implements a hierarchical specialized agent architect
 ### Key Technical Characteristics
 
 **Domain Specialization**:
+
 - Each domain requires 1-4 specialized agent types
 - Domain-specific configuration values and operational thresholds
 - Cross-domain communication patterns and dependencies
 - Framework-wide patterns (supervision trees, event-driven, async-first)
 
 **Agent Capabilities**:
+
 - Static specialization for core domains
 - Dynamic respecialization for adaptive workloads
 - Multi-domain expertise for coordination agents
 - Hierarchical supervision with domain-specific strategies
 
 **Integration Patterns**:
+
 - Supervision tree integration for fault tolerance
 - Message routing for cross-domain communication
 - State management for domain persistence

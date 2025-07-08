@@ -29,17 +29,20 @@ uuid = { version = "1.0", features = ["v4"] }
 ## Transport Integration Points
 
 ### Core Transport Layer
+
 - **Connection Management**: `../transport-core.md#connection-pooling`
 - **Message Routing**: `../transport-core.md#routing-patterns`
 - **Health Monitoring**: `../transport-core.md#health-checks`
 - **Error Handling**: `../transport-core.md#error-strategies`
 
 ### Security Integration
+
 - **Authentication**: `../security/authentication.md#nats-auth`
 - **Authorization**: `../security/authorization.md#subject-permissions`
 - **TLS Configuration**: `../security/tls-configuration.md#nats-tls`
 
 ### Data Management Integration
+
 - **Message Schemas**: `../data-management/message-schemas.md#nats-formats`
 - **Persistence Patterns**: `../data-management/data-persistence.md#jetstream-storage`
 - **Agent Communication**: `../data-management/agent-communication.md#nats-messaging`
@@ -1359,21 +1362,25 @@ impl NatsConnectionManager {
 ## Framework Integration
 
 ### Transport Layer Integration
+
 - **[Transport Core](./transport-core.md)** - Connection pooling, health monitoring, error handling
 - **[gRPC Transport](./grpc-transport.md)** - RPC communication patterns
 - **[HTTP Transport](./http-transport.md)** - RESTful API integration
 
 ### Security Integration
+
 - **[Authentication](../security/authentication.md)** - NATS authentication patterns
 - **[Authorization](../security/authorization.md)** - Subject-based permissions
 - **[TLS Configuration](../security/tls-configuration.md)** - Secure NATS connections
 
 ### Data Management Integration
+
 - **[Message Schemas](../data-management/message-schemas.md)** - Structured message formats
 - **[Persistence Operations](../data-management/persistence-operations.md)** - JetStream storage patterns
 - **[Agent Communication](../data-management/agent-communication.md)** - Multi-agent messaging
 
 ### Core Architecture Integration
+
 - **[Async Patterns](../core-architecture/async-patterns.md)** - Tokio integration
 - **[Supervision Trees](../core-architecture/supervision-trees.md)** - Fault tolerance
 - **[Component Architecture](../core-architecture/component-architecture.md)** - Modular design
@@ -1381,6 +1388,7 @@ impl NatsConnectionManager {
 ## Implementation Guidelines
 
 ### When to Use NATS
+
 - **High-throughput messaging**: 3M+ messages/sec with core NATS
 - **Distributed agent communication**: Pub/sub patterns with subject hierarchies
 - **Event-driven architectures**: Real-time agent coordination
@@ -1388,11 +1396,13 @@ impl NatsConnectionManager {
 - **Claude CLI integration**: Hook system integration
 
 ### When to Use Alternatives
+
 - **gRPC**: Typed RPC calls, streaming between services
 - **HTTP**: RESTful APIs, WebSocket real-time communication
 - **Direct TCP**: Ultra-low latency, custom protocols
 
 ### Performance Considerations
+
 - **Core NATS**: Fire-and-forget, maximum throughput
 - **JetStream**: At-least-once delivery, ~200k msgs/sec
 - **Connection pooling**: Shared connections across components

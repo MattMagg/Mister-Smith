@@ -18,6 +18,7 @@ It establishes the foundation message patterns for agent communication, task man
 ## Integration References
 
 This core message schema specification integrates with:
+
 - [Complete Message Schemas](./message-schemas.md) - Full schema specification
 - [Message Framework](./message-framework.md) - Validation and routing framework
 - [Transport Layer](../transport/) - NATS and gRPC implementations

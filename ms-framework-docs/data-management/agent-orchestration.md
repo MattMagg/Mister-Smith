@@ -38,6 +38,7 @@ for distributed agent systems. These patterns integrate with the operational pat
 ### Integration with Agent Operations
 
 Orchestration patterns coordinate with operational patterns through:
+
 - **Discovery Integration**: Uses `AgentRegistry` from agent-operations.md for capability-based agent discovery
 - **Health Monitoring**: Integrates with `HealthMonitor` for supervision decisions
 - **Error Handling**: Shares `ErrorHandler` and `CircuitBreaker` patterns for fault tolerance
@@ -46,6 +47,7 @@ Orchestration patterns coordinate with operational patterns through:
 ### Schema Standardization Requirements
 
 **Message Priority Scale**: Unified 0-4 priority levels
+
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MessagePriority {
@@ -58,6 +60,7 @@ pub enum MessagePriority {
 ```
 
 **AgentId Format**: UUID v4 with agent prefix
+
 ```rust
 pub type AgentId = String;  // Format: "agent-{uuid-v4}"
 
@@ -66,6 +69,7 @@ const AGENT_ID_PATTERN: &str = r"^agent-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89
 ```
 
 **Security Integration**: mTLS with message authentication
+
 ```rust
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SecureMessage {
@@ -79,7 +83,8 @@ pub struct SecureMessage {
 
 ## 1. Basic Agent Architecture
 
-**Implementation Requirements**: 
+**Implementation Requirements**:
+
 - Resource limits configured per agent type using Tokio runtime constraints
 - Memory/CPU monitoring integrated with supervision tree decisions
 - Thread-safe state management using `Arc<RwLock<T>>` patterns

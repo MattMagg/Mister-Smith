@@ -1361,6 +1361,7 @@ Agents should implement these patterns incrementally, starting with basic abstra
 ### Document Relationship
 
 **This Document** (`transport-core.md`):
+
 - Core transport abstractions and patterns
 - Connection management foundations
 - Error handling patterns
@@ -1368,6 +1369,7 @@ Agents should implement these patterns incrementally, starting with basic abstra
 - Implementation guidelines
 
 **Companion Document** ([`transport-layer-specifications.md`](./transport-layer-specifications.md)):
+
 - Complete protocol implementations (NATS, gRPC, HTTP)
 - Detailed service definitions and schemas
 - Configuration specifications
@@ -1384,23 +1386,27 @@ Agents should implement these patterns incrementally, starting with basic abstra
 ### Framework Integration Points
 
 **Core Architecture**:
+
 - **[Async Patterns](../core-architecture/async-patterns.md)** - Tokio runtime integration
 - **[Component Architecture](../core-architecture/component-architecture.md)** - Transport layer positioning
 - **[Integration Patterns](../core-architecture/integration-patterns.md)** - Cross-system communication
 - **[System Architecture](../core-architecture/system-architecture.md)** - Overall system design
 
 **Data Management**:
+
 - **[Message Schemas](../data-management/message-schemas.md)** - Transport message formats
 - **[Agent Communication](../data-management/agent-communication.md)** - Agent messaging patterns
 - **[Connection Management](../data-management/connection-management.md)** - Data layer coordination
 - **[JetStream KV](../data-management/jetstream-kv.md)** - NATS persistence patterns
 
 **Security Integration**:
+
 - **[Authentication Specifications](../security/authentication-specifications.md)** - Transport authentication
 - **[Security Patterns](../security/security-patterns.md)** - Transport security implementation
 - **[Security Framework](../security/security-framework.md)** - Overall security architecture
 
 **Operations**:
+
 - **[Configuration Management](../operations/configuration-management.md)** - Transport configuration
 - **[Observability Framework](../operations/observability-monitoring-framework.md)** - Transport monitoring
 - **[Deployment Architecture](../operations/deployment-architecture-specifications.md)** - Production deployment
@@ -1414,12 +1420,14 @@ Agents should implement these patterns incrementally, starting with basic abstra
 ### Implementation Guidance
 
 **Start Here** (transport-core.md):
+
 1. Understand basic messaging patterns (Sections 1-4)
 2. Choose appropriate transport abstraction (Section 5)
 3. Implement error handling (Section 8)
 4. Add security layer (Section 9)
 
 **Then Reference** (transport-layer-specifications.md):
+
 1. Protocol-specific configurations
 2. Service definitions and schemas
 3. Performance optimization

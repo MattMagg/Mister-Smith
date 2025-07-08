@@ -11,6 +11,7 @@ tags:
 ## Foundation Storage Patterns Guide
 
 **Related Documentation**:
+
 - [[connection-management]] - Connection pooling and transaction coordination
 - [[persistence-operations]] - Error handling and operational procedures  
 - [[stream-processing]] - JetStream patterns and stream management
@@ -19,6 +20,7 @@ tags:
 ## Overview
 
 Storage architecture patterns for distributed agent state management using:
+
 - **PostgreSQL 15 + SQLx 0.7**: Long-term persistence and complex queries
 - **NATS JetStream KV**: Fast distributed state cache with TTL
 - **Dual-store pattern**: KV for hot data, SQL for durability

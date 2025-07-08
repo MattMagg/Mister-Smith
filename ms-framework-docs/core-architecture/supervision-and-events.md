@@ -837,12 +837,14 @@ impl EventBuilder {
 This module provides the fault-tolerance backbone of the MisterSmith framework:
 
 ### Supervision Tree
+
 - **Hierarchical structure** for managing agent lifecycles
 - **Multiple restart strategies** (permanent, transient, temporary)
 - **Failure escalation** with configurable policies
 - **Backoff strategies** for restart attempts
 
 ### Event System
+
 - **Centralized event bus** for system-wide communication
 - **Type-safe event handling** with filtering
 - **Event persistence** with replay capabilities

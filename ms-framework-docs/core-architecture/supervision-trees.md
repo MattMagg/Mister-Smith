@@ -362,6 +362,7 @@ Phi Value Calculation:
 ```
 
 **Key Features**:
+
 - Adaptive to network conditions
 - Configurable sensitivity (Φ threshold)
 - Minimizes false positives
@@ -1048,6 +1049,7 @@ match result {
 ### Optimization Strategies
 
 #### 1. Heartbeat Optimization
+
 ```
     Standard Heartbeat          Batched Heartbeat
     
@@ -1060,6 +1062,7 @@ match result {
 - UDP option for stable networks
 
 #### 2. Restart Storm Prevention
+
 ```
     Exponential Backoff:
     
@@ -1149,6 +1152,7 @@ Implementation Priority:
 ## Security Considerations
 
 ### Privilege Management
+
 ```
     Supervisor (Elevated)
          │
@@ -1300,18 +1304,21 @@ ConfigurationManager::watch_config::<SupervisionConfig>(
 This specification defines comprehensive supervision tree patterns for the Mister Smith framework:
 
 ### Core Patterns
+
 - Hierarchical supervision with multiple strategies
 - Hub-and-spoke routing for centralized control
 - Adaptive failure detection (Phi Accrual)
 - Circuit breaker protection
 
 ### Advanced Patterns  
+
 - Error boundaries and recovery coordination
 - State reconstruction with Byzantine tolerance
 - Bulkhead isolation for failure containment
 - Intelligent retry with backpressure control
 
 ### Integration Points
+
 - SystemCore component supervision
 - EventBus for failure notifications
 - ResourceManager for recovery resources
