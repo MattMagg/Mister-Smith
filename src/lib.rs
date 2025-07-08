@@ -15,12 +15,17 @@ pub mod transport;
 pub mod supervision;
 pub mod metrics;
 pub mod persistence;
+pub mod collaboration;
+pub mod handlers;
+pub mod mcp_server;
 
 // Re-export core types for convenience
 pub use agent::{Agent, AgentId, AgentState, AgentConfig, AgentPool};
-pub use runtime::{ProcessManager, ClaudeCommand};
+pub use runtime::{ProcessManager, ClaudeCommand, InteractiveClaudeSession};
 pub use message::{MessageEnvelope, AgentCommand, AgentEvent, MessageRouter, Subject};
 pub use transport::{NatsTransport};
+pub use collaboration::{LiveOrchestrator, DiscoveryBroadcaster, DiscoveryType, DiscoveryListener,
+                       SharedContext, ContextType, ContextContent, ContextManager};
 
 /// Framework version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

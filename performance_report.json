@@ -1,0 +1,93 @@
+{
+  "results": [
+    {
+      "agent_count": 2,
+      "average_latency_ms": 0.0,
+      "discoveries_per_second": 3.99894396207765,
+      "error_count": 0,
+      "max_latency_ms": 0.0,
+      "memory_usage_mb": 0,
+      "p95_latency_ms": 0.0,
+      "p99_latency_ms": 0.0,
+      "scenario_name": "Light Load",
+      "success_rate": 100.0,
+      "test_duration_secs": 10,
+      "total_discoveries_received": 40,
+      "total_discoveries_sent": 40
+    },
+    {
+      "agent_count": 5,
+      "average_latency_ms": 0.0,
+      "discoveries_per_second": 16.664237344148095,
+      "error_count": 0,
+      "max_latency_ms": 0.0,
+      "memory_usage_mb": 0,
+      "p95_latency_ms": 0.0,
+      "p99_latency_ms": 0.0,
+      "scenario_name": "Medium Load",
+      "success_rate": 100.0,
+      "test_duration_secs": 15,
+      "total_discoveries_received": 1000,
+      "total_discoveries_sent": 250
+    },
+    {
+      "agent_count": 10,
+      "average_latency_ms": 0.0,
+      "discoveries_per_second": 49.493684915140356,
+      "error_count": 0,
+      "max_latency_ms": 0.0,
+      "memory_usage_mb": 0,
+      "p95_latency_ms": 0.0,
+      "p99_latency_ms": 0.0,
+      "scenario_name": "Heavy Load",
+      "success_rate": 100.0,
+      "test_duration_secs": 20,
+      "total_discoveries_received": 8910,
+      "total_discoveries_sent": 990
+    },
+    {
+      "agent_count": 5,
+      "average_latency_ms": 0.0,
+      "discoveries_per_second": 99.90180942864541,
+      "error_count": 0,
+      "max_latency_ms": 0.0,
+      "memory_usage_mb": 0,
+      "p95_latency_ms": 0.0,
+      "p99_latency_ms": 0.0,
+      "scenario_name": "Burst Load",
+      "success_rate": 100.0,
+      "test_duration_secs": 10,
+      "total_discoveries_received": 4000,
+      "total_discoveries_sent": 1000
+    },
+    {
+      "agent_count": 3,
+      "average_latency_ms": 0.0,
+      "discoveries_per_second": 46.27176848374558,
+      "error_count": 0,
+      "max_latency_ms": 0.0,
+      "memory_usage_mb": 0,
+      "p95_latency_ms": 0.0,
+      "p99_latency_ms": 0.0,
+      "scenario_name": "Memory Stress",
+      "success_rate": 100.0,
+      "test_duration_secs": 25,
+      "total_discoveries_received": 2314,
+      "total_discoveries_sent": 1157
+    }
+  ],
+  "summary": {
+    "best_latency": 0.0,
+    "peak_throughput": 99.90180942864541,
+    "total_agents_tested": 25,
+    "total_discoveries": 3437,
+    "total_scenarios": 5
+  },
+  "system_info": {
+    "architecture": "aarch64",
+    "nats_url": "nats://localhost:4222",
+    "platform": "macos"
+  },
+  "test_run_id": "c34510b0-1e99-4e47-b428-df3307d53be7",
+  "timestamp": "2025-07-08T18:06:48.939602Z"
+}

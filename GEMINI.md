@@ -261,7 +261,7 @@ Your role: Work with both existing implementation and documentation to evolve th
 
 ### What's Built (Phase 2)
 
-- ✅ Single Claude CLI agent implementation
+- ✅ Single Gemini CLI agent implementation
 - ✅ Agent pool management with capacity control
 - ✅ State management system (Created → Running → Terminated)
 - ✅ NATS transport layer (basic)
@@ -307,7 +307,7 @@ Before ANY action:
 - Set up basic module organization
 
 ### ✅ PHASE 2: Single Agent (COMPLETE - CURRENT)
-- Implemented single Claude CLI agent
+- Implemented single Gemini CLI agent
 - Basic message handling via NATS
 - Agent lifecycle management
 - Process supervision framework
@@ -513,7 +513,7 @@ grep -r "authentication\|authorization" ms-framework-docs/security/
 
 ## FOLDER-SPECIFIC INSTRUCTIONS
 
-Note: When entering `ms-framework-docs/` or other directories, additional CLAUDE.md files may load with folder-specific guidance. These complement but never override these project-level instructions.
+Note: When entering `ms-framework-docs/` or other directories, additional GEMINI.md files may load with folder-specific guidance. These complement but never override these project-level instructions.
 
 ## SUCCESS METRICS FOR DOCUMENTATION PHASE
 

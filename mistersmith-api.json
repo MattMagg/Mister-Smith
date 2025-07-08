@@ -277,6 +277,86 @@
           }
         }
       }
+    },
+    "/discoveries": {
+      "post": {
+        "summary": "Share a discovery",
+        "description": "Share a discovery with all connected agents in real-time",
+        "operationId": "share_discovery",
+        "tags": ["Discovery Management"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareDiscoveryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Discovery shared successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Discovery"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid discovery request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/discoveries/subscribe": {
+      "post": {
+        "summary": "Subscribe to discoveries",
+        "description": "Subscribe to real-time discovery updates from other agents",
+        "operationId": "subscribe_discoveries",
+        "tags": ["Discovery Management"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscribeDiscoveriesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoverySubscription"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid subscription request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -505,6 +585,150 @@
             "description": "Additional error details"
           }
         }
+      },
+      "DiscoveryType": {
+        "type": "string",
+        "enum": ["Pattern", "Anomaly", "Connection", "Solution", "Question", "Insight"],
+        "description": "Type of discovery being shared"
+      },
+      "ShareDiscoveryRequest": {
+        "type": "object",
+        "required": ["agent_id", "agent_role", "discovery_type", "content"],
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the agent sharing the discovery"
+          },
+          "agent_role": {
+            "type": "string",
+            "description": "Role/type of the agent"
+          },
+          "discovery_type": {
+            "$ref": "#/components/schemas/DiscoveryType"
+          },
+          "content": {
+            "type": "string",
+            "description": "Discovery content"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Confidence level (0-1)"
+          },
+          "related_to": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of related discovery"
+          }
+        }
+      },
+      "Discovery": {
+        "type": "object",
+        "required": ["id", "agent_id", "agent_role", "discovery_type", "content", "timestamp"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the discovery"
+          },
+          "agent_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the agent that shared the discovery"
+          },
+          "agent_role": {
+            "type": "string",
+            "description": "Role/type of the agent"
+          },
+          "discovery_type": {
+            "$ref": "#/components/schemas/DiscoveryType"
+          },
+          "content": {
+            "type": "string",
+            "description": "Discovery content"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Confidence level (0-1)"
+          },
+          "related_to": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of related discovery"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the discovery was shared"
+          }
+        }
+      },
+      "SubscribeDiscoveriesRequest": {
+        "type": "object",
+        "required": ["agent_id"],
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the subscribing agent"
+          },
+          "discovery_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiscoveryType"
+            },
+            "description": "Filter by discovery types"
+          },
+          "agent_roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by agent roles"
+          }
+        }
+      },
+      "DiscoverySubscription": {
+        "type": "object",
+        "required": ["subscription_id", "endpoint", "token"],
+        "properties": {
+          "subscription_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the subscription"
+          },
+          "endpoint": {
+            "type": "string",
+            "format": "uri",
+            "description": "SSE endpoint for receiving discovery updates"
+          },
+          "token": {
+            "type": "string",
+            "description": "Authentication token for the SSE connection"
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "discovery_types": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DiscoveryType"
+                }
+              },
+              "agent_roles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Active filters for this subscription"
+          }
+        }
       }
     }
   },
@@ -520,6 +744,10 @@
     {
       "name": "System",
       "description": "System health and monitoring operations"
+    },
+    {
+      "name": "Discovery Management",
+      "description": "Operations for sharing and subscribing to agent discoveries"
     }
   ]
 }

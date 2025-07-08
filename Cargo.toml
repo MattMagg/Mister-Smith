@@ -13,6 +13,7 @@ categories = ["asynchronous", "network-programming"]
 # Core async runtime
 tokio = { version = "1.45.0", features = ["full"] }
 tokio-util = "0.7"
+tokio-stream = { version = "0.1", features = ["sync"] }
 
 # Messaging and transport
 async-nats = "0.37.0"
@@ -41,11 +42,18 @@ opentelemetry = "0.29"
 opentelemetry-prometheus = "0.29"
 opentelemetry_sdk = "0.29"
 
+# Web framework
+axum = "0.7"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+
 # System information
 sysinfo = "0.31"
 
 # Async utilities
 async-trait = "0.1"
+async-stream = "0.3"
+lazy_static = "1.5"
 
 # Random number generation
 fastrand = "2.0"

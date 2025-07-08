@@ -7,8 +7,10 @@ pub mod process;
 pub mod supervisor;
 pub mod command;
 pub mod claude_executor;
+pub mod interactive_session;
 
 pub use process::*;
 pub use supervisor::*;
 pub use command::*;
 pub use claude_executor::*;
+pub use interactive_session::*;
