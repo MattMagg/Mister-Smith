@@ -675,18 +675,21 @@ pub struct SystemComponents {
 This module provides comprehensive monitoring capabilities for the MisterSmith framework:
 
 ### Health Monitoring
+
 - **Async health checks** with customizable intervals
 - **Component-specific implementations** for runtime, database, and actor system
 - **Event integration** for health status changes
 - **Aggregated system health** assessment
 
 ### Metrics Collection
+
 - **Multiple metric types**: Counter, Gauge, Histogram, Summary
 - **Tag-based organization** for dimensional metrics
 - **Async collection** with periodic flushing
 - **Backend abstraction** for Prometheus, OpenTelemetry integration
 
 ### Production Considerations
+
 1. **Integrate with real metrics backends** (Prometheus, Grafana, etc.)
 2. **Add distributed tracing** support (OpenTelemetry)
 3. **Implement alerting** based on health status

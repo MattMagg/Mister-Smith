@@ -13,6 +13,7 @@ tags:
 This document provides technical specifications for agent communication patterns, message passing protocols, and coordination mechanisms within the MisterSmith framework. It includes verified async implementations using Tokio, comprehensive message schemas, and error handling patterns for distributed agent systems.
 
 **Key Communication Patterns:**
+
 - **Direct RPC**: Point-to-point communication for immediate responses
 - **Publish/Subscribe**: Topic-based message distribution using NATS
 - **Internal Channels**: Tokio mpsc/broadcast/watch for intra-process communication

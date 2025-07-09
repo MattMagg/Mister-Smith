@@ -29,7 +29,7 @@ This document provides complete protocol implementations and specifications for 
 **Foundation Patterns**: This document builds on the messaging patterns defined in [transport-core.md](./transport-core.md). Reference that document for:
 
 - Request-Response Pattern (Section 1.1)
-- Publish-Subscribe Pattern (Section 1.2) 
+- Publish-Subscribe Pattern (Section 1.2)
 - Queue Group Pattern (Section 1.3)
 - Blackboard Pattern (Section 1.4)
 - Transport Abstraction (Section 5)
@@ -1964,6 +1964,7 @@ This document provides complete protocol implementations and specifications for 
 ### Document Relationship
 
 **Foundation Document** ([`transport-core.md`](./transport-core.md)):
+
 - Basic messaging patterns and abstractions
 - Transport interface design
 - Connection management foundations
@@ -1971,6 +1972,7 @@ This document provides complete protocol implementations and specifications for 
 - Security fundamentals
 
 **This Document** (`transport-layer-specifications.md`):
+
 - Complete NATS, gRPC, HTTP implementations
 - Production configuration templates
 - Service definitions and schemas
@@ -1987,28 +1989,33 @@ This document provides complete protocol implementations and specifications for 
 ### Framework Integration
 
 **Core Architecture**:
+
 - **[Tokio Runtime](../core-architecture/tokio-runtime.md)** - Async runtime foundation
 - **[Async Patterns](../core-architecture/async-patterns.md)** - Async coordination patterns
 - **[System Integration](../core-architecture/system-integration.md)** - Cross-component integration
 - **[Implementation Guidelines](../core-architecture/implementation-guidelines.md)** - Implementation best practices
 
 **Data Management**:
+
 - **[Message Framework](../data-management/message-framework.md)** - Core messaging infrastructure
 - **[Core Message Schemas](../data-management/core-message-schemas.md)** - Base message definitions
 - **[JetStream KV](../data-management/jetstream-kv.md)** - NATS persistence implementation
 - **[PostgreSQL Implementation](../data-management/postgresql-implementation.md)** - Database integration
 
 **Security**:
+
 - **[Authentication Implementation](../security/authentication-implementation.md)** - Transport authentication
 - **[Authorization Implementation](../security/authorization-implementation.md)** - Transport authorization
 - **[Security Integration](../security/security-integration.md)** - Security layer coordination
 
 **Operations**:
+
 - **[Configuration Deployment](../operations/configuration-deployment-specifications.md)** - Production configuration
 - **[Observability Monitoring](../operations/observability-monitoring-framework.md)** - Transport monitoring
 - **[Build Specifications](../operations/build-specifications.md)** - Build and deployment
 
 **Testing**:
+
 - **[Testing Framework](../testing/testing-framework.md)** - Transport testing patterns
 - **[Test Schemas](../testing/test-schemas.md)** - Test message schemas
 
