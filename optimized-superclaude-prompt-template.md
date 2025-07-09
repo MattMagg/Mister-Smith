@@ -19,7 +19,7 @@ Extract from the user's query:
 
 ## Step 3: Command Selection
 Based on the documentation, select:
-- Appropriate command(s) from the 19 available
+- Appropriate command(s) from the 19 available (excluding MCPs as flags - use them inside prompts instead)
 - Relevant persona(s) from the 9 cognitive archetypes
 - Optimal flags (ONLY use documented flags from SuperClaude_COMMANDS.md)
 
@@ -31,7 +31,7 @@ Create the optimal slash command(s) following these patterns:
 - Complex analysis: Chain commands with clear progression
 
 ### CRITICAL: For Multi-Step Sequences
-- Number each step clearly (e.g., "STEP 1 OF 7")
+- Number each step clearly
 - Include completion instructions: "When complete, confirm completion and await next step instructions"
 - Prevent task bleeding by making step boundaries explicit
 - Start each command prompt with step context
@@ -40,7 +40,7 @@ Create the optimal slash command(s) following these patterns:
 Present the command(s) in executable format:
 ```bash
 # Step X of Y: [Purpose]
-/command --flag1 --flag2 --mcp server1,server2 "STEP X OF Y - [TASK]: [detailed instructions]. IMPORTANT: This is step X of Y. When complete, confirm completion and await next step instructions."
+/command --flag1 --flag2 server1,server2 "STEP X OF Y - [TASK]: [detailed instructions]. IMPORTANT: This is step X of Y. When complete, confirm completion and await next step instructions."
 ```
 
 ### Flag Placement Guidelines
@@ -61,11 +61,12 @@ Flags can be placed either before OR after the prompt string - both are valid:
 2. **Include step management** - Clear numbering and completion instructions
 3. **Reference loaded context** - Use information from previous steps
 4. **Provide alternatives** - Show both sequential and parallel approaches when applicable
+5. **DO NOT USE MCPs AS flags** - Explicitly state to use the code-reasoning, context7, and basic-memory MCPs as needed INSIDE the prompt instead of as flags
 
 ## Example Multi-Step Structure:
 ```bash
 # Step 1 of N: Context Loading
-/load --depth deep --context --seq "STEP 1 OF N - CONTEXT LOADING: [task details]. IMPORTANT: This is step 1 of N. When complete, confirm completion and await next step instructions."
+/load --depth deep --context "STEP 1 OF N - CONTEXT LOADING: [task details]. IMPORTANT: This is step 1 of N. When complete, confirm completion and await next step instructions."
 
 # Step 2 of N: Design Phase
 /design --api --ultrathink --persona-architect "STEP 2 OF N - DESIGN: [task details using context from step 1]. IMPORTANT: This is step 2 of N. When complete, confirm completion and await next step instructions."
@@ -81,34 +82,7 @@ Remember:
 ---
 
 **Query Input:**
-[
-Make the slash command so I can continue this development in another conversation. Reference the basic-memory note that was just created by you. For context, below are the next steps:
-# Step 1 of 7: Define Requirements
-/analyze --requirements --persona-architect "STEP 1 OF 7 - REQUIREMENTS ANALYSIS: Define requirements for MisterSmith monitoring 
-  UI: 1) Real-time log streaming, 2) Metrics display, 3) Discovery event history, 4) Agent status tracking, 5) NATS connection # Step 4 of 7: Add Monitoring Features
-  /build --feature --tdd --persona-backend "STEP 4 OF 7 - MONITORING INFRASTRUCTURE: Implement monitoring features: 1) Connect to 
-  MisterSmith MCP server endpoints, 2) Real-time log streaming via SSE, 3) Metrics collection and display, 4) Discovery event 
-  history with filtering, 5) Agent status tracking, 6) NATS connection monitoring, 7) Error tracking with stack traces. IMPORTANT: 
-  This is step 4 of 7. When monitoring is integrated, confirm completion and await next step instructions."
-
-# Step 5 of 7: Create Debug Tools
-/build --feature --interactive --persona-analyzer "STEP 5 OF 7 - DEBUG TOOLS: Create interactive debugging tools: 1) Discovery 
-  injection interface to test share_discovery, 2) Subscription manager for subscribe_discoveries, 3) NATS message inspector, 4) 
-Discovery state viewer, 5) Performance profiler display, 6) MCP protocol debugger, 7) Real-time filtering controls. IMPORTANT: 
-  This is step 5 of 7. When debug tools are complete, confirm completion and await next step instructions."
-
-  # Step 6 of 7: Test Everything
-  /test --e2e --coverage --strict "STEP 6 OF 7 - COMPREHENSIVE TESTING: Test MisterSmith monitoring UI: 1) Real-time update 
-  functionality, 2) Discovery visualization accuracy, 3) Debug tool operations, 4) Performance under load (125K discoveries/sec 
-  capability), 5) Error handling, 6) Browser compatibility. Create tests for all monitoring and debugging features. IMPORTANT: This 
-  is step 6 of 7. When testing is complete, confirm completion and await next step instructions."
-
-  # Step 7 of 7: Document System
-  /document --technical --interactive "STEP 7 OF 7 - DOCUMENTATION: Create comprehensive documentation for MisterSmith monitoring 
-  UI: 1) Architecture overview with diagrams, 2) Setup and configuration guide, 3) User guide for monitoring features, 4) Debug 
-  tools reference, 5) API integration examples, 6) Troubleshooting guide. Save key documentation to basic-memory note 'MisterSmith 
-  Monitoring UI Documentation'. IMPORTANT: This is final step 7 of 7. When documentation is complete, provide summary of all 
-  completed steps."]
+[Make the slash command so I can continue this development in another conversation. Reference the basic-memory note that was just created by you.]
 
 
 ---
@@ -129,7 +103,6 @@ Or for a more comprehensive approach with validation:
 
 For inline usage without file reference:
 
-
 /build --ultrathink --persona-architect "You are a SuperClaude command optimization specialist. Follow this structured process to generate optimal slash commands from any query.
 
 ## Step 1: Mandatory Preparation
@@ -149,7 +122,7 @@ Extract from the user's query:
 
 ## Step 3: Command Selection
 Based on the documentation, select:
-- Appropriate command(s) from the 19 available
+- Appropriate command(s) from the 19 available (excluding MCPs as flags- use them inside prompts instead)
 - Relevant persona(s) from the 9 cognitive archetypes
 - Optimal flags (ONLY use documented flags from SuperClaude_COMMANDS.md)
 
@@ -161,7 +134,7 @@ Create the optimal slash command(s) following these patterns:
 - Complex analysis: Chain commands with clear progression
 
 ### CRITICAL: For Multi-Step Sequences
-- Number each step clearly (e.g., "STEP 1 OF 7")
+- Number each step clearly
 - Include completion instructions: "When complete, confirm completion and await next step instructions"
 - Prevent task bleeding by making step boundaries explicit
 - Start each command prompt with step context
@@ -170,7 +143,7 @@ Create the optimal slash command(s) following these patterns:
 Present the command(s) in executable format:
 ```bash
 # Step X of Y: [Purpose]
-/command --flag1 --flag2 --mcp server1,server2 "STEP X OF Y - [TASK]: [detailed instructions]. IMPORTANT: This is step X of Y. When complete, confirm completion and await next step instructions."
+/command --flag1 --flag2 server1,server2 "STEP X OF Y - [TASK]: [detailed instructions]. IMPORTANT: This is step X of Y. When complete, confirm completion and await next step instructions."
 ```
 
 ### Flag Placement Guidelines
@@ -191,6 +164,7 @@ Flags can be placed either before OR after the prompt string - both are valid:
 2. **Include step management** - Clear numbering and completion instructions
 3. **Reference loaded context** - Use information from previous steps
 4. **Provide alternatives** - Show both sequential and parallel approaches when applicable
+5. **DO NOT USE MCPs AS flags** - Explicitly state to use the code-reasoning, context7, and basic-memory MCPs as needed INSIDE the prompt instead of as flags
 
 ## Example Multi-Step Structure:
 ```bash
@@ -211,31 +185,42 @@ Remember:
 ---
 
 **Query Input:**
-[
-Make the slash command so I can continue this development in another conversation. Reference the basic-memory note that was just created by you. For context, below are the next steps:
-# Step 1 of 7: Define Requirements
-/analyze --requirements --persona-architect "STEP 1 OF 7 - REQUIREMENTS ANALYSIS: Define requirements for MisterSmith monitoring 
-  UI: 1) Real-time log streaming, 2) Metrics display, 3) Discovery event history, 4) Agent status tracking, 5) NATS connection # Step 4 of 7: Add Monitoring Features
-  /build --feature --tdd --persona-backend "STEP 4 OF 7 - MONITORING INFRASTRUCTURE: Implement monitoring features: 1) Connect to 
-  MisterSmith MCP server endpoints, 2) Real-time log streaming via SSE, 3) Metrics collection and display, 4) Discovery event 
-  history with filtering, 5) Agent status tracking, 6) NATS connection monitoring, 7) Error tracking with stack traces. IMPORTANT: 
+[Make the slash command so I can continue this development in another conversation. Reference the basic-memory note that was just created by you. For context, below are the next steps:
+  📋 Updated Sequential Commands for Steps 4-7
+
+  # Step 4 of 7: Add Monitoring Features
+  /build --feature --tdd --persona-backend "STEP 4 OF 7 - MONITORING INFRASTRUCTURE: Working in the 
+  now-functioning monitoring UI, implement monitoring features: 1) Use mcp__basic-memory__read_note to review 
+  MisterSmith architecture from previous notes, 2) Connect to MisterSmith MCP server endpoints, 3) Real-time log 
+  streaming via SSE using existing SSEClient, 4) Metrics collection and display using existing MetricsChart 
+  component, 5) Use mcp__Context_7__get-library-docs for RxJS and TanStack Query patterns, 6) Agent status 
+  tracking with AgentCard updates, 7) NATS connection monitoring, 8) Error tracking with stack traces. IMPORTANT: 
   This is step 4 of 7. When monitoring is integrated, confirm completion and await next step instructions."
 
-# Step 5 of 7: Create Debug Tools
-/build --feature --interactive --persona-analyzer "STEP 5 OF 7 - DEBUG TOOLS: Create interactive debugging tools: 1) Discovery 
-  injection interface to test share_discovery, 2) Subscription manager for subscribe_discoveries, 3) NATS message inspector, 4) 
-Discovery state viewer, 5) Performance profiler display, 6) MCP protocol debugger, 7) Real-time filtering controls. IMPORTANT: 
-  This is step 5 of 7. When debug tools are complete, confirm completion and await next step instructions."
+  # Step 5 of 7: Create Debug Tools
+  /build --feature --interactive --persona-analyzer "STEP 5 OF 7 - DEBUG TOOLS: Create interactive debugging tools
+   in the monitoring UI: 1) Discovery injection interface to test share_discovery, 2) Use 
+  mcp__Context_7__get-library-docs for Monaco Editor advanced features, 3) Subscription manager for 
+  subscribe_discoveries, 4) NATS message inspector enhancement, 5) Discovery state viewer using D3.js (use 
+  mcp__Context_7__get-library-docs for D3.js force-directed graph patterns), 6) Performance profiler display with 
+  Recharts, 7) MCP protocol debugger, 8) Real-time filtering controls. Use mcp__code-reasoning__code-reasoning for
+   complex implementation decisions. IMPORTANT: This is step 5 of 7. When debug tools are complete, confirm 
+  completion and await next step instructions."
 
   # Step 6 of 7: Test Everything
-  /test --e2e --coverage --strict "STEP 6 OF 7 - COMPREHENSIVE TESTING: Test MisterSmith monitoring UI: 1) Real-time update 
-  functionality, 2) Discovery visualization accuracy, 3) Debug tool operations, 4) Performance under load (125K discoveries/sec 
-  capability), 5) Error handling, 6) Browser compatibility. Create tests for all monitoring and debugging features. IMPORTANT: This 
-  is step 6 of 7. When testing is complete, confirm completion and await next step instructions."
+  /test --e2e --coverage --strict "STEP 6 OF 7 - COMPREHENSIVE TESTING: Test MisterSmith monitoring UI: 1) Use 
+  mcp__Context_7__get-library-docs to research Vitest and React Testing Library best practices, 2) Real-time 
+  update functionality with SSE/WebSocket, 3) Discovery visualization accuracy in DiscoveryFlowGraph, 4) Debug 
+  tool operations, 5) Performance under load (125K discoveries/sec capability), 6) Error handling, 7) Browser 
+  compatibility. Fix the 5 existing test failures (timezone and mock issues) using 
+  mcp__code-reasoning__code-reasoning to analyze root causes. IMPORTANT: This is step 6 of 7. When testing is 
+  complete, confirm completion and await next step instructions."
 
   # Step 7 of 7: Document System
-  /document --technical --interactive "STEP 7 OF 7 - DOCUMENTATION: Create comprehensive documentation for MisterSmith monitoring 
-  UI: 1) Architecture overview with diagrams, 2) Setup and configuration guide, 3) User guide for monitoring features, 4) Debug 
-  tools reference, 5) API integration examples, 6) Troubleshooting guide. Save key documentation to basic-memory note 'MisterSmith 
-  Monitoring UI Documentation'. IMPORTANT: This is final step 7 of 7. When documentation is complete, provide summary of all 
-  completed steps."]" --seq --validate
+  /document --technical --interactive --persona-architect "STEP 7 OF 7 - DOCUMENTATION: Create comprehensive 
+  documentation for MisterSmith monitoring UI: 1) Architecture overview with D3.js flow diagrams, 2) Setup guide 
+  for React+Vite+TypeScript stack, 3) User guide for monitoring features, 4) Debug tools reference, 5) API 
+  integration examples, 6) Troubleshooting guide. Use mcp__Context_7__get-library-docs for documentation best 
+  practices. Save key sections to basic-memory using mcp__basic-memory__write_note with title 'MisterSmith 
+  Monitoring UI Documentation'. IMPORTANT: This is final step 7 of 7. When documentation is complete, provide 
+  summary of all 7.5 completed steps."]

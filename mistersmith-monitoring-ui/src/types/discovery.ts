@@ -6,7 +6,7 @@ export interface Discovery {
   content: string;
   confidence: number;
   agentId: string;
-  timestamp: Date;
+  timestamp: string;
   relatedTo?: string;
   metadata?: Record<string, any>;
 }
@@ -17,8 +17,8 @@ export interface DiscoveryFilter {
   confidenceMin?: number;
   confidenceMax?: number;
   timeRange?: {
-    start: Date;
-    end: Date;
+    start: string;
+    end: string;
   };
   keywords?: string[];
   relatedTo?: string;

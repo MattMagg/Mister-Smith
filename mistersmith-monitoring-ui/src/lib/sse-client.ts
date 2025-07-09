@@ -1,8 +1,17 @@
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
-import { Discovery } from '../types/discovery';
+
+// Inline type to avoid import issues
+type Discovery = {
+  id: string;
+  type: string;
+  content: string;
+  confidence: number;
+  agentId: string;
+  timestamp: string;
+};
 
 export interface SSEEvent {
-  type: 'discovery' | 'metric' | 'alert' | 'heartbeat';
+  type: 'discovery' | 'metric' | 'alert' | 'heartbeat' | 'log' | 'trace';
   data: any;
   id?: string;
   retry?: number;
@@ -97,6 +106,34 @@ export class SSEClient {
           data: event.data,
           id: event.lastEventId,
         });
+      });
+      
+      // Log events
+      this.eventSource.addEventListener('log', (event) => {
+        try {
+          const logEntry = JSON.parse(event.data);
+          this.events$.next({
+            type: 'log',
+            data: logEntry,
+            id: event.lastEventId,
+          });
+        } catch (error) {
+          console.error('Failed to parse log event:', error);
+        }
+      });
+      
+      // Trace events
+      this.eventSource.addEventListener('trace', (event) => {
+        try {
+          const traceData = JSON.parse(event.data);
+          this.events$.next({
+            type: 'trace',
+            data: traceData,
+            id: event.lastEventId,
+          });
+        } catch (error) {
+          console.error('Failed to parse trace event:', error);
+        }
       });
       
     } catch (error) {

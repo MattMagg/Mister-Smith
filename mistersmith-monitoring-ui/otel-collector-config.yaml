@@ -1,0 +1,163 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://localhost:5173"
+            - "http://localhost:5174"
+            - "http://localhost:3000"
+            - "http://localhost:8080"
+            - "http://mistersmith-ui:5173"
+            - "*"
+          allowed_headers:
+            - "*"
+          max_age: 7200
+
+  # Prometheus scraping for internal metrics
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'otel-collector'
+          scrape_interval: 15s
+          static_configs:
+            - targets: ['localhost:8888']
+              labels:
+                service: 'otel-collector'
+
+processors:
+  # Batch processor to improve throughput
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    limit_mib: 256
+    spike_limit_mib: 64
+    check_interval: 1s
+
+  # Resource processor to add consistent resource attributes
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: "development"
+        action: upsert
+      - key: service.namespace
+        value: "mistersmith"
+        action: upsert
+
+  # Attributes processor for span/metric modification
+  attributes:
+    actions:
+      - key: sensitive_info
+        action: delete
+      - key: user_id
+        action: hash
+      - key: environment
+        value: "docker"
+        action: upsert
+
+  # Transform processor for advanced data manipulation
+  transform:
+    metric_statements:
+      - context: metric
+        statements:
+          - set(description, "MisterSmith UI metric") where name == "mistersmith.ui.render_time"
+          - set(unit, "ms") where name == "mistersmith.ui.render_time"
+
+exporters:
+  # OTLP gRPC exporter for traces to Jaeger
+  otlp/jaeger:
+    endpoint: "jaeger:4317"
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 100ms
+      max_interval: 30s
+      max_elapsed_time: 5m
+
+  # Prometheus exporter for metrics
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: "mistersmith"
+    const_labels:
+      environment: "development"
+      service: "monitoring-ui"
+    metric_expiration: 180s
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  # Prometheus remote write (if external Prometheus)
+  prometheusremotewrite:
+    endpoint: "http://prometheus:9090/api/v1/write"
+    retry_on_failure:
+      enabled: true
+      initial_interval: 100ms
+      max_interval: 30s
+      max_elapsed_time: 5m
+
+  # Debug exporter for debugging
+  debug:
+    verbosity: basic
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+  # File exporter for local debugging
+  file:
+    path: /tmp/otel-traces.jsonl
+    rotation:
+      max_megabytes: 10
+      max_days: 3
+      max_backups: 3
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+    
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+connectors:
+  # Span metrics connector to generate metrics from trace data
+  spanmetrics:
+    dimensions:
+      - name: http.method
+        default: GET
+      - name: http.status_code
+    metrics_flush_interval: 15s
+
+service:
+  telemetry:
+    logs:
+      level: info
+      development: true
+    metrics:
+      level: detailed
+      address: 0.0.0.0:8888
+
+  extensions: [health_check, pprof, zpages]
+  
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource, attributes, transform]
+      exporters: [otlp/jaeger, debug, file, spanmetrics]
+      
+    metrics:
+      receivers: [otlp, prometheus, spanmetrics]
+      processors: [memory_limiter, batch, resource, attributes, transform]
+      exporters: [prometheus, prometheusremotewrite, debug]
+      
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource, attributes]
+      exporters: [debug]

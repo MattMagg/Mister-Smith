@@ -1,0 +1,110 @@
+services:
+  # Jaeger all-in-one container
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: mistersmith-jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Jaeger HTTP collector
+      - "6831:6831/udp"  # Jaeger UDP collector
+      - "6832:6832/udp"  # Jaeger UDP collector
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_OTLP_HTTP_HOST_PORT=:4318
+      - COLLECTOR_OTLP_GRPC_HOST_PORT=:4317
+      - SPAN_STORAGE_TYPE=memory
+    networks:
+      - mistersmith-telemetry
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:14269/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.117.0
+    container_name: mistersmith-otel-collector
+    depends_on:
+      jaeger:
+        condition: service_healthy
+    ports:
+      - "4317:4317"    # OTLP gRPC receiver
+      - "4318:4318"    # OTLP HTTP receiver
+      - "8888:8888"    # Prometheus metrics
+      - "8889:8889"    # Prometheus exporter metrics
+      - "13133:13133"  # Health check
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    environment:
+      - JAEGER_ENDPOINT=jaeger:14268
+      - PROMETHEUS_ENDPOINT=prometheus:9090
+    networks:
+      - mistersmith-telemetry
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:13133/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Prometheus (optional - for metrics storage)
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: mistersmith-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+      - '--web.enable-remote-write-receiver'
+    networks:
+      - mistersmith-telemetry
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MisterSmith Monitoring UI (development) - commented out for testing
+  # mistersmith-ui:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.dev
+  #   container_name: mistersmith-ui
+  #   depends_on:
+  #     otel-collector:
+  #       condition: service_healthy
+  #   ports:
+  #     - "5173:5173"  # Vite dev server
+  #   environment:
+  #     - VITE_METRICS_ENDPOINT=http://otel-collector:4318/v1/metrics
+  #     - VITE_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces
+  #     - VITE_JAEGER_UI_URL=http://localhost:16686
+  #     - VITE_PROMETHEUS_URL=http://localhost:9090
+  #     - NODE_ENV=development
+  #   volumes:
+  #     - .:/app
+  #     - /app/node_modules
+  #     - /app/.next
+  #   networks:
+  #     - mistersmith-telemetry
+  #   command: npm run dev
+
+networks:
+  mistersmith-telemetry:
+    driver: bridge
+    name: mistersmith-telemetry
+
+volumes:
+  prometheus_data:
+    driver: local

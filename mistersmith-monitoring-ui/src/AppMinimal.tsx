@@ -1,49 +1,8 @@
-console.log('App.tsx - Starting imports...');
 import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-console.log('App.tsx - About to import useMonitoring...');
-import { useMonitoring, useDashboardStatus } from './hooks/useMonitoring';
-console.log('App.tsx - Imports complete');
-// import { TestItem } from './Discovery'; // TROUBLESHOOTING: Removed to test
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 10 * 1000,
-      gcTime: 5 * 60 * 1000,
-    },
-  },
-});
-
-function AppContent() {
-  console.log('AppContent rendering...');
-  
-  const { 
-    connectionStatus, 
-    discoveries, 
-    agents, 
-    systemHealth, 
-    systemMetrics, 
-    errors, 
-    isConnected 
-  } = useMonitoring();
-  
-  console.log('useMonitoring result:', { connectionStatus, discoveries, agents });
-  
-  const { data: dashboardStatus } = useDashboardStatus();
-  
-  // Show connection status
-  const getConnectionStatusColor = () => {
-    switch (connectionStatus) {
-      case 'connected': return '#16a34a';
-      case 'connecting': return '#f59e0b';
-      case 'error': return '#dc2626';
-      default: return '#6b7280';
-    }
-  };
-  
-  // Use real data if available, fallback to mock for demo
-  const displayDiscoveries = discoveries.length > 0 ? discoveries.slice(0, 3) : [
+function AppMinimal() {
+  // Mock data only - no hooks or external connections
+  const displayDiscoveries = [
     {
       id: 'disc-1',
       type: 'pattern',
@@ -70,7 +29,7 @@ function AppContent() {
     }
   ];
 
-  const displayAgents = agents.length > 0 ? agents.slice(0, 3) : [
+  const displayAgents = [
     { id: 'agent-001', status: 'running', discoveries: 23, uptime: '2h 15m' },
     { id: 'agent-002', status: 'running', discoveries: 18, uptime: '1h 42m' },
     { id: 'agent-003', status: 'warning', discoveries: 12, uptime: '45m' },
@@ -85,17 +44,6 @@ function AppContent() {
       fontSize: '16px',
       lineHeight: '1.6'
     }}>      
-      {/* Connection Status Banner */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '4px',
-        backgroundColor: getConnectionStatusColor(),
-        zIndex: 1000,
-        transition: 'background-color 0.3s ease'
-      }} />
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
         <h1 style={{ 
@@ -109,33 +57,6 @@ function AppContent() {
         <p style={{ color: '#93c5fd' }}>
           Real-time multi-agent orchestration monitoring • Step 2 of 5 Complete ✅
         </p>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '16px', 
-          marginTop: '12px',
-          fontSize: '0.875rem' 
-        }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              backgroundColor: getConnectionStatusColor()
-            }} />
-            {connectionStatus.charAt(0).toUpperCase() + connectionStatus.slice(1)}
-          </span>
-          {systemHealth && (
-            <span style={{ color: '#93c5fd' }}>
-              System: {systemHealth.status} • Uptime: {Math.floor(systemHealth.uptime / 60)}m
-            </span>
-          )}
-          {systemMetrics && (
-            <span style={{ color: '#93c5fd' }}>
-              CPU: {systemMetrics.cpu_usage.toFixed(1)}% • Memory: {systemMetrics.memory_usage.toFixed(1)}%
-            </span>
-          )}
-        </div>
       </div>
 
       {/* Dashboard Grid */}
@@ -298,21 +219,10 @@ function AppContent() {
       }}>
         <p style={{ margin: 0, color: '#93c5fd' }}>
           ✅ React Framework: Working • ✅ Vite Dev Server: http://localhost:5173 • ✅ TypeScript: Compiled • ✅ Tailwind CSS: Configured
-          {isConnected && ' • ✅ MisterSmith MCP: Connected'}
-          {errors.length > 0 && ` • ⚠️ ${errors.length} Recent Errors`}
         </p>
       </div>
     </div>
   );
 }
 
-function App() {
-  console.log('App component rendering...');
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AppContent />
-    </QueryClientProvider>
-  );
-}
-
-export default App;
+export default AppMinimal;

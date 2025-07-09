@@ -1,6 +1,36 @@
 import axios, { AxiosInstance } from 'axios';
-import { Discovery, DiscoveryFilter } from '../types/discovery';
-import { Agent, AgentMetrics } from '../types/agent';
+
+// Inline types to avoid import issues
+type Discovery = {
+  id: string;
+  type: string;
+  content: string;
+  confidence: number;
+  agentId: string;
+  timestamp: string;
+};
+
+type DiscoveryFilter = {
+  type?: string;
+  agentId?: string;
+  minConfidence?: number;
+  startDate?: Date;
+  endDate?: Date;
+};
+
+type Agent = {
+  id: string;
+  status: string;
+  discoveries: number;
+  uptime: string;
+};
+
+type AgentMetrics = {
+  totalDiscoveries: number;
+  averageConfidence: number;
+  lastActiveAt: Date;
+  errorRate: number;
+};
 
 export interface PaginationParams {
   page?: number;

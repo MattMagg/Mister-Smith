@@ -2,12 +2,15 @@ export type AgentStatus = 'created' | 'running' | 'terminated' | 'error';
 
 export interface Agent {
   id: string;
-  type: string;
-  status: AgentStatus;
-  createdAt: Date;
-  lastActivity?: Date;
-  capabilities: string[];
+  type?: string;
+  status: AgentStatus | string;
+  createdAt?: string;
+  lastActivity?: string;
+  capabilities?: string[];
   metadata?: Record<string, any>;
+  // UI display fields
+  discoveries?: number;
+  uptime?: string;
 }
 
 export interface AgentMetrics {
@@ -21,7 +24,7 @@ export interface AgentMetrics {
 
 export interface AgentActivity {
   agentId: string;
-  timestamp: Date;
+  timestamp: string;
   type: 'discovery' | 'status_change' | 'error' | 'message';
   details: any;
 }

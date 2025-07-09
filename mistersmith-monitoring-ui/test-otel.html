@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenTelemetry Browser Test</title>
+</head>
+<body>
+    <h1>OpenTelemetry Browser Test</h1>
+    <button id="testBtn">Send Test Span</button>
+    <div id="status"></div>
+    <pre id="log"></pre>
+
+    <script type="module">
+        // Simple test to verify OTLP endpoint connectivity
+        const log = (msg) => {
+            console.log(msg);
+            document.getElementById('log').textContent += msg + '\n';
+        };
+
+        log('Starting OpenTelemetry test...');
+
+        // Test direct OTLP endpoint
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            log('Testing OTLP endpoint...');
+            
+            const testData = {
+                resourceSpans: [{
+                    resource: {
+                        attributes: [{
+                            key: "service.name",
+                            value: { stringValue: "test-service" }
+                        }]
+                    },
+                    scopeSpans: [{
+                        scope: { name: "test" },
+                        spans: [{
+                            traceId: "5B8EFFF798038103D269B633813FC60C",
+                            spanId: "EEE19B7EC3C1B174",
+                            name: "test-span",
+                            startTimeUnixNano: Date.now() * 1000000,
+                            endTimeUnixNano: (Date.now() + 100) * 1000000,
+                            attributes: [{
+                                key: "test",
+                                value: { stringValue: "manual" }
+                            }]
+                        }]
+                    }]
+                }]
+            };
+
+            try {
+                const response = await fetch('http://localhost:4318/v1/traces', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                if (response.ok) {
+                    log('✅ Success! Response: ' + response.status);
+                    document.getElementById('status').textContent = 'Trace sent successfully!';
+                } else {
+                    log('❌ Failed: ' + response.status + ' ' + response.statusText);
+                    const text = await response.text();
+                    log('Response body: ' + text);
+                }
+            } catch (error) {
+                log('❌ Error: ' + error.message);
+                if (error.message.includes('CORS')) {
+                    log('CORS error detected - check OTel Collector configuration');
+                }
+            }
+        });
+
+        // Test connectivity on load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('http://localhost:4318/v1/traces', {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': 'http://localhost:5173',
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'content-type'
+                    }
+                });
+                log('CORS preflight test: ' + response.status);
+                log('CORS headers: ' + response.headers.get('access-control-allow-origin'));
+            } catch (error) {
+                log('CORS preflight failed: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

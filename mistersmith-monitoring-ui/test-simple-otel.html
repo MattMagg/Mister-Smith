@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple OpenTelemetry Test</title>
+</head>
+<body>
+    <h1>Simple OpenTelemetry Test</h1>
+    <button id="sendTrace">Send Trace</button>
+    <pre id="log"></pre>
+
+    <script type="module">
+        const log = (msg) => {
+            console.log(msg);
+            document.getElementById('log').textContent += msg + '\n';
+        };
+
+        // Test if we can import and use OTel modules
+        try {
+            const { trace } = await import('@opentelemetry/api');
+            const { WebTracerProvider, BatchSpanProcessor } = await import('@opentelemetry/sdk-trace-web');
+            const { OTLPTraceExporter } = await import('@opentelemetry/exporter-trace-otlp-http');
+            const { Resource } = await import('@opentelemetry/resources');
+            
+            log('✅ Modules imported successfully');
+
+            // Create a simple tracer
+            const resource = new Resource({
+                'service.name': 'simple-test-service'
+            });
+
+            const provider = new WebTracerProvider({ resource });
+            
+            // Create exporter
+            const exporter = new OTLPTraceExporter({
+                url: 'http://localhost:4318/v1/traces',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            
+            // Add span processor
+            provider.addSpanProcessor(new BatchSpanProcessor(exporter));
+            
+            // Register the provider
+            trace.setGlobalTracerProvider(provider);
+            
+            log('✅ Tracer initialized');
+
+            // Create a test span immediately
+            const tracer = trace.getTracer('simple-test', '1.0.0');
+            const span = tracer.startSpan('immediate-test-span');
+            span.setAttribute('test.type', 'immediate');
+            span.end();
+            log('✅ Immediate test span created');
+
+            // Button click handler
+            document.getElementById('sendTrace').addEventListener('click', () => {
+                const clickSpan = tracer.startSpan('button-click-span');
+                clickSpan.setAttribute('test.type', 'button-click');
+                clickSpan.end();
+                log('✅ Button click span created');
+                
+                // Force flush
+                provider.forceFlush().then(() => {
+                    log('✅ Force flushed spans');
+                }).catch(err => {
+                    log('❌ Force flush error: ' + err.message);
+                });
+            });
+
+        } catch (error) {
+            log('❌ Error: ' + error.message);
+            console.error(error);
+        }
+    </script>
+</body>
+</html>
