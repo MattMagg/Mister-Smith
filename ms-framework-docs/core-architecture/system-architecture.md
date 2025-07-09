@@ -44,6 +44,7 @@ The Mister Smith AI Agent Framework is built on a robust, async-first architectu
 ## Core Components
 
 ### 1. Runtime and Error Management
+
 - Comprehensive error taxonomy with automatic severity classification
 - Recovery strategies for different error types
 - Tokio-based async runtime with lifecycle management
@@ -52,6 +53,7 @@ The Mister Smith AI Agent Framework is built on a robust, async-first architectu
 [→ Full Runtime and Errors Documentation](runtime-and-errors.md)
 
 ### 2. Async Patterns
+
 - Task execution framework with priorities and retry policies
 - Stream processing with backpressure handling
 - Actor model implementation with mailboxes
@@ -61,6 +63,7 @@ The Mister Smith AI Agent Framework is built on a robust, async-first architectu
 [→ Full Async Patterns Documentation](async-patterns-detailed.md)
 
 ### 3. Supervision and Events
+
 - Hierarchical supervision trees for fault tolerance
 - Multiple restart strategies (permanent, transient, temporary)
 - Event bus for system-wide communication
@@ -69,6 +72,7 @@ The Mister Smith AI Agent Framework is built on a robust, async-first architectu
 [→ Full Supervision and Events Documentation](supervision-and-events.md)
 
 ### 4. Monitoring and Health
+
 - Async health check system
 - Component-specific health implementations
 - Metrics collection with multiple types
@@ -77,6 +81,7 @@ The Mister Smith AI Agent Framework is built on a robust, async-first architectu
 [→ Full Monitoring and Health Documentation](monitoring-and-health.md)
 
 ### 5. Implementation Guidelines
+
 - Error handling best practices
 - Critical anti-patterns to avoid
 - Extension mechanisms (middleware, routing)
@@ -88,28 +93,36 @@ The Mister Smith AI Agent Framework is built on a robust, async-first architectu
 ## Architecture Principles
 
 ### 1. Async-First Design
+
 All components are built on Tokio's async runtime, ensuring:
+
 - Non-blocking I/O operations
 - Efficient resource utilization
 - Scalable concurrent operations
 - Proper timeout and cancellation support
 
 ### 2. Fault Tolerance
+
 The system is designed to handle failures gracefully:
+
 - Supervision trees for automatic recovery
 - Circuit breakers for external services
 - Retry policies with exponential backoff
 - Health monitoring for early detection
 
 ### 3. Resource Management
+
 Preventing resource exhaustion through:
+
 - Bounded agent spawning
 - Connection pooling
 - Memory-conscious context management
 - Semaphore-based concurrency limits
 
 ### 4. Observability
+
 Comprehensive monitoring capabilities:
+
 - Structured logging with tracing
 - Metrics collection and export
 - Health check endpoints
@@ -136,6 +149,7 @@ metrics = "0.23"
 ## Implementation Status
 
 ### ✅ Fully Implemented
+
 - Error types and handling strategies
 - Runtime management with Tokio
 - Task execution framework
@@ -145,11 +159,13 @@ metrics = "0.23"
 - Type system with strong typing
 
 ### ⚠️ Partially Implemented
+
 - Supervision trees (concrete implementation provided, needs testing)
 - Event system (implementation provided, needs integration)
 - Health monitoring (basic implementation, needs production backends)
 
 ### ❌ Not Yet Implemented
+
 - Resource pools
 - Circuit breaker pattern
 - Configuration management system
@@ -206,6 +222,7 @@ The system architecture integrates with other framework domains:
 The Mister Smith AI Agent Framework provides a robust foundation for building distributed AI agent systems. With its async-first design, comprehensive error handling, and fault-tolerant architecture, it enables the creation of reliable, scalable, and maintainable agent applications.
 
 The architecture emphasizes:
+
 - **Safety** through strong typing and error handling
 - **Performance** through async patterns and resource management
 - **Reliability** through supervision and health monitoring

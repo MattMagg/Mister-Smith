@@ -13,6 +13,7 @@ This document provides implementation patterns and technical specifications for 
 ### Technical Scope
 
 **Implementation Patterns**:
+
 - OpenTelemetry instrumentation patterns for multi-agent tracing
 - Metrics collection and aggregation strategies
 - Structured logging with correlation IDs
@@ -20,6 +21,7 @@ This document provides implementation patterns and technical specifications for 
 - Performance monitoring and alerting
 
 **Technology Stack**:
+
 - **Telemetry**: OpenTelemetry (traces, metrics, logs)
 - **Metrics Storage**: Prometheus with custom exporters
 - **Trace Storage**: Jaeger for distributed tracing
@@ -30,22 +32,26 @@ This document provides implementation patterns and technical specifications for 
 ### Cross-References
 
 **Core Architecture**:
+
 - **[System Integration](../core-architecture/system-integration.md)** - Component integration patterns
 - **[Supervision Trees](../core-architecture/supervision-trees.md)** - Agent supervision and error handling
 - **[Tokio Runtime](../core-architecture/tokio-runtime.md)** - Async runtime configuration
 - **[Component Architecture](../core-architecture/component-architecture.md)** - Agent component structure
 
 **Operations**:
+
 - **[Deployment Configuration](../operations/deployment-configuration.md)** - Infrastructure setup and deployment patterns
 - **[Process Management](../operations/process-management.md)** - Agent lifecycle and supervision patterns
 - **[Container Orchestration](../operations/container-orchestration.md)** - Docker and Kubernetes deployment
 
 **Data Management**:
+
 - **[Agent Communication](../data-management/agent-communication.md)** - Message patterns and protocols
 - **[Message Schemas](../data-management/message-schemas.md)** - Data structure specifications
 - **[Agent Lifecycle](../data-management/agent-lifecycle.md)** - State management patterns
 
 **Transport & Security**:
+
 - **[NATS Integration](../transport/nats-integration.md)** - Message transport configuration
 - **[Authentication](../security/authentication.md)** - Agent authentication patterns
 
@@ -3436,18 +3442,21 @@ PATTERN DisasterRecovery:
 This framework provides technical patterns for observability and monitoring in multi-agent systems. Implementation follows these key principles:
 
 **Performance Considerations**:
+
 - Minimal overhead instrumentation (< 5% performance impact)
 - Efficient sampling strategies for high-throughput scenarios
 - Async export patterns to prevent blocking operations
 - Resource-aware metric collection
 
 **Integration Points**:
+
 - Agent lifecycle hooks for automatic instrumentation
 - Message transport integration for distributed tracing
 - Supervision tree integration for error correlation
 - Configuration management for dynamic observability settings
 
 **Deployment Requirements**:
+
 - OpenTelemetry Collector for centralized processing
 - Prometheus for metrics storage and querying
 - Jaeger for trace storage and analysis
@@ -3458,6 +3467,7 @@ The patterns in this document enable comprehensive observability without comprom
 ## Quick Reference
 
 ### Key Patterns
+
 - **AgentInstrumentation**: Initialize telemetry context and configure exporters
 - **ObservabilityPipeline**: Data flow from agent to visualization
 - **DistributedTracing**: Cross-agent trace correlation and context propagation
@@ -3465,12 +3475,14 @@ The patterns in this document enable comprehensive observability without comprom
 - **StructuredLogging**: Correlated logs with trace context
 
 ### Essential Integrations
+
 - **OpenTelemetry SDK**: `opentelemetry = "0.20"` for Rust agents
 - **OTLP Export**: gRPC endpoint on port 4317 for trace/metrics export
 - **Prometheus**: `/metrics` endpoint for scraping agent metrics
 - **Context Propagation**: HTTP/NATS headers for distributed tracing
 
 ### Configuration Files
+
 - `otel-collector-config.yaml`: Central collector configuration
 - `prometheus.yml`: Metrics scraping configuration
 - `grafana/dashboards/`: Dashboard definitions for visualization

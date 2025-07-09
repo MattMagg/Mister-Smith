@@ -17,6 +17,7 @@ This document defines HTTP-based transport patterns for agent communication usin
 This module focuses on RESTful APIs, WebSocket communication, and complete HTTP protocol specifications.
 
 HTTP transport provides the foundation for web-compatible agent communication with support for:
+
 - REST APIs with comprehensive endpoint specifications
 - WebSocket connections for real-time bidirectional communication
 - Multiple authentication schemes (Bearer tokens, API keys)

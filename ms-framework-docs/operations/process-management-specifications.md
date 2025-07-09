@@ -8,6 +8,7 @@ This document provides comprehensive process management specifications for the M
 process supervision patterns, lifecycle management strategies, resource management policies, and health monitoring systems for distributed agent operations.
 
 **Related Documentation**:
+
 - [Configuration Management](configuration-management.md) - Configuration patterns and deployment strategies
 - [Deployment Architecture](deployment-architecture-specifications.md) - Infrastructure and deployment patterns
 - [Observability Framework](observability-monitoring-framework.md) - Monitoring and observability specifications

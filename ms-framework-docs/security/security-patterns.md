@@ -16,6 +16,7 @@ tags:
 This document provides essential security patterns, guidelines, and configurations for agent implementation. It covers authentication, authorization, TLS configuration, secrets management, and secure communication patterns.
 
 **Related Documentation:**
+
 - [Security Framework](./security-framework.md) - Comprehensive security implementations and detailed code examples
 - [JWT Implementation](./security-framework.md#2-jwt-authentication-implementation) - Complete JWT authentication service
 - [Certificate Management](./security-framework.md#1-certificate-management-implementation) - Production-ready certificate handling
@@ -36,7 +37,6 @@ Essential security patterns, guidelines, and configuration templates for agent i
 ### 1. Basic Authentication Pattern
 
 **See also:** [JWT Authentication Implementation](./security-framework.md#2-jwt-authentication-implementation) for complete production-ready JWT service.
-
 
 **Pseudocode Pattern:**
 
@@ -89,7 +89,6 @@ authentication:
 ### 2. Simple Authorization Pattern
 
 **See also:** [RBAC Authorization Implementation](./security-framework.md#3-authorization-implementation) for complete role-based access control engine.
-
 
 **Pseudocode Pattern:**
 
@@ -281,7 +280,6 @@ secrets:
 
 ### 5. Basic Security Middleware
 
-
 **Pseudocode Pattern:**
 
 ```rust
@@ -335,7 +333,6 @@ function rate_limit_middleware(request, response, next):
 ### 6. Basic Audit Logging
 
 **See also:** [Security Audit Implementation](./security-framework.md#4-security-audit-implementation) for comprehensive audit service with integrity protection.
-
 
 **Pseudocode Pattern:**
 
@@ -399,7 +396,6 @@ security_events = [
 ```
 
 ### 7. NATS Security Patterns
-
 
 **Pseudocode Pattern - mTLS Configuration:**
 
