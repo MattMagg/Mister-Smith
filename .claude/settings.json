@@ -34,26 +34,16 @@
       "Bash(eval *)"
     ]
   },
-  "rustDevelopment": {
-    "cargoPath": "cargo",
-    "rustfmtOnSave": true,
-    "clippyOnSave": true,
-    "testOnChange": true,
-    "docGeneration": true,
-    "workspaceSupport": true,
-    "featureFlags": ["async", "serde", "tokio"],
-    "targetDir": "target/claude-flow"
-  },
   "hooks": {
     "preEditHook": {
       "command": "npx",
-      "args": ["claude-flow", "hooks", "pre-edit", "--file", "${file}", "--auto-assign-agents", "true", "--load-context", "true", "--rust-check", "true", "--nats-patterns", "true"],
+      "args": ["claude-flow", "hooks", "pre-edit", "--file", "${file}", "--auto-assign-agents", "true", "--load-context", "true"],
       "alwaysRun": false,
       "outputFormat": "json"
     },
     "postEditHook": {
       "command": "npx",
-      "args": ["claude-flow", "hooks", "post-edit", "--file", "${file}", "--format", "true", "--update-memory", "true", "--train-neural", "true", "--rust-fmt", "true", "--clippy", "true", "--test-affected", "true"],
+      "args": ["claude-flow", "hooks", "post-edit", "--file", "${file}", "--format", "true", "--update-memory", "true", "--train-neural", "true"],
       "alwaysRun": true,
       "outputFormat": "json"
     },
@@ -74,7 +64,17 @@
       "args": ["claude-flow", "hooks", "session-end", "--generate-summary", "true", "--persist-state", "true", "--export-metrics", "true"],
       "alwaysRun": true,
       "outputFormat": "json"
+    },
+    "sessionStartHook": {
+      "command": "npx",
+      "args": ["claude-flow", "hooks", "pre-task", "--description", "Session initialization", "--task-id", "session-init", "--agent-id", "orchestrator"],
+      "alwaysRun": true,
+      "outputFormat": "json"
     }
+  },
+  "mcp": {
+    "autoRestoreSwarms": true,
+    "swarmConfigPath": ".claude/swarm-topology-config.json"
   },
   "mcpServers": {
     "claude-flow": {
@@ -88,7 +88,9 @@
         "CLAUDE_FLOW_HOOKS_ENABLED": "true",
         "CLAUDE_FLOW_TELEMETRY_ENABLED": "true",
         "CLAUDE_FLOW_REMOTE_READY": "true",
-        "CLAUDE_FLOW_GITHUB_INTEGRATION": "true"
+        "CLAUDE_FLOW_GITHUB_INTEGRATION": "true",
+        "CLAUDE_FLOW_AUTO_RESTORE_SWARMS": "true",
+        "CLAUDE_FLOW_SWARM_CONFIG_PATH": ".claude/swarm-topology-config.json"
       }
     }
   },
@@ -104,18 +106,11 @@
     "githubIntegration": true
   },
   "performance": {
-    "maxAgents": 50,
+    "maxAgents": 10,
     "defaultTopology": "hierarchical",
     "executionStrategy": "parallel",
     "tokenOptimization": true,
     "cacheEnabled": true,
-    "telemetryLevel": "detailed",
-    "autoScaling": true,
-    "scaleThreshold": 0.8,
-    "tokenBudget": 1000000,
-    "parallelTasks": 12,
-    "memoryCompression": true,
-    "adaptiveRouting": true,
-    "rustOptimizations": true
+    "telemetryLevel": "detailed"
   }
 }
