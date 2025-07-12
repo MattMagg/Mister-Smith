@@ -180,3 +180,4 @@ agenterra/**/*
 # Thumbs.db
 node_modules
 claude-f*/
+.swarm/*.db-shm
