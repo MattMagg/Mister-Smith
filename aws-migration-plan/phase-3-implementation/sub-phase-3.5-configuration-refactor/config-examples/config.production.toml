@@ -1,0 +1,53 @@
+# Production Configuration for MisterSmith
+# This file is loaded when ENVIRONMENT=production
+
+[nats]
+# URL will be loaded from AWS Parameter Store
+# Fallback URL if AWS is unavailable
+url = "nats://prod-nats.internal:4222"
+connect_timeout = "30s"
+ping_interval = "60s"
+max_reconnects = 20
+
+[nats.auth]
+# Credentials loaded from AWS Secrets Manager
+# username and password fields populated at runtime
+
+[http]
+port = 8080
+sse_port = 3000
+bind_address = "0.0.0.0"
+cors_origins = [
+    "https://app.mistersmith.io",
+    "https://api.mistersmith.io"
+]
+
+[timeouts]
+circuit_breaker_reset = "1s"
+process_execution = "30s"
+agent_heartbeat = "60s"
+task_completion = "10m"
+
+[aws]
+region = "us-east-1"
+parameter_store_prefix = "/mistersmith/production/"
+secrets_manager_prefix = "mistersmith/production/"
+use_parameter_store = true
+use_secrets_manager = true
+
+[runtime]
+environment = "production"
+log_level = "warn"
+enable_telemetry = true
+enable_circuit_breaker = true
+
+# Production-specific settings
+[runtime.performance]
+max_concurrent_agents = 100
+max_memory_per_agent = "512MB"
+enable_auto_scaling = true
+
+[runtime.security]
+require_auth = true
+enable_rate_limiting = true
+max_requests_per_minute = 1000

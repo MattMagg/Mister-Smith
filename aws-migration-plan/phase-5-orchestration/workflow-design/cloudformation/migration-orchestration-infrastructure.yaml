@@ -1,0 +1,955 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Migration Orchestration Infrastructure - Step Functions, Lambda, and Supporting Services'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: 'aws-migration'
+    Description: 'Name of the migration project'
+  
+  Environment:
+    Type: String
+    Default: 'prod'
+    AllowedValues: ['dev', 'test', 'prod']
+    Description: 'Environment name'
+  
+  NotificationEmail:
+    Type: String
+    Description: 'Email address for migration notifications'
+  
+  ApprovalEmail:
+    Type: String
+    Description: 'Email address for approval notifications'
+
+Resources:
+  # =============================================================================
+  # IAM ROLES AND POLICIES
+  # =============================================================================
+  
+  StepFunctionsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-stepfunctions-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSStepFunctionsFullAccess
+      Policies:
+        - PolicyName: StepFunctionsExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                  - sns:Publish
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - states:StartExecution
+                  - codedeploy:CreateDeployment
+                  - ecs:RunTask
+                  - dms:StartReplicationTask
+                  - dms:DescribeReplicationTasks
+                  - datasync:StartTaskExecution
+                  - elasticloadbalancingv2:*
+                  - cloudformation:*
+                  - iam:CreateRole
+                Resource: '*'
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-lambda-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
+      Policies:
+        - PolicyName: MigrationLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:*
+                  - rds:*
+                  - s3:*
+                  - iam:*
+                  - cloudformation:*
+                  - elasticloadbalancingv2:*
+                  - dms:*
+                  - datasync:*
+                  - codedeploy:*
+                  - ecs:*
+                  - cloudwatch:*
+                  - sns:Publish
+                  - dynamodb:*
+                  - sts:GetCallerIdentity
+                Resource: '*'
+
+  # =============================================================================
+  # SNS TOPICS AND SUBSCRIPTIONS
+  # =============================================================================
+  
+  StatusNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-status-notifications'
+      DisplayName: 'Migration Status Notifications'
+
+  ErrorNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-error-notifications'
+      DisplayName: 'Migration Error Notifications'
+
+  ApprovalNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-approval-notifications'
+      DisplayName: 'Migration Approval Requests'
+
+  SuccessNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-success-notifications'
+      DisplayName: 'Migration Success Notifications'
+
+  StatusEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      TopicArn: !Ref StatusNotificationTopic
+      Endpoint: !Ref NotificationEmail
+
+  ErrorEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      TopicArn: !Ref ErrorNotificationTopic
+      Endpoint: !Ref NotificationEmail
+
+  ApprovalEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      TopicArn: !Ref ApprovalNotificationTopic
+      Endpoint: !Ref ApprovalEmail
+
+  SuccessEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      TopicArn: !Ref SuccessNotificationTopic
+      Endpoint: !Ref NotificationEmail
+
+  # =============================================================================
+  # DYNAMODB TABLES
+  # =============================================================================
+  
+  CheckpointTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-${Environment}-migration-checkpoints'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: migrationId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: migrationId
+          KeyType: HASH
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  MigrationStateTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-${Environment}-migration-state'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: migrationId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: migrationId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  # =============================================================================
+  # S3 BUCKETS
+  # =============================================================================
+  
+  MigrationArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-${Environment}-migration-artifacts-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldVersions
+            Status: Enabled
+            NoncurrentVersionExpirationInDays: 30
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  # =============================================================================
+  # LAMBDA FUNCTIONS
+  # =============================================================================
+  
+  ValidationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-validation-function'
+      Runtime: python3.9
+      Handler: validation_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 900
+      MemorySize: 512
+      Code:
+        ZipFile: |
+          # Placeholder - would be replaced with actual function code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Validation function placeholder'}
+      Environment:
+        Variables:
+          PROJECT_NAME: !Ref ProjectName
+          ENVIRONMENT: !Ref Environment
+          CHECKPOINT_TABLE: !Ref CheckpointTable
+      TracingConfig:
+        Mode: Active
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  ProvisioningFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-provisioning-function'
+      Runtime: python3.9
+      Handler: provisioning_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 900
+      MemorySize: 1024
+      Code:
+        ZipFile: |
+          # Placeholder - would be replaced with actual function code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Provisioning function placeholder'}
+      Environment:
+        Variables:
+          PROJECT_NAME: !Ref ProjectName
+          ENVIRONMENT: !Ref Environment
+          ARTIFACTS_BUCKET: !Ref MigrationArtifactsBucket
+      TracingConfig:
+        Mode: Active
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  MigrationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-migration-function'
+      Runtime: python3.9
+      Handler: migration_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 900
+      MemorySize: 1024
+      Code:
+        ZipFile: |
+          # Placeholder - would be replaced with actual function code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Migration function placeholder'}
+      Environment:
+        Variables:
+          PROJECT_NAME: !Ref ProjectName
+          ENVIRONMENT: !Ref Environment
+          STATE_TABLE: !Ref MigrationStateTable
+      TracingConfig:
+        Mode: Active
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  VerificationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-verification-function'
+      Runtime: python3.9
+      Handler: verification_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 900
+      MemorySize: 1024
+      Code:
+        ZipFile: |
+          # Placeholder - would be replaced with actual function code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Verification function placeholder'}
+      Environment:
+        Variables:
+          PROJECT_NAME: !Ref ProjectName
+          ENVIRONMENT: !Ref Environment
+      TracingConfig:
+        Mode: Active
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  RollbackFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-rollback-function'
+      Runtime: python3.9
+      Handler: rollback_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 900
+      MemorySize: 1024
+      Code:
+        ZipFile: |
+          # Placeholder - would be replaced with actual function code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Rollback function placeholder'}
+      Environment:
+        Variables:
+          PROJECT_NAME: !Ref ProjectName
+          ENVIRONMENT: !Ref Environment
+          CHECKPOINT_TABLE: !Ref CheckpointTable
+      TracingConfig:
+        Mode: Active
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  ApprovalFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-approval-function'
+      Runtime: python3.9
+      Handler: approval_function.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 900
+      MemorySize: 512
+      Code:
+        ZipFile: |
+          # Placeholder - would be replaced with actual function code
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Approval function placeholder'}
+      Environment:
+        Variables:
+          PROJECT_NAME: !Ref ProjectName
+          ENVIRONMENT: !Ref Environment
+          APPROVAL_TOPIC: !Ref ApprovalNotificationTopic
+      TracingConfig:
+        Mode: Active
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  # =============================================================================
+  # STEP FUNCTIONS STATE MACHINES
+  # =============================================================================
+  
+  MainMigrationStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub '${ProjectName}-${Environment}-main-migration-workflow'
+      StateMachineType: STANDARD
+      RoleArn: !GetAtt StepFunctionsExecutionRole.Arn
+      DefinitionString: !Sub |
+        {
+          "Comment": "AWS Migration Main Orchestration Workflow",
+          "StartAt": "InitializeMigration",
+          "States": {
+            "InitializeMigration": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${ValidationFunction}",
+                "Payload": {
+                  "action": "initialize",
+                  "migrationId.$": "$.migrationId",
+                  "sourceEnvironment.$": "$.sourceEnvironment",
+                  "targetEnvironment.$": "$.targetEnvironment"
+                }
+              },
+              "ResultPath": "$.initialization",
+              "Retry": [
+                {
+                  "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException"],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "HandleInitializationError",
+                  "ResultPath": "$.error"
+                }
+              ],
+              "Next": "ValidatePrerequisites"
+            },
+            "HandleInitializationError": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::sns:publish",
+              "Parameters": {
+                "TopicArn": "${ErrorNotificationTopic}",
+                "Message": {
+                  "error.$": "$.error",
+                  "phase": "initialization",
+                  "migrationId.$": "$.migrationId"
+                }
+              },
+              "Next": "MigrationFailed"
+            },
+            "ValidatePrerequisites": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${ValidationFunction}",
+                "Payload": {
+                  "action": "validateSource",
+                  "sourceEnvironment.$": "$.sourceEnvironment"
+                }
+              },
+              "ResultPath": "$.validationResults",
+              "Next": "NotifyValidationSuccess"
+            },
+            "NotifyValidationSuccess": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::sns:publish",
+              "Parameters": {
+                "TopicArn": "${StatusNotificationTopic}",
+                "Message": {
+                  "status": "Validation completed successfully",
+                  "migrationId.$": "$.migrationId"
+                }
+              },
+              "Next": "SaveCheckpoint"
+            },
+            "SaveCheckpoint": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::dynamodb:putItem",
+              "Parameters": {
+                "TableName": "${CheckpointTable}",
+                "Item": {
+                  "migrationId": {
+                    "S.$": "$.migrationId"
+                  },
+                  "checkpoint": {
+                    "S": "validation_complete"
+                  },
+                  "timestamp": {
+                    "S.$": "$$.State.EnteredTime"
+                  },
+                  "state": {
+                    "S.$": "States.JsonToString($)"
+                  }
+                }
+              },
+              "ResultPath": "$.checkpointResult",
+              "Next": "RunVerificationTests"
+            },
+            "RunVerificationTests": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${VerificationFunction}",
+                "Payload": {
+                  "action": "runAllTests",
+                  "endpoints.$": "$.targetEnvironment.endpoints",
+                  "tests": [
+                    "healthCheck",
+                    "functionalTest",
+                    "performanceTest"
+                  ]
+                }
+              },
+              "ResultPath": "$.verificationResults",
+              "Next": "RequestCutoverApproval"
+            },
+            "RequestCutoverApproval": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+              "Parameters": {
+                "FunctionName": "${ApprovalFunction}",
+                "Payload": {
+                  "taskToken.$": "$$.Task.Token",
+                  "action": "cutoverApproval",
+                  "verificationResults.$": "$.verificationResults",
+                  "migrationSummary": {
+                    "migrationId.$": "$.migrationId",
+                    "startTime.$": "$.initialization.Payload.startTime"
+                  }
+                }
+              },
+              "TimeoutSeconds": 3600,
+              "Next": "MigrationSuccess"
+            },
+            "MigrationSuccess": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::sns:publish",
+              "Parameters": {
+                "TopicArn": "${SuccessNotificationTopic}",
+                "Message": {
+                  "status": "Migration completed successfully",
+                  "migrationId.$": "$.migrationId"
+                }
+              },
+              "Next": "MigrationComplete"
+            },
+            "MigrationFailed": {
+              "Type": "Fail",
+              "Error": "MigrationFailed",
+              "Cause": "The migration process failed"
+            },
+            "MigrationComplete": {
+              "Type": "Succeed"
+            }
+          }
+        }
+      LoggingConfiguration:
+        Level: ALL
+        IncludeExecutionData: true
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt StepFunctionsLogGroup.Arn
+      TracingConfiguration:
+        Enabled: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  NetworkProvisioningStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub '${ProjectName}-${Environment}-network-provisioning'
+      StateMachineType: EXPRESS
+      RoleArn: !GetAtt StepFunctionsExecutionRole.Arn
+      DefinitionString: !Sub |
+        {
+          "Comment": "Network Infrastructure Provisioning",
+          "StartAt": "CreateVPC",
+          "States": {
+            "CreateVPC": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${ProvisioningFunction}",
+                "Payload": {
+                  "action": "createVPC",
+                  "vpcConfig.$": "$.vpcConfig"
+                }
+              },
+              "Next": "CreateSubnets"
+            },
+            "CreateSubnets": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${ProvisioningFunction}",
+                "Payload": {
+                  "action": "createSubnets",
+                  "vpcId.$": "$.Payload.vpcId",
+                  "subnetConfig.$": "$.vpcConfig.subnets"
+                }
+              },
+              "Next": "ConfigureSecurityGroups"
+            },
+            "ConfigureSecurityGroups": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${ProvisioningFunction}",
+                "Payload": {
+                  "action": "createSecurityGroups",
+                  "vpcId.$": "$.Payload.vpcId"
+                }
+              },
+              "End": true
+            }
+          }
+        }
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  RollbackStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub '${ProjectName}-${Environment}-rollback-workflow'
+      StateMachineType: STANDARD
+      RoleArn: !GetAtt StepFunctionsExecutionRole.Arn
+      DefinitionString: !Sub |
+        {
+          "Comment": "Migration Rollback Workflow",
+          "StartAt": "InitiateRollback",
+          "States": {
+            "InitiateRollback": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${RollbackFunction}",
+                "Payload": {
+                  "action": "fullRollback",
+                  "migrationId.$": "$.migrationId",
+                  "rollbackReason.$": "$.rollbackReason"
+                }
+              },
+              "Next": "NotifyRollbackComplete"
+            },
+            "NotifyRollbackComplete": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::sns:publish",
+              "Parameters": {
+                "TopicArn": "${StatusNotificationTopic}",
+                "Message": {
+                  "status": "Rollback completed",
+                  "migrationId.$": "$.migrationId",
+                  "rollbackResult.$": "$.Payload"
+                }
+              },
+              "End": true
+            }
+          }
+        }
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  # =============================================================================
+  # API GATEWAY
+  # =============================================================================
+  
+  MigrationAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-migration-api'
+      Description: 'API for triggering and managing migrations'
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Policy:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action:
+              - execute-api:Invoke
+            Resource: '*'
+
+  MigrationAPIResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref MigrationAPI
+      ParentId: !GetAtt MigrationAPI.RootResourceId
+      PathPart: 'migration'
+
+  StartMigrationResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref MigrationAPI
+      ParentId: !Ref MigrationAPIResource
+      PathPart: 'start'
+
+  StartMigrationMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref MigrationAPI
+      ResourceId: !Ref StartMigrationResource
+      HttpMethod: POST
+      AuthorizationType: AWS_IAM
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:states:action/StartExecution'
+        Credentials: !GetAtt APIGatewayExecutionRole.Arn
+        RequestTemplates:
+          application/json: !Sub |
+            {
+              "stateMachineArn": "${MainMigrationStateMachine}",
+              "input": "$util.escapeJavaScript($input.body)"
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseTemplates:
+              application/json: |
+                {
+                  "executionArn": "$input.path('$.executionArn')",
+                  "startDate": "$input.path('$.startDate')"
+                }
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            application/json: Empty
+
+  APIGatewayExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionsExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource: !Ref MainMigrationStateMachine
+
+  APIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - StartMigrationMethod
+    Properties:
+      RestApiId: !Ref MigrationAPI
+      StageName: !Ref Environment
+
+  # =============================================================================
+  # CLOUDWATCH RESOURCES
+  # =============================================================================
+  
+  StepFunctionsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/stepfunctions/${ProjectName}-${Environment}'
+      RetentionInDays: 30
+
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ProjectName}-${Environment}'
+      RetentionInDays: 30
+
+  MigrationDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${ProjectName}-${Environment}-migration-dashboard'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/StepFunctions", "ExecutionsSucceeded", "StateMachineArn", "${MainMigrationStateMachine}" ],
+                  [ ".", "ExecutionsFailed", ".", "." ],
+                  [ ".", "ExecutionsStarted", ".", "." ]
+                ],
+                "period": 300,
+                "stat": "Sum",
+                "region": "${AWS::Region}",
+                "title": "Migration Executions"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/Lambda", "Duration", "FunctionName", "${ValidationFunction}" ],
+                  [ ".", ".", ".", "${VerificationFunction}" ],
+                  [ ".", ".", ".", "${RollbackFunction}" ]
+                ],
+                "period": 300,
+                "stat": "Average",
+                "region": "${AWS::Region}",
+                "title": "Lambda Function Duration"
+              }
+            }
+          ]
+        }
+
+  # =============================================================================
+  # CLOUDWATCH ALARMS
+  # =============================================================================
+  
+  MigrationFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-migration-failures'
+      AlarmDescription: 'Alarm for migration execution failures'
+      MetricName: ExecutionsFailed
+      Namespace: AWS/StepFunctions
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: StateMachineArn
+          Value: !Ref MainMigrationStateMachine
+      AlarmActions:
+        - !Ref ErrorNotificationTopic
+
+  LambdaErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-lambda-errors'
+      AlarmDescription: 'Alarm for Lambda function errors'
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 3
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref ErrorNotificationTopic
+
+# =============================================================================
+# OUTPUTS
+# =============================================================================
+
+Outputs:
+  MainStateMachineArn:
+    Description: 'ARN of the main migration state machine'
+    Value: !Ref MainMigrationStateMachine
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-main-state-machine-arn'
+
+  NetworkProvisioningStateMachineArn:
+    Description: 'ARN of the network provisioning state machine'
+    Value: !Ref NetworkProvisioningStateMachine
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-network-provisioning-arn'
+
+  RollbackStateMachineArn:
+    Description: 'ARN of the rollback state machine'
+    Value: !Ref RollbackStateMachine
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-rollback-state-machine-arn'
+
+  ValidationFunctionArn:
+    Description: 'ARN of the validation Lambda function'
+    Value: !GetAtt ValidationFunction.Arn
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-validation-function-arn'
+
+  VerificationFunctionArn:
+    Description: 'ARN of the verification Lambda function'
+    Value: !GetAtt VerificationFunction.Arn
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-verification-function-arn'
+
+  RollbackFunctionArn:
+    Description: 'ARN of the rollback Lambda function'
+    Value: !GetAtt RollbackFunction.Arn
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-rollback-function-arn'
+
+  CheckpointTableName:
+    Description: 'Name of the checkpoint DynamoDB table'
+    Value: !Ref CheckpointTable
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-checkpoint-table'
+
+  MigrationArtifactsBucket:
+    Description: 'Name of the migration artifacts S3 bucket'
+    Value: !Ref MigrationArtifactsBucket
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-artifacts-bucket'
+
+  MigrationAPIEndpoint:
+    Description: 'API Gateway endpoint for migration operations'
+    Value: !Sub 'https://${MigrationAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-api-endpoint'
+
+  StatusNotificationTopicArn:
+    Description: 'ARN of the status notification SNS topic'
+    Value: !Ref StatusNotificationTopic
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-status-topic-arn'
+
+  ErrorNotificationTopicArn:
+    Description: 'ARN of the error notification SNS topic'
+    Value: !Ref ErrorNotificationTopic
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-error-topic-arn'
+
+  ApprovalNotificationTopicArn:
+    Description: 'ARN of the approval notification SNS topic'
+    Value: !Ref ApprovalNotificationTopic
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-approval-topic-arn'
+
+  DashboardURL:
+    Description: 'URL of the CloudWatch dashboard'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${MigrationDashboard}'

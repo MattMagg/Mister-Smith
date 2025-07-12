@@ -1,0 +1,48 @@
+{
+  "Name": "MigrationPhaseCompletion",
+  "Description": "Triggers when a migration phase reaches 100% completion",
+  "State": "ENABLED",
+  "EventPattern": {
+    "source": ["aws.cloudwatch"],
+    "detail-type": ["CloudWatch Alarm State Change"],
+    "detail": {
+      "alarmName": [
+        {
+          "prefix": "PhaseCompletion"
+        }
+      ],
+      "state": {
+        "value": ["OK"]
+      },
+      "previousState": {
+        "value": ["ALARM", "INSUFFICIENT_DATA"]
+      }
+    }
+  },
+  "Targets": [
+    {
+      "Id": "1",
+      "Arn": "arn:aws:lambda:us-east-1:123456789012:function:ProgressReporter",
+      "Input": "{\"reportType\": \"phase-completion\", \"eventType\": \"phase-complete\"}",
+      "RetryPolicy": {
+        "MaximumRetryAttempts": 2,
+        "MaximumEventAge": 3600
+      },
+      "DeadLetterConfig": {
+        "Arn": "arn:aws:sqs:us-east-1:123456789012:migration-dlq"
+      }
+    },
+    {
+      "Id": "2",
+      "Arn": "arn:aws:sns:us-east-1:123456789012:migration-milestones",
+      "InputTransformer": {
+        "InputPathsMap": {
+          "alarm": "$.detail.alarmName",
+          "phase": "$.detail.configuration.dimensions[0].value",
+          "timestamp": "$.time"
+        },
+        "InputTemplate": "\"Phase <phase> has reached 100% completion at <timestamp>. Alarm: <alarm>\""
+      }
+    }
+  ]
+}

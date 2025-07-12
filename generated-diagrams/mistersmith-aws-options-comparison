@@ -1,0 +1,47 @@
+digraph "MisterSmith: Current vs AWS Options" {
+	graph [fontcolor="#2D3436" fontname="Sans-Serif" fontsize=15 label="MisterSmith: Current vs AWS Options" nodesep=0.60 pad=2.0 rankdir=LR ranksep=0.75 splines=ortho]
+	node [fixedsize=true fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 height=1.4 imagescale=true labelloc=b shape=box style=rounded width=1.4]
+	edge [color="#7B8894"]
+	f29ffc8d5a51439d9d63fb02711c0773 -> c4e4f2d8ad9b4fab8122917e1676a3cd [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	c4e4f2d8ad9b4fab8122917e1676a3cd -> "6737bd58e447441bb8a3fab9f4ee12d2" [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	f29ffc8d5a51439d9d63fb02711c0773 -> "88eea4ee4b094ca2b59cb58565780462" [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	subgraph "cluster_Current Local Setup
+$0/month" {
+		graph [bgcolor="#E5F5FD" fontname="Sans-Serif" fontsize=12 label="Current Local Setup
+$0/month" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style=rounded]
+		f29ffc8d5a51439d9d63fb02711c0773 [label="Rust Backend" height=1.9 image="/Users/mac-main/.cache/uv/archive-v0/Jy0mfLxfQR4RHgviaUKCp/lib/python3.13/site-packages/resources/programming/language/rust.png" shape=none]
+		c4e4f2d8ad9b4fab8122917e1676a3cd [label=NATS height=1.9 image="/Users/mac-main/.cache/uv/archive-v0/Jy0mfLxfQR4RHgviaUKCp/lib/python3.13/site-packages/resources/onprem/compute/server.png" shape=none]
+		"88eea4ee4b094ca2b59cb58565780462" [label=PostgreSQL height=1.9 image="/Users/mac-main/.cache/uv/archive-v0/Jy0mfLxfQR4RHgviaUKCp/lib/python3.13/site-packages/resources/onprem/database/postgresql.png" shape=none]
+		"6737bd58e447441bb8a3fab9f4ee12d2" [label="MCP Server" height=1.9 image="/Users/mac-main/.cache/uv/archive-v0/Jy0mfLxfQR4RHgviaUKCp/lib/python3.13/site-packages/resources/onprem/compute/server.png" shape=none]
+	}
+	a05a70d1c65d4a1d9600171ac805cab1 -> "2dbca73320994f178a447c5f9b3756b5" [label=telemetry dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 style=dashed]
+	a05a70d1c65d4a1d9600171ac805cab1 -> f841bfb23e43446bbefb96aa088e1846 [label=events dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 style=dashed]
+	subgraph "cluster_Option A: Hybrid
+$20-50/month" {
+		graph [bgcolor="#E5F5FD" fontname="Sans-Serif" fontsize=12 label="Option A: Hybrid
+$20-50/month" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style=rounded]
+		a05a70d1c65d4a1d9600171ac805cab1 [label="Rust + OTEL" height=1.9 image="/Users/mac-main/.cache/uv/archive-v0/Jy0mfLxfQR4RHgviaUKCp/lib/python3.13/site-packages/resources/programming/language/rust.png" shape=none]
+		"2dbca73320994f178a447c5f9b3756b5" [label=CloudWatch height=1.9 image="/Users/mac-main/.cache/uv/archive-v0/Jy0mfLxfQR4RHgviaUKCp/lib/python3.13/site-packages/resources/aws/management/cloudwatch.png" shape=none]
+		f841bfb23e43446bbefb96aa088e1846 [label=EventBridge height=1.9 image="/Users/mac-main/.cache/uv/archive-v0/Jy0mfLxfQR4RHgviaUKCp/lib/python3.13/site-packages/resources/aws/integration/eventbridge.png" shape=none]
+	}
+	a8a440c5fc51454b94f58ed9e895de2c -> "6af0791ad85c4248ab92c15786fe9d97" [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	"6af0791ad85c4248ab92c15786fe9d97" -> c1af44de107b46b4ba19747ed91458bf [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	a8a440c5fc51454b94f58ed9e895de2c -> d40ddaeb6b764e8099b067e52804ea01 [dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13]
+	subgraph "cluster_Option B: Full AWS
+$321+/month" {
+		graph [bgcolor="#E5F5FD" fontname="Sans-Serif" fontsize=12 label="Option B: Full AWS
+$321+/month" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style=rounded]
+		a8a440c5fc51454b94f58ed9e895de2c [label="ECS Fargate" height=1.9 image="/Users/mac-main/.cache/uv/archive-v0/Jy0mfLxfQR4RHgviaUKCp/lib/python3.13/site-packages/resources/aws/compute/elastic-container-service.png" shape=none]
+		d40ddaeb6b764e8099b067e52804ea01 [label="RDS PostgreSQL" height=1.9 image="/Users/mac-main/.cache/uv/archive-v0/Jy0mfLxfQR4RHgviaUKCp/lib/python3.13/site-packages/resources/aws/database/rds.png" shape=none]
+		c1af44de107b46b4ba19747ed91458bf [label=CloudWatch height=1.9 image="/Users/mac-main/.cache/uv/archive-v0/Jy0mfLxfQR4RHgviaUKCp/lib/python3.13/site-packages/resources/aws/management/cloudwatch.png" shape=none]
+		"6af0791ad85c4248ab92c15786fe9d97" [label=EventBridge height=1.9 image="/Users/mac-main/.cache/uv/archive-v0/Jy0mfLxfQR4RHgviaUKCp/lib/python3.13/site-packages/resources/aws/integration/eventbridge.png" shape=none]
+	}
+	f29ffc8d5a51439d9d63fb02711c0773 -> "4968feda2afb4e24958fe957c4f35787" [label="3 days work" color=green dir=forward fontcolor="#2D3436" fontname="Sans-Serif" fontsize=13 style=bold]
+	subgraph "cluster_Recommended: Local Monitoring
+$0/month" {
+		graph [bgcolor="#E5F5FD" fontname="Sans-Serif" fontsize=12 label="Recommended: Local Monitoring
+$0/month" labeljust=l pencolor="#AEB6BE" rankdir=LR shape=box style=rounded]
+		"4968feda2afb4e24958fe957c4f35787" [label="SQLite Events
++ Web Dashboard" height=2.3 image="/Users/mac-main/.cache/uv/archive-v0/Jy0mfLxfQR4RHgviaUKCp/lib/python3.13/site-packages/resources/onprem/compute/server.png" shape=none]
+	}
+}

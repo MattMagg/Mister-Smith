@@ -1,0 +1,850 @@
+{
+  "Comment": "AWS Migration Main Orchestration Workflow",
+  "StartAt": "InitializeMigration",
+  "States": {
+    "InitializeMigration": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${ValidationFunctionArn}",
+        "Payload": {
+          "action": "initialize",
+          "migrationId.$": "$.migrationId",
+          "sourceEnvironment.$": "$.sourceEnvironment",
+          "targetEnvironment.$": "$.targetEnvironment"
+        }
+      },
+      "ResultPath": "$.initialization",
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException"],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "HandleInitializationError",
+          "ResultPath": "$.error"
+        }
+      ],
+      "Next": "ValidatePrerequisites"
+    },
+    
+    "HandleInitializationError": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${ErrorNotificationTopicArn}",
+        "Message": {
+          "error.$": "$.error",
+          "phase": "initialization",
+          "migrationId.$": "$.migrationId"
+        }
+      },
+      "Next": "MigrationFailed"
+    },
+    
+    "ValidatePrerequisites": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "ValidateSourceEnvironment",
+          "States": {
+            "ValidateSourceEnvironment": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${ValidationFunctionArn}",
+                "Payload": {
+                  "action": "validateSource",
+                  "sourceEnvironment.$": "$.sourceEnvironment"
+                }
+              },
+              "End": true,
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 5,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 1.5
+                }
+              ]
+            }
+          }
+        },
+        {
+          "StartAt": "ValidateAWSPermissions",
+          "States": {
+            "ValidateAWSPermissions": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${ValidationFunctionArn}",
+                "Payload": {
+                  "action": "validatePermissions",
+                  "targetEnvironment.$": "$.targetEnvironment",
+                  "requiredPermissions": [
+                    "ec2:*",
+                    "rds:*",
+                    "s3:*",
+                    "cloudformation:*",
+                    "iam:*"
+                  ]
+                }
+              },
+              "End": true,
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 5,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 1.5
+                }
+              ]
+            }
+          }
+        },
+        {
+          "StartAt": "ValidateNetworkConnectivity",
+          "States": {
+            "ValidateNetworkConnectivity": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${ValidationFunctionArn}",
+                "Payload": {
+                  "action": "validateNetwork",
+                  "sourceEnvironment.$": "$.sourceEnvironment",
+                  "targetEnvironment.$": "$.targetEnvironment"
+                }
+              },
+              "End": true,
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 5,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 1.5
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ResultPath": "$.validationResults",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "ValidationFailed",
+          "ResultPath": "$.validationError"
+        }
+      ],
+      "Next": "CheckValidationResults"
+    },
+    
+    "CheckValidationResults": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.validationResults[0].Payload.status",
+          "StringEquals": "passed",
+          "Next": "NotifyValidationSuccess"
+        }
+      ],
+      "Default": "ValidationFailed"
+    },
+    
+    "ValidationFailed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${ErrorNotificationTopicArn}",
+        "Message": {
+          "error": "Validation failed",
+          "details.$": "$.validationError",
+          "migrationId.$": "$.migrationId"
+        }
+      },
+      "Next": "MigrationFailed"
+    },
+    
+    "NotifyValidationSuccess": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${StatusNotificationTopicArn}",
+        "Message": {
+          "status": "Validation completed successfully",
+          "migrationId.$": "$.migrationId"
+        }
+      },
+      "Next": "ProvisionResources"
+    },
+    
+    "ProvisionResources": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "ProvisionNetworking",
+          "States": {
+            "ProvisionNetworking": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::states:startExecution.sync:2",
+              "Parameters": {
+                "StateMachineArn": "${NetworkProvisioningStateMachineArn}",
+                "Input": {
+                  "vpcConfig.$": "$.targetEnvironment.networking",
+                  "migrationId.$": "$.migrationId"
+                }
+              },
+              "ResultPath": "$.networkingResult",
+              "End": true,
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 30,
+                  "MaxAttempts": 2,
+                  "BackoffRate": 2.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "StartAt": "ProvisionDatabaseInfra",
+          "States": {
+            "ProvisionDatabaseInfra": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${ProvisioningFunctionArn}",
+                "Payload": {
+                  "action": "provisionDatabase",
+                  "databaseConfig.$": "$.targetEnvironment.database",
+                  "vpcId.$": "$.networkingResult.vpcId"
+                }
+              },
+              "ResultPath": "$.databaseResult",
+              "End": true,
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 30,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "StartAt": "ProvisionApplicationInfra",
+          "States": {
+            "ProvisionApplicationInfra": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::ecs:runTask.sync",
+              "Parameters": {
+                "TaskDefinition": "${InfraProvisioningTaskArn}",
+                "Cluster": "${ECSClusterArn}",
+                "Overrides": {
+                  "ContainerOverrides": [
+                    {
+                      "Name": "provisioner",
+                      "Environment": [
+                        {
+                          "Name": "ACTION",
+                          "Value": "provision_app_infra"
+                        },
+                        {
+                          "Name": "CONFIG",
+                          "Value.$": "States.JsonToString($.targetEnvironment.application)"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              "ResultPath": "$.applicationResult",
+              "End": true,
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 30,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "StartAt": "ConfigureSecurity",
+          "States": {
+            "ConfigureSecurity": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::aws-sdk:iam:createRole",
+              "Parameters": {
+                "RoleName.$": "States.Format('{}-migration-role', $.migrationId)",
+                "AssumeRolePolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": {
+                        "Service": "ec2.amazonaws.com"
+                      },
+                      "Action": "sts:AssumeRole"
+                    }
+                  ]
+                }
+              },
+              "ResultPath": "$.securityResult",
+              "End": true,
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 10,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2.0
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "ResultPath": "$.provisioningResults",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "HandleProvisioningError",
+          "ResultPath": "$.provisioningError"
+        }
+      ],
+      "Next": "NotifyProvisioningComplete"
+    },
+    
+    "HandleProvisioningError": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${RollbackFunctionArn}",
+        "Payload": {
+          "action": "rollbackProvisioning",
+          "provisioningResults.$": "$.provisioningResults",
+          "error.$": "$.provisioningError"
+        }
+      },
+      "Next": "MigrationFailed"
+    },
+    
+    "NotifyProvisioningComplete": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${StatusNotificationTopicArn}",
+        "Message": {
+          "status": "Resource provisioning completed",
+          "migrationId.$": "$.migrationId",
+          "resources.$": "$.provisioningResults"
+        }
+      },
+      "Next": "SaveCheckpoint"
+    },
+    
+    "SaveCheckpoint": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Parameters": {
+        "TableName": "${CheckpointTableName}",
+        "Item": {
+          "migrationId": {
+            "S.$": "$.migrationId"
+          },
+          "checkpoint": {
+            "S": "provisioning_complete"
+          },
+          "timestamp": {
+            "S.$": "$$.State.EnteredTime"
+          },
+          "state": {
+            "S.$": "States.JsonToString($)"
+          }
+        }
+      },
+      "ResultPath": "$.checkpointResult",
+      "Next": "MigrateData"
+    },
+    
+    "MigrateData": {
+      "Type": "Map",
+      "ItemsPath": "$.dataSources",
+      "MaxConcurrency": 2,
+      "Parameters": {
+        "dataSource.$": "$$.Map.Item.Value",
+        "migrationId.$": "$.migrationId",
+        "targetEnvironment.$": "$.provisioningResults"
+      },
+      "Iterator": {
+        "StartAt": "DetermineDataType",
+        "States": {
+          "DetermineDataType": {
+            "Type": "Choice",
+            "Choices": [
+              {
+                "Variable": "$.dataSource.type",
+                "StringEquals": "database",
+                "Next": "MigrateDatabase"
+              },
+              {
+                "Variable": "$.dataSource.type",
+                "StringEquals": "s3",
+                "Next": "MigrateS3Data"
+              },
+              {
+                "Variable": "$.dataSource.type",
+                "StringEquals": "files",
+                "Next": "MigrateFileSystem"
+              }
+            ],
+            "Default": "UnsupportedDataType"
+          },
+          
+          "MigrateDatabase": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::aws-sdk:dms:startReplicationTask",
+            "Parameters": {
+              "ReplicationTaskArn.$": "$.dataSource.replicationTaskArn"
+            },
+            "Next": "WaitForDatabaseMigration",
+            "Retry": [
+              {
+                "ErrorEquals": ["States.TaskFailed"],
+                "IntervalSeconds": 60,
+                "MaxAttempts": 3,
+                "BackoffRate": 2.0
+              }
+            ]
+          },
+          
+          "WaitForDatabaseMigration": {
+            "Type": "Wait",
+            "Seconds": 300,
+            "Next": "CheckDatabaseMigrationStatus"
+          },
+          
+          "CheckDatabaseMigrationStatus": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::aws-sdk:dms:describeReplicationTasks",
+            "Parameters": {
+              "Filters": [
+                {
+                  "Name": "replication-task-arn",
+                  "Values.$": "States.Array($.dataSource.replicationTaskArn)"
+                }
+              ]
+            },
+            "Next": "IsDatabaseMigrationComplete",
+            "ResultPath": "$.migrationStatus"
+          },
+          
+          "IsDatabaseMigrationComplete": {
+            "Type": "Choice",
+            "Choices": [
+              {
+                "Variable": "$.migrationStatus.ReplicationTasks[0].Status",
+                "StringEquals": "stopped",
+                "Next": "DataMigrationComplete"
+              },
+              {
+                "Variable": "$.migrationStatus.ReplicationTasks[0].Status",
+                "StringEquals": "failed",
+                "Next": "DataMigrationFailed"
+              }
+            ],
+            "Default": "WaitForDatabaseMigration"
+          },
+          
+          "MigrateS3Data": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::aws-sdk:datasync:startTaskExecution",
+            "Parameters": {
+              "TaskArn.$": "$.dataSource.dataSyncTaskArn"
+            },
+            "Next": "MonitorS3Migration",
+            "Retry": [
+              {
+                "ErrorEquals": ["States.TaskFailed"],
+                "IntervalSeconds": 60,
+                "MaxAttempts": 3,
+                "BackoffRate": 2.0
+              }
+            ]
+          },
+          
+          "MonitorS3Migration": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+              "FunctionName": "${MigrationFunctionArn}",
+              "Payload": {
+                "action": "monitorDataSync",
+                "taskArn.$": "$.dataSource.dataSyncTaskArn"
+              }
+            },
+            "Next": "DataMigrationComplete"
+          },
+          
+          "MigrateFileSystem": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": {
+              "FunctionName": "${MigrationFunctionArn}",
+              "Payload": {
+                "action": "migrateFiles",
+                "source.$": "$.dataSource.source",
+                "destination.$": "$.dataSource.destination"
+              }
+            },
+            "Next": "DataMigrationComplete"
+          },
+          
+          "DataMigrationComplete": {
+            "Type": "Succeed"
+          },
+          
+          "DataMigrationFailed": {
+            "Type": "Fail",
+            "Error": "DataMigrationError",
+            "Cause": "Data migration failed"
+          },
+          
+          "UnsupportedDataType": {
+            "Type": "Fail",
+            "Error": "UnsupportedDataType",
+            "Cause": "The specified data type is not supported"
+          }
+        }
+      },
+      "ResultPath": "$.dataMigrationResults",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "HandleDataMigrationError",
+          "ResultPath": "$.dataMigrationError"
+        }
+      ],
+      "Next": "DeployServices"
+    },
+    
+    "HandleDataMigrationError": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${RollbackFunctionArn}",
+        "Payload": {
+          "action": "rollbackDataMigration",
+          "migrationResults.$": "$.dataMigrationResults",
+          "error.$": "$.dataMigrationError"
+        }
+      },
+      "Next": "MigrationFailed"
+    },
+    
+    "DeployServices": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "DeployApplications",
+          "States": {
+            "DeployApplications": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::codedeploy:createDeployment.sync",
+              "Parameters": {
+                "ApplicationName": "${ApplicationName}",
+                "DeploymentGroupName": "${DeploymentGroupName}",
+                "Revision": {
+                  "RevisionType": "S3",
+                  "S3Location": {
+                    "Bucket": "${DeploymentBucket}",
+                    "Key": "${DeploymentKey}"
+                  }
+                }
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "ConfigureLoadBalancers",
+          "States": {
+            "ConfigureLoadBalancers": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "FunctionName": "${ProvisioningFunctionArn}",
+                "Payload": {
+                  "action": "configureLoadBalancers",
+                  "targetGroups.$": "$.provisioningResults[2].Payload.targetGroups",
+                  "healthCheckConfig": {
+                    "interval": 30,
+                    "timeout": 5,
+                    "healthyThreshold": 2,
+                    "unhealthyThreshold": 3
+                  }
+                }
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "SetupMonitoring",
+          "States": {
+            "SetupMonitoring": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::states:startExecution.sync:2",
+              "Parameters": {
+                "StateMachineArn": "${MonitoringSetupStateMachineArn}",
+                "Input": {
+                  "resources.$": "$.provisioningResults",
+                  "monitoringConfig": {
+                    "dashboards": ["application", "infrastructure", "migration"],
+                    "alarms": ["cpu", "memory", "errors", "latency"],
+                    "logGroups": ["application", "system"]
+                  }
+                }
+              },
+              "End": true
+            }
+          }
+        }
+      ],
+      "ResultPath": "$.deploymentResults",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "HandleDeploymentError",
+          "ResultPath": "$.deploymentError"
+        }
+      ],
+      "Next": "RunVerificationTests"
+    },
+    
+    "HandleDeploymentError": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${RollbackFunctionArn}",
+        "Payload": {
+          "action": "rollbackDeployment",
+          "deploymentResults.$": "$.deploymentResults",
+          "error.$": "$.deploymentError"
+        }
+      },
+      "Next": "MigrationFailed"
+    },
+    
+    "RunVerificationTests": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${VerificationFunctionArn}",
+        "Payload": {
+          "action": "runAllTests",
+          "endpoints.$": "$.deploymentResults[0].endpoints",
+          "tests": [
+            "healthCheck",
+            "functionalTest",
+            "performanceTest",
+            "securityScan"
+          ]
+        }
+      },
+      "ResultPath": "$.verificationResults",
+      "Retry": [
+        {
+          "ErrorEquals": ["States.TaskFailed"],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 3,
+          "BackoffRate": 1.5
+        }
+      ],
+      "Next": "EvaluateVerificationResults"
+    },
+    
+    "EvaluateVerificationResults": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "And": [
+            {
+              "Variable": "$.verificationResults.Payload.healthCheck",
+              "StringEquals": "passed"
+            },
+            {
+              "Variable": "$.verificationResults.Payload.functionalTest",
+              "StringEquals": "passed"
+            },
+            {
+              "Variable": "$.verificationResults.Payload.performanceTest",
+              "StringEquals": "passed"
+            }
+          ],
+          "Next": "RequestCutoverApproval"
+        }
+      ],
+      "Default": "VerificationFailed"
+    },
+    
+    "VerificationFailed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${ApprovalTopicArn}",
+        "Message": {
+          "status": "Verification failed",
+          "results.$": "$.verificationResults",
+          "action": "Review results and decide on rollback"
+        }
+      },
+      "Next": "WaitForRollbackDecision"
+    },
+    
+    "WaitForRollbackDecision": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${ApprovalFunctionArn}",
+        "Payload": {
+          "taskToken.$": "$$.Task.Token",
+          "action": "rollbackDecision",
+          "verificationResults.$": "$.verificationResults"
+        }
+      },
+      "Next": "ProcessRollbackDecision"
+    },
+    
+    "ProcessRollbackDecision": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.decision",
+          "StringEquals": "rollback",
+          "Next": "InitiateRollback"
+        },
+        {
+          "Variable": "$.decision",
+          "StringEquals": "proceed",
+          "Next": "RequestCutoverApproval"
+        }
+      ],
+      "Default": "MigrationFailed"
+    },
+    
+    "RequestCutoverApproval": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${ApprovalFunctionArn}",
+        "Payload": {
+          "taskToken.$": "$$.Task.Token",
+          "action": "cutoverApproval",
+          "verificationResults.$": "$.verificationResults",
+          "migrationSummary": {
+            "migrationId.$": "$.migrationId",
+            "startTime.$": "$.initialization.Payload.startTime",
+            "resourcesProvisioned.$": "$.provisioningResults",
+            "dataMigrated.$": "$.dataMigrationResults",
+            "servicesDeployed.$": "$.deploymentResults"
+          }
+        }
+      },
+      "TimeoutSeconds": 3600,
+      "Next": "ProcessCutoverDecision"
+    },
+    
+    "ProcessCutoverDecision": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.approved",
+          "BooleanEquals": true,
+          "Next": "ExecuteCutover"
+        }
+      ],
+      "Default": "CutoverRejected"
+    },
+    
+    "ExecuteCutover": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::states:startExecution.sync:2",
+      "Parameters": {
+        "StateMachineArn": "${CutoverStateMachineArn}",
+        "Input": {
+          "migrationId.$": "$.migrationId",
+          "sourceEnvironment.$": "$.sourceEnvironment",
+          "targetEnvironment.$": "$.provisioningResults",
+          "cutoverStrategy": "blue-green"
+        }
+      },
+      "ResultPath": "$.cutoverResult",
+      "Next": "MigrationSuccess"
+    },
+    
+    "CutoverRejected": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${StatusNotificationTopicArn}",
+        "Message": {
+          "status": "Cutover rejected",
+          "migrationId.$": "$.migrationId",
+          "message": "Migration completed but cutover was not approved"
+        }
+      },
+      "Next": "MigrationComplete"
+    },
+    
+    "InitiateRollback": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::states:startExecution.sync:2",
+      "Parameters": {
+        "StateMachineArn": "${RollbackStateMachineArn}",
+        "Input": {
+          "migrationId.$": "$.migrationId",
+          "provisioningResults.$": "$.provisioningResults",
+          "dataMigrationResults.$": "$.dataMigrationResults",
+          "deploymentResults.$": "$.deploymentResults"
+        }
+      },
+      "Next": "MigrationFailed"
+    },
+    
+    "MigrationSuccess": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${SuccessNotificationTopicArn}",
+        "Message": {
+          "status": "Migration completed successfully",
+          "migrationId.$": "$.migrationId",
+          "cutoverResult.$": "$.cutoverResult"
+        }
+      },
+      "Next": "MigrationComplete"
+    },
+    
+    "MigrationFailed": {
+      "Type": "Fail",
+      "Error": "MigrationFailed",
+      "Cause": "The migration process failed"
+    },
+    
+    "MigrationComplete": {
+      "Type": "Succeed"
+    }
+  }
+}

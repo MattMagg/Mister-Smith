@@ -1,0 +1,123 @@
+{
+  "family": "mistersmith-production",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "2048",
+  "memory": "4096",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/mistersmith-task-role",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/mistersmith-execution-role",
+  "containerDefinitions": [
+    {
+      "name": "mistersmith",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/mistersmith:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        },
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "ENVIRONMENT",
+          "value": "production"
+        },
+        {
+          "name": "USE_AWS_CONFIG",
+          "value": "true"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "LOG_LEVEL",
+          "value": "info"
+        },
+        {
+          "name": "ENABLE_TELEMETRY",
+          "value": "true"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "NATS_URL",
+          "valueFrom": "arn:aws:ssm:us-east-1:123456789012:parameter/mistersmith/production/nats/url"
+        },
+        {
+          "name": "HTTP_PORT",
+          "valueFrom": "arn:aws:ssm:us-east-1:123456789012:parameter/mistersmith/production/http/port"
+        },
+        {
+          "name": "SSE_PORT",
+          "valueFrom": "arn:aws:ssm:us-east-1:123456789012:parameter/mistersmith/production/http/sse_port"
+        },
+        {
+          "name": "CIRCUIT_BREAKER_TIMEOUT",
+          "valueFrom": "arn:aws:ssm:us-east-1:123456789012:parameter/mistersmith/production/timeouts/circuit_breaker"
+        },
+        {
+          "name": "PROCESS_TIMEOUT",
+          "valueFrom": "arn:aws:ssm:us-east-1:123456789012:parameter/mistersmith/production/timeouts/process_execution"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/mistersmith-production",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "ulimits": [
+        {
+          "name": "nofile",
+          "softLimit": 65536,
+          "hardLimit": 65536
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "config",
+          "containerPath": "/app/config",
+          "readOnly": true
+        }
+      ]
+    }
+  ],
+  "volumes": [
+    {
+      "name": "config",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "fs-12345678",
+        "rootDirectory": "/mistersmith/config/production",
+        "transitEncryption": "ENABLED"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "key": "Environment",
+      "value": "production"
+    },
+    {
+      "key": "Service",
+      "value": "mistersmith"
+    },
+    {
+      "key": "ManagedBy",
+      "value": "terraform"
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Overall Migration Progress",
+        "metrics": [
+          ["AWS/MigrationTracker", "PhaseCompletionPercentage", {"stat": "Average"}]
+        ],
+        "period": 300,
+        "stat": "Average",
+        "region": "us-east-1",
+        "yAxis": {
+          "left": {"min": 0, "max": 100}
+        },
+        "view": "singleValue",
+        "stacked": false,
+        "setPeriodToTimeRange": true,
+        "sparkline": true,
+        "trend": true
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 0,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Active Blockers by Severity",
+        "metrics": [
+          ["AWS/MigrationTracker", "BlockerCount", {"stat": "Sum"}, {"Severity": "Critical"}],
+          ["...", {"Severity": "High"}],
+          ["...", {"Severity": "Medium"}],
+          ["...", {"Severity": "Low"}]
+        ],
+        "period": 300,
+        "stat": "Sum",
+        "region": "us-east-1",
+        "view": "pie",
+        "setPeriodToTimeRange": true,
+        "legend": {
+          "position": "right"
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 6,
+      "width": 24,
+      "height": 6,
+      "properties": {
+        "title": "Phase Status Overview",
+        "metrics": [
+          ["AWS/MigrationTracker", "PhaseCompletionPercentage", {"Phase": "1"}, {"label": "Phase 1: Planning"}],
+          ["...", {"Phase": "2"}, {"label": "Phase 2: Infrastructure"}],
+          ["...", {"Phase": "3"}, {"label": "Phase 3: Data Migration"}],
+          ["...", {"Phase": "4"}, {"label": "Phase 4: App Migration"}],
+          ["...", {"Phase": "5"}, {"label": "Phase 5: Testing"}],
+          ["...", {"Phase": "6"}, {"label": "Phase 6: Cutover"}],
+          ["...", {"Phase": "7"}, {"label": "Phase 7: Post-Migration"}]
+        ],
+        "period": 3600,
+        "stat": "Average",
+        "region": "us-east-1",
+        "view": "bar",
+        "yAxis": {
+          "left": {"min": 0, "max": 100, "label": "Completion %"}
+        },
+        "setPeriodToTimeRange": false
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 12,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Timeline Progress",
+        "metrics": [
+          ["AWS/MigrationTracker", "DaysElapsed", {"stat": "Maximum"}, {"label": "Days Elapsed"}],
+          [".", "DaysRemaining", {"stat": "Minimum"}, {"label": "Days Remaining"}]
+        ],
+        "period": 86400,
+        "stat": "Average",
+        "region": "us-east-1",
+        "view": "line",
+        "stacked": false,
+        "yAxis": {
+          "left": {"min": 0, "label": "Days"}
+        }
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 12,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "title": "Key Performance Indicators",
+        "metrics": [
+          ["AWS/MigrationTracker", "VerificationPassRate", {"stat": "Average"}, {"label": "Verification Pass Rate"}],
+          [".", "AutomationSuccessRate", {"stat": "Average"}, {"label": "Automation Success"}],
+          [".", "MigrationVelocity", {"stat": "Average"}, {"label": "Migration Velocity"}]
+        ],
+        "period": 3600,
+        "stat": "Average",
+        "region": "us-east-1",
+        "view": "singleValue",
+        "stacked": false,
+        "setPeriodToTimeRange": true,
+        "yAxis": {
+          "left": {"min": 0, "max": 100}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "x": 0,
+      "y": 18,
+      "width": 24,
+      "height": 2,
+      "properties": {
+        "markdown": "# Quick Links\n[Technical Dashboard](https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=MigrationTechnical) | [Risk Dashboard](https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=MigrationRisk) | [Performance Dashboard](https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=MigrationPerformance) | [Runbook](https://wiki.example.com/migration-runbook) | [Support](mailto:migration-support@example.com)"
+      }
+    }
+  ]
+}

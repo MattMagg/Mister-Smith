@@ -1,0 +1,279 @@
+# rollback-triggers.yaml
+# Automated rollback trigger configuration for MisterSmith
+
+# Health Check Triggers
+health_checks:
+  orchestrator:
+    endpoint: "grpc://localhost:50051/health"
+    interval: 30s
+    timeout: 10s
+    failure_threshold: 3
+    success_threshold: 2
+    action:
+      type: component_rollback
+      target: orchestrator
+      auto_execute: true
+      notify: true
+      
+  webui:
+    endpoint: "http://localhost:3000/health"
+    interval: 30s
+    timeout: 5s
+    failure_threshold: 3
+    success_threshold: 2
+    action:
+      type: component_rollback
+      target: webui
+      auto_execute: false
+      notify: true
+      
+  database:
+    check_type: postgresql
+    host: localhost
+    port: 5432
+    database: mistersmith
+    interval: 60s
+    timeout: 30s
+    failure_threshold: 2
+    action:
+      type: database_rollback
+      auto_execute: false
+      notify: true
+      require_confirmation: true
+      
+  nats:
+    check_type: nats_connectivity
+    endpoints:
+      - "nats://localhost:4222"
+    interval: 30s
+    timeout: 10s
+    failure_threshold: 3
+    action:
+      type: component_rollback
+      target: nats
+      auto_execute: true
+      notify: true
+
+# Performance Degradation Triggers
+performance:
+  response_time:
+    services:
+      orchestrator:
+        endpoint: "grpc://localhost:50051/ping"
+        threshold: 5000ms
+        duration: 5m
+        percentile: 95
+        action:
+          type: evaluate_rollback
+          severity: warning
+          
+      webui:
+        endpoint: "http://localhost:3000/api/health"
+        threshold: 3000ms
+        duration: 3m
+        percentile: 95
+        action:
+          type: evaluate_rollback
+          severity: warning
+          
+  error_rate:
+    global:
+      threshold: 5%
+      duration: 2m
+      window: sliding
+      action:
+        type: immediate_rollback
+        severity: critical
+        
+    per_service:
+      orchestrator:
+        threshold: 10%
+        duration: 5m
+        action:
+          type: component_rollback
+          target: orchestrator
+          
+      webui:
+        threshold: 15%
+        duration: 5m
+        action:
+          type: evaluate_rollback
+          
+  resource_usage:
+    cpu:
+      threshold: 90%
+      duration: 10m
+      action:
+        type: evaluate_rollback
+        check_scaling_first: true
+        
+    memory:
+      threshold: 95%
+      duration: 5m
+      action:
+        type: immediate_rollback
+        severity: critical
+        
+    disk_io:
+      threshold: 95%
+      duration: 15m
+      action:
+        type: evaluate_rollback
+        
+# Connectivity Triggers
+connectivity:
+  database:
+    timeout: 30s
+    retries: 3
+    backoff: exponential
+    action:
+      type: immediate_rollback
+      components: [orchestrator, webui]
+      
+  nats:
+    disconnection_threshold: 60s
+    reconnect_attempts: 5
+    action:
+      type: component_restart
+      fallback_to_rollback: true
+      
+  inter_service:
+    timeout: 15s
+    failure_threshold: 5
+    duration: 2m
+    action:
+      type: evaluate_rollback
+      
+# AWS-Specific Triggers
+aws_services:
+  ecs_task_failures:
+    threshold: 3
+    window: 10m
+    action:
+      type: aws_rollback
+      target: ecs_service
+      
+  rds_availability:
+    check_interval: 60s
+    failure_threshold: 2
+    action:
+      type: database_failover
+      fallback_to_local: true
+      
+  alb_health_checks:
+    unhealthy_threshold: 3
+    action:
+      type: traffic_shift
+      rollback_percentage: 100
+      
+# Data Integrity Triggers
+data_integrity:
+  checksum_mismatch:
+    action:
+      type: immediate_rollback
+      severity: critical
+      notify_oncall: true
+      
+  replication_lag:
+    threshold: 60s
+    action:
+      type: evaluate_rollback
+      pause_writes: true
+      
+  orphaned_records:
+    threshold: 100
+    check_interval: 5m
+    action:
+      type: alert_only
+      severity: warning
+      
+# Manual Override Settings
+manual_controls:
+  require_confirmation:
+    production: true
+    staging: false
+    development: false
+    
+  approval_required_for:
+    - database_rollback
+    - full_system_rollback
+    - aws_infrastructure_rollback
+    
+  emergency_override:
+    enabled: true
+    password_protected: true
+    audit_log: true
+    
+# Notification Settings
+notifications:
+  channels:
+    - type: webhook
+      url: "${MISTERSMITH_WEBHOOK_URL}"
+      events: [all]
+      
+    - type: email
+      recipients: ["ops@example.com"]
+      events: [critical, rollback_initiated, rollback_completed]
+      
+    - type: slack
+      channel: "#mistersmith-alerts"
+      events: [critical, warning]
+      
+  escalation:
+    initial_delay: 5m
+    levels:
+      - recipients: ["oncall@example.com"]
+        after: 10m
+      - recipients: ["manager@example.com"]
+        after: 30m
+        
+# Rollback Policies
+policies:
+  cascade_rollback:
+    enabled: true
+    order:
+      - webui
+      - orchestrator
+      - nats
+      - database
+      
+  partial_rollback:
+    enabled: true
+    allow_mixed_versions: false
+    compatibility_check: true
+    
+  rollback_window:
+    maximum_age: 7d
+    backup_retention: 30d
+    
+  post_rollback:
+    verification_required: true
+    smoke_tests: true
+    monitoring_period: 1h
+    
+# Automation Settings
+automation:
+  enabled: true
+  
+  auto_rollback_scenarios:
+    - trigger: health_check_failure
+      threshold: critical
+      components: [all]
+      
+    - trigger: data_corruption
+      threshold: any
+      components: [database]
+      
+    - trigger: performance_degradation
+      threshold: severe
+      duration: 10m
+      
+  manual_approval_required:
+    - full_system_rollback
+    - database_rollback
+    - infrastructure_changes
+    
+  test_mode:
+    enabled: false
+    dry_run: true
+    log_only: true

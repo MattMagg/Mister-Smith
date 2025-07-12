@@ -1,0 +1,692 @@
+# CloudFormation Template for Continuous Verification Infrastructure
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Continuous Verification System for AWS Migration'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: 'aws-migration'
+    Description: 'Project name for resource naming'
+  
+  Environment:
+    Type: String
+    Default: 'production'
+    AllowedValues: ['development', 'staging', 'production']
+    Description: 'Environment name'
+  
+  ApiBaseUrl:
+    Type: String
+    Description: 'Base URL for API health checks'
+  
+  UIBaseUrl:
+    Type: String
+    Description: 'Base URL for UI functional testing'
+  
+  NotificationEmail:
+    Type: String
+    Description: 'Email address for alerts'
+  
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: 'VPC ID for canary execution'
+  
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: 'Subnet IDs for canary execution'
+  
+  DatabaseHost:
+    Type: String
+    Description: 'Aurora PostgreSQL cluster endpoint'
+  
+  DatabaseName:
+    Type: String
+    Default: 'migration_db'
+    Description: 'Database name for health checks'
+
+Resources:
+  # SNS Topic for Alerts
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-alerts'
+      DisplayName: 'Migration Verification Alerts'
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref NotificationEmail
+
+  # IAM Role for Synthetics Canaries
+  SyntheticsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-synthetics-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/CloudWatchSyntheticsExecutionRolePolicy
+      Policies:
+        - PolicyName: SyntheticsS3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetBucketLocation
+                Resource:
+                  - !Sub '${SyntheticsResultsBucket}/*'
+                  - !Ref SyntheticsResultsBucket
+        - PolicyName: CloudWatchMetrics
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: '*'
+
+  # S3 Bucket for Synthetics Results
+  SyntheticsResultsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-${Environment}-synthetics-results'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldResults
+            Status: Enabled
+            ExpirationInDays: 30
+
+  # Security Group for Canaries
+  CanarySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${ProjectName}-${Environment}-canary-sg'
+      GroupDescription: 'Security group for Synthetics canaries'
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: 'HTTPS outbound'
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: 'HTTP outbound'
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 10.0.0.0/8
+          Description: 'PostgreSQL access'
+
+  # Infrastructure Health Canary
+  InfrastructureHealthCanary:
+    Type: AWS::Synthetics::Canary
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-infrastructure-health'
+      ExecutionRoleArn: !GetAtt SyntheticsExecutionRole.Arn
+      Code:
+        Handler: 'infrastructure-health-canary.handler'
+        Script: !Sub |
+          const synthetics = require('Synthetics');
+          const log = require('SyntheticsLogger');
+          
+          const checkInfrastructure = async function () {
+              const config = {
+                  includeRequestHeaders: true,
+                  includeResponseHeaders: true,
+                  restrictedHeaders: [],
+                  restrictedUrlParameters: []
+              };
+          
+              // ECS Health Check
+              await synthetics.executeStep('checkECSHealth', async function () {
+                  const ecsEndpoint = '${ApiBaseUrl}/health/ecs';
+                  return await synthetics.executeHttpStep('checkECSHealth', ecsEndpoint, config);
+              });
+          
+              // RDS Health Check
+              await synthetics.executeStep('checkRDSHealth', async function () {
+                  const rdsEndpoint = '${ApiBaseUrl}/health/rds';
+                  return await synthetics.executeHttpStep('checkRDSHealth', rdsEndpoint, config);
+              });
+          
+              // Load Balancer Health Check
+              await synthetics.executeStep('checkLoadBalancer', async function () {
+                  const albEndpoint = '${ApiBaseUrl}/health/alb';
+                  return await synthetics.executeHttpStep('checkALBHealth', albEndpoint, config);
+              });
+          };
+          
+          exports.handler = async () => {
+              return await synthetics.executeStep('infrastructureHealthCheck', checkInfrastructure);
+          };
+      ArtifactS3Location: !Sub '${SyntheticsResultsBucket}/infrastructure-health'
+      RuntimeVersion: 'syn-nodejs-puppeteer-3.8'
+      Schedule:
+        Expression: 'rate(1 minute)'
+        DurationInSeconds: 60
+      RunConfig:
+        TimeoutInSeconds: 30
+        MemoryInMB: 960
+      VPCConfig:
+        VpcId: !Ref VpcId
+        SubnetIds: !Ref SubnetIds
+        SecurityGroupIds:
+          - !Ref CanarySecurityGroup
+      Tags:
+        - Key: 'Project'
+          Value: !Ref ProjectName
+        - Key: 'Environment'
+          Value: !Ref Environment
+        - Key: 'Type'
+          Value: 'Infrastructure'
+
+  # API Health Canary
+  APIHealthCanary:
+    Type: AWS::Synthetics::Canary
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-api-health'
+      ExecutionRoleArn: !GetAtt SyntheticsExecutionRole.Arn
+      Code:
+        Handler: 'api-health-canary.handler'
+        Script: !Sub |
+          const synthetics = require('Synthetics');
+          const log = require('SyntheticsLogger');
+          
+          const checkAPIEndpoints = async function () {
+              const config = {
+                  includeRequestHeaders: true,
+                  includeResponseHeaders: true,
+                  restrictedHeaders: [],
+                  restrictedUrlParameters: []
+              };
+          
+              const baseUrl = '${ApiBaseUrl}';
+          
+              // Health Check Endpoint
+              await synthetics.executeStep('healthCheck', async function () {
+                  const response = await synthetics.executeHttpStep('checkHealth', baseUrl + '/health', config);
+                  if (response.responseCode !== 200) {
+                      throw new Error('Health check failed with status: ' + response.responseCode);
+                  }
+                  return response;
+              });
+          
+              // Core API Endpoints
+              const coreEndpoints = ['/api/users', '/api/orders', '/api/products'];
+              for (const endpoint of coreEndpoints) {
+                  await synthetics.executeStep('check' + endpoint.replace(/[^a-zA-Z0-9]/g, ''), async function () {
+                      const response = await synthetics.executeHttpStep('check_' + endpoint, baseUrl + endpoint, config);
+                      if (response.responseCode !== 200 && response.responseCode !== 401) {
+                          throw new Error('API endpoint ' + endpoint + ' failed with status: ' + response.responseCode);
+                      }
+                      return response;
+                  });
+              }
+          };
+          
+          exports.handler = async () => {
+              return await synthetics.executeStep('apiHealthCheck', checkAPIEndpoints);
+          };
+      ArtifactS3Location: !Sub '${SyntheticsResultsBucket}/api-health'
+      RuntimeVersion: 'syn-nodejs-puppeteer-3.8'
+      Schedule:
+        Expression: 'rate(5 minutes)'
+        DurationInSeconds: 300
+      RunConfig:
+        TimeoutInSeconds: 60
+        MemoryInMB: 960
+      VPCConfig:
+        VpcId: !Ref VpcId
+        SubnetIds: !Ref SubnetIds
+        SecurityGroupIds:
+          - !Ref CanarySecurityGroup
+      Tags:
+        - Key: 'Project'
+          Value: !Ref ProjectName
+        - Key: 'Environment'
+          Value: !Ref Environment
+        - Key: 'Type'
+          Value: 'API'
+
+  # UI Functional Testing Canary
+  UIFunctionalCanary:
+    Type: AWS::Synthetics::Canary
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-ui-functional'
+      ExecutionRoleArn: !GetAtt SyntheticsExecutionRole.Arn
+      Code:
+        Handler: 'ui-functional-canary.handler'
+        Script: !Sub |
+          const synthetics = require('Synthetics');
+          const log = require('SyntheticsLogger');
+          
+          const checkUIFunctionality = async function () {
+              let page = await synthetics.getPage();
+              const baseUrl = '${UIBaseUrl}';
+          
+              // Navigate to home page
+              await synthetics.executeStep('loadHomePage', async function () {
+                  const response = await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+                  if (!response || response.status() !== 200) {
+                      throw new Error('Failed to load home page: ' + (response ? response.status() : 'No response'));
+                  }
+              });
+          
+              // Take screenshot for visual verification
+              await synthetics.executeStep('captureScreenshot', async function () {
+                  await synthetics.takeScreenshot('functional-test', 'loaded');
+              });
+          };
+          
+          exports.handler = async () => {
+              return await synthetics.executeStep('uiFunctionalCheck', checkUIFunctionality);
+          };
+      ArtifactS3Location: !Sub '${SyntheticsResultsBucket}/ui-functional'
+      RuntimeVersion: 'syn-nodejs-puppeteer-3.8'
+      Schedule:
+        Expression: 'rate(15 minutes)'
+        DurationInSeconds: 900
+      RunConfig:
+        TimeoutInSeconds: 120
+        MemoryInMB: 960
+      VPCConfig:
+        VpcId: !Ref VpcId
+        SubnetIds: !Ref SubnetIds
+        SecurityGroupIds:
+          - !Ref CanarySecurityGroup
+      Tags:
+        - Key: 'Project'
+          Value: !Ref ProjectName
+        - Key: 'Environment'
+          Value: !Ref Environment
+        - Key: 'Type'
+          Value: 'UI'
+
+  # IAM Role for Lambda Health Checks
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-lambda-health-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: HealthCheckPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecs:DescribeClusters
+                  - ecs:DescribeServices
+                  - ecs:DescribeTasks
+                  - rds:DescribeDBClusters
+                  - rds:DescribeDBInstances
+                  - elbv2:DescribeLoadBalancers
+                  - elbv2:DescribeTargetGroups
+                  - elbv2:DescribeTargetHealth
+                  - cloudwatch:PutMetricData
+                Resource: '*'
+
+  # Secrets Manager for Database Credentials
+  DatabaseCredentials:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-db-credentials'
+      Description: 'Database credentials for health checks'
+      GenerateSecretString:
+        SecretStringTemplate: !Sub '{"username": "health_check_user", "dbname": "${DatabaseName}", "engine": "postgres", "host": "${DatabaseHost}", "port": 5432}'
+        GenerateStringKey: 'password'
+        PasswordLength: 32
+        ExcludeCharacters: '"@/\'
+
+  # Infrastructure Health Check Lambda
+  InfrastructureHealthLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-infrastructure-health'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      MemorySize: 512
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref CanarySecurityGroup
+        SubnetIds: !Ref SubnetIds
+      Environment:
+        Variables:
+          ECS_CLUSTER_NAME: !Sub '${ProjectName}-${Environment}-cluster'
+          RDS_CLUSTER_ID: !Sub '${ProjectName}-${Environment}-aurora'
+          LOAD_BALANCER_ARN: !Sub 'arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:loadbalancer/app/${ProjectName}-${Environment}-alb/*'
+          VPC_TEST_ENDPOINT: !Sub '${ApiBaseUrl}/health/vpc'
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import requests
+          import os
+          from datetime import datetime
+          
+          def lambda_handler(event, context):
+              health_status = {
+                  'timestamp': datetime.utcnow().isoformat(),
+                  'overall_status': 'HEALTHY',
+                  'checks': {}
+              }
+              
+              # ECS Cluster Health
+              try:
+                  ecs_client = boto3.client('ecs')
+                  cluster_name = os.environ['ECS_CLUSTER_NAME']
+                  
+                  response = ecs_client.describe_clusters(clusters=[cluster_name])
+                  cluster = response['clusters'][0]
+                  
+                  running_tasks = cluster.get('runningTasksCount', 0)
+                  
+                  health_status['checks']['ecs_cluster'] = {
+                      'status': 'HEALTHY' if running_tasks > 0 else 'UNHEALTHY',
+                      'running_tasks': running_tasks,
+                      'active_services': cluster.get('activeServicesCount', 0)
+                  }
+                  
+                  if running_tasks == 0:
+                      health_status['overall_status'] = 'UNHEALTHY'
+                      
+              except Exception as e:
+                  health_status['checks']['ecs_cluster'] = {
+                      'status': 'ERROR',
+                      'error': str(e)
+                  }
+                  health_status['overall_status'] = 'UNHEALTHY'
+              
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps(health_status, indent=2)
+              }
+      Tags:
+        - Key: 'Project'
+          Value: !Ref ProjectName
+        - Key: 'Environment'
+          Value: !Ref Environment
+
+  # Database Health Check Lambda
+  DatabaseHealthLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-database-health'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      MemorySize: 512
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref CanarySecurityGroup
+        SubnetIds: !Ref SubnetIds
+      Environment:
+        Variables:
+          DB_SECRET_ARN: !Ref DatabaseCredentials
+          CRITICAL_TABLES: 'users,orders,products'
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+          
+          def lambda_handler(event, context):
+              health_status = {
+                  'timestamp': datetime.utcnow().isoformat(),
+                  'overall_status': 'HEALTHY',
+                  'checks': {}
+              }
+              
+              try:
+                  # Get database credentials from Secrets Manager
+                  secrets_client = boto3.client('secretsmanager')
+                  secret_arn = os.environ['DB_SECRET_ARN']
+                  
+                  secret_response = secrets_client.get_secret_value(SecretId=secret_arn)
+                  secret_data = json.loads(secret_response['SecretString'])
+                  
+                  health_status['checks']['database_connection'] = {
+                      'status': 'HEALTHY',
+                      'host': secret_data['host'],
+                      'database': secret_data['dbname']
+                  }
+                  
+              except Exception as e:
+                  health_status['checks']['database_connection'] = {
+                      'status': 'ERROR',
+                      'error': str(e)
+                  }
+                  health_status['overall_status'] = 'UNHEALTHY'
+              
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps(health_status, indent=2)
+              }
+      Tags:
+        - Key: 'Project'
+          Value: !Ref ProjectName
+        - Key: 'Environment'
+          Value: !Ref Environment
+
+  # EventBridge Rules for Lambda Health Checks
+  InfrastructureHealthSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-infrastructure-health-schedule'
+      Description: 'Schedule for infrastructure health checks'
+      ScheduleExpression: 'rate(5 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt InfrastructureHealthLambda.Arn
+          Id: 'InfrastructureHealthTarget'
+
+  DatabaseHealthSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-database-health-schedule'
+      Description: 'Schedule for database health checks'
+      ScheduleExpression: 'rate(15 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt DatabaseHealthLambda.Arn
+          Id: 'DatabaseHealthTarget'
+
+  # Lambda Permissions for EventBridge
+  InfrastructureHealthLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref InfrastructureHealthLambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt InfrastructureHealthSchedule.Arn
+
+  DatabaseHealthLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DatabaseHealthLambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DatabaseHealthSchedule.Arn
+
+  # CloudWatch Alarms
+  InfrastructureHealthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-infrastructure-health'
+      AlarmDescription: 'Infrastructure health check failures'
+      MetricName: 'SuccessPercent'
+      Namespace: 'CloudWatchSynthetics'
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 90
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: CanaryName
+          Value: !Ref InfrastructureHealthCanary
+      AlarmActions:
+        - !Ref AlertTopic
+      TreatMissingData: breaching
+
+  APIHealthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-api-health'
+      AlarmDescription: 'API health check failures'
+      MetricName: 'SuccessPercent'
+      Namespace: 'CloudWatchSynthetics'
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 95
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: CanaryName
+          Value: !Ref APIHealthCanary
+      AlarmActions:
+        - !Ref AlertTopic
+      TreatMissingData: breaching
+
+  UIFunctionalAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-ui-functional'
+      AlarmDescription: 'UI functional test failures'
+      MetricName: 'SuccessPercent'
+      Namespace: 'CloudWatchSynthetics'
+      Statistic: Average
+      Period: 900
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: CanaryName
+          Value: !Ref UIFunctionalCanary
+      AlarmActions:
+        - !Ref AlertTopic
+      TreatMissingData: breaching
+
+  # CloudWatch Dashboard
+  VerificationDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${ProjectName}-${Environment}-verification'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "CloudWatchSynthetics", "SuccessPercent", "CanaryName", "${InfrastructureHealthCanary}" ],
+                  [ ".", ".", ".", "${APIHealthCanary}" ],
+                  [ ".", ".", ".", "${UIFunctionalCanary}" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Canary Success Rate",
+                "period": 300
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "CloudWatchSynthetics", "Duration", "CanaryName", "${InfrastructureHealthCanary}" ],
+                  [ ".", ".", ".", "${APIHealthCanary}" ],
+                  [ ".", ".", ".", "${UIFunctionalCanary}" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Canary Execution Duration",
+                "period": 300
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 6,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/lambda/${InfrastructureHealthLambda}' | SOURCE '/aws/lambda/${DatabaseHealthLambda}'\n| fields @timestamp, @message\n| filter @message like /ERROR/ or @message like /UNHEALTHY/\n| sort @timestamp desc\n| limit 20",
+                "region": "${AWS::Region}",
+                "title": "Recent Health Check Errors",
+                "view": "table"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  AlertTopicArn:
+    Description: 'SNS Topic ARN for alerts'
+    Value: !Ref AlertTopic
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-alert-topic'
+
+  SyntheticsResultsBucketName:
+    Description: 'S3 Bucket for Synthetics results'
+    Value: !Ref SyntheticsResultsBucket
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-synthetics-bucket'
+
+  DashboardURL:
+    Description: 'CloudWatch Dashboard URL'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${ProjectName}-${Environment}-verification'
+
+  InfrastructureHealthCanaryName:
+    Description: 'Infrastructure Health Canary Name'
+    Value: !Ref InfrastructureHealthCanary
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-infrastructure-canary'
+
+  APIHealthCanaryName:
+    Description: 'API Health Canary Name'
+    Value: !Ref APIHealthCanary
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-api-canary'
+
+  UIFunctionalCanaryName:
+    Description: 'UI Functional Canary Name'
+    Value: !Ref UIFunctionalCanary
+    Export:
+      Name: !Sub '${ProjectName}-${Environment}-ui-canary'

@@ -1,0 +1,451 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Migration Progress Monitoring Stack - Complete monitoring infrastructure'
+
+Parameters:
+  NotificationEmail:
+    Type: String
+    Description: Email address for migration notifications
+    Default: migration-team@example.com
+    
+  Environment:
+    Type: String
+    Description: Environment name
+    Default: production
+    AllowedValues:
+      - development
+      - staging
+      - production
+      
+  RetentionDays:
+    Type: Number
+    Description: CloudWatch Logs retention in days
+    Default: 30
+    
+  DashboardRefreshInterval:
+    Type: Number
+    Description: Dashboard refresh interval in seconds
+    Default: 300
+
+Resources:
+  # SNS Topics for different alert severities
+  CriticalAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'migration-alerts-critical-${Environment}'
+      DisplayName: Critical Migration Alerts
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref NotificationEmail
+      
+  HighAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'migration-alerts-high-${Environment}'
+      DisplayName: High Priority Migration Alerts
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref NotificationEmail
+      
+  MediumAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'migration-alerts-medium-${Environment}'
+      DisplayName: Medium Priority Migration Alerts
+      
+  LowAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'migration-alerts-low-${Environment}'
+      DisplayName: Low Priority Migration Alerts
+      
+  # DynamoDB Table for tracking migration progress
+  MigrationProgressTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'MigrationProgress-${Environment}'
+      AttributeDefinitions:
+        - AttributeName: Phase
+          AttributeType: S
+        - AttributeName: Timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Phase
+          KeyType: HASH
+        - AttributeName: Timestamp
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Purpose
+          Value: MigrationTracking
+        - Key: Environment
+          Value: !Ref Environment
+          
+  # S3 Bucket for metrics archive
+  MetricsArchiveBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'migration-metrics-archive-${AWS::AccountId}-${Environment}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: ArchiveOldData
+            Status: Enabled
+            Transitions:
+              - TransitionInDays: 30
+                StorageClass: STANDARD_IA
+              - TransitionInDays: 90
+                StorageClass: GLACIER
+              - TransitionInDays: 365
+                StorageClass: DEEP_ARCHIVE
+          - Id: DeleteOldVersions
+            Status: Enabled
+            NoncurrentVersionExpirationInDays: 30
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+        
+  # Lambda Execution Role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'MigrationMonitoringLambdaRole-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: MigrationMonitoringPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                  - cloudwatch:GetMetricStatistics
+                  - cloudwatch:ListMetrics
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                Resource: !GetAtt MigrationProgressTable.Arn
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref CriticalAlertsTopic
+                  - !Ref HighAlertsTopic
+                  - !Ref MediumAlertsTopic
+                  - !Ref LowAlertsTopic
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource: !Sub '${MetricsArchiveBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                Resource: '*'
+                
+  # Lambda Log Groups
+  MetricCalculatorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/MetricCalculator-${Environment}'
+      RetentionInDays: !Ref RetentionDays
+      
+  ProgressReporterLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/ProgressReporter-${Environment}'
+      RetentionInDays: !Ref RetentionDays
+      
+  AlertProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/AlertProcessor-${Environment}'
+      RetentionInDays: !Ref RetentionDays
+      
+  # Lambda Functions
+  MetricCalculatorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'MetricCalculator-${Environment}'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      MemorySize: 512
+      Environment:
+        Variables:
+          MIGRATION_TABLE: !Ref MigrationProgressTable
+          METRIC_NAMESPACE: AWS/MigrationTracker
+          ENVIRONMENT: !Ref Environment
+      Code:
+        ZipFile: |
+          # Placeholder code - replace with actual metric-calculator.py content
+          import json
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': json.dumps('Metric Calculator')}
+              
+  ProgressReporterFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'ProgressReporter-${Environment}'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      MemorySize: 512
+      Environment:
+        Variables:
+          MIGRATION_TABLE: !Ref MigrationProgressTable
+          METRIC_NAMESPACE: AWS/MigrationTracker
+          NOTIFICATION_EMAIL: !Ref NotificationEmail
+          ENVIRONMENT: !Ref Environment
+      Code:
+        ZipFile: |
+          # Placeholder code - replace with actual progress-reporter.py content
+          import json
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': json.dumps('Progress Reporter')}
+              
+  AlertProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'AlertProcessor-${Environment}'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 60
+      MemorySize: 256
+      Environment:
+        Variables:
+          CRITICAL_TOPIC: !Ref CriticalAlertsTopic
+          HIGH_TOPIC: !Ref HighAlertsTopic
+          MEDIUM_TOPIC: !Ref MediumAlertsTopic
+          LOW_TOPIC: !Ref LowAlertsTopic
+          ENVIRONMENT: !Ref Environment
+      Code:
+        ZipFile: |
+          # Placeholder code - replace with actual alert-processor.py content
+          import json
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': json.dumps('Alert Processor')}
+              
+  # EventBridge Rules
+  MetricCalculationRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub 'MetricCalculation-${Environment}'
+      Description: Calculate derived metrics every 5 minutes
+      ScheduleExpression: rate(5 minutes)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt MetricCalculatorFunction.Arn
+          Id: MetricCalculatorTarget
+          
+  DailyReportRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub 'DailyMigrationReport-${Environment}'
+      Description: Generate daily migration progress report at 9 AM EST
+      ScheduleExpression: cron(0 14 * * ? *)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt ProgressReporterFunction.Arn
+          Id: DailyReportTarget
+          Input: '{"reportType": "daily"}'
+          
+  WeeklyReportRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub 'WeeklyMigrationReport-${Environment}'
+      Description: Generate weekly migration progress report on Mondays
+      ScheduleExpression: cron(0 14 ? * MON *)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt ProgressReporterFunction.Arn
+          Id: WeeklyReportTarget
+          Input: '{"reportType": "weekly"}'
+          
+  # Lambda Permissions for EventBridge
+  MetricCalculatorEventPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MetricCalculatorFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt MetricCalculationRule.Arn
+      
+  DailyReportEventPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ProgressReporterFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DailyReportRule.Arn
+      
+  WeeklyReportEventPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ProgressReporterFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt WeeklyReportRule.Arn
+      
+  # CloudWatch Alarms
+  PhaseDelayAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'PhaseDelay-${Environment}'
+      AlarmDescription: Alert when any phase is delayed by more than 2 days
+      MetricName: DaysRemaining
+      Namespace: AWS/MigrationTracker
+      Statistic: Average
+      Period: 86400
+      EvaluationPeriods: 1
+      Threshold: -2
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Ref HighAlertsTopic
+      TreatMissingData: notBreaching
+      
+  CriticalBlockerAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'CriticalBlockers-${Environment}'
+      AlarmDescription: Alert when critical blockers exceed threshold
+      MetricName: BlockerCount
+      Namespace: AWS/MigrationTracker
+      Dimensions:
+        - Name: Severity
+          Value: Critical
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref CriticalAlertsTopic
+      TreatMissingData: notBreaching
+      
+  VerificationFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'VerificationFailureRate-${Environment}'
+      AlarmDescription: Alert when verification failure rate exceeds 10%
+      MetricName: VerificationPassRate
+      Namespace: AWS/MigrationTracker
+      Statistic: Average
+      Period: 3600
+      EvaluationPeriods: 2
+      Threshold: 90
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Ref HighAlertsTopic
+      TreatMissingData: notBreaching
+      
+  # CloudWatch Dashboard
+  MigrationDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub 'MigrationMonitoring-${Environment}'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "title": "Migration Progress Overview",
+                "metrics": [
+                  ["AWS/MigrationTracker", "PhaseCompletionPercentage", {"stat": "Average"}]
+                ],
+                "period": ${DashboardRefreshInterval},
+                "stat": "Average",
+                "region": "${AWS::Region}",
+                "yAxis": {
+                  "left": {"min": 0, "max": 100}
+                }
+              }
+            }
+          ]
+        }
+
+Outputs:
+  DashboardURL:
+    Description: URL to CloudWatch Dashboard
+    Value: !Sub 'https://console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${MigrationDashboard}'
+    
+  CriticalAlertsTopicArn:
+    Description: ARN of Critical Alerts SNS Topic
+    Value: !Ref CriticalAlertsTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-CriticalAlertsTopic'
+      
+  HighAlertsTopicArn:
+    Description: ARN of High Priority Alerts SNS Topic
+    Value: !Ref HighAlertsTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-HighAlertsTopic'
+      
+  DynamoDBTableName:
+    Description: Name of DynamoDB Progress Table
+    Value: !Ref MigrationProgressTable
+    Export:
+      Name: !Sub '${AWS::StackName}-ProgressTable'
+      
+  MetricsArchiveBucketName:
+    Description: Name of S3 Metrics Archive Bucket
+    Value: !Ref MetricsArchiveBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-ArchiveBucket'
+      
+  LambdaRoleArn:
+    Description: ARN of Lambda Execution Role
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaRole'
+      
+  MetricCalculatorFunctionArn:
+    Description: ARN of Metric Calculator Lambda Function
+    Value: !GetAtt MetricCalculatorFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-MetricCalculator'
+      
+  ProgressReporterFunctionArn:
+    Description: ARN of Progress Reporter Lambda Function
+    Value: !GetAtt ProgressReporterFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ProgressReporter'
+      
+  AlertProcessorFunctionArn:
+    Description: ARN of Alert Processor Lambda Function
+    Value: !GetAtt AlertProcessorFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-AlertProcessor'
