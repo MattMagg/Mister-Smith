@@ -6,8 +6,25 @@
     "CLAUDE_FLOW_TELEMETRY_ENABLED": "true",
     "CLAUDE_FLOW_REMOTE_EXECUTION": "true",
     "CLAUDE_FLOW_GITHUB_INTEGRATION": "true",
+    "CLAUDE_FLOW_AUTO_RESTORE_SWARMS": "true",
+    "CLAUDE_FLOW_SWARM_CONFIG_PATH": ".claude/swarm-topology-config.json",
+    "CLAUDE_FLOW_AUTO_TOPOLOGY_SELECTION": "true",
+    "CLAUDE_FLOW_PARALLEL_EXECUTION": "true",
+    "CLAUDE_FLOW_NEURAL_TRAINING": "true",
+    "CLAUDE_FLOW_BOTTLENECK_ANALYSIS": "true",
+    "CLAUDE_FLOW_SMART_AUTO_SPAWNING": "true",
+    "CLAUDE_FLOW_SELF_HEALING_WORKFLOWS": "true",
+    "CLAUDE_FLOW_CROSS_SESSION_MEMORY": "true",
+    "CLAUDE_FLOW_MAX_AGENTS": "60",
+    "CLAUDE_FLOW_DEFAULT_TOPOLOGY": "hierarchical",
+    "CLAUDE_FLOW_EXECUTION_STRATEGY": "parallel",
+    "CLAUDE_FLOW_TOKEN_OPTIMIZATION": "true",
+    "CLAUDE_FLOW_CACHE_ENABLED": "true",
+    "CLAUDE_FLOW_TELEMETRY_LEVEL": "detailed",
     "ANTHROPIC_CUSTOM_HEADERS": "anthropic-beta: interleaved-thinking-2025-05-14",
-    "MAX_THINKING_TOKENS": "25000"
+    "MAX_THINKING_TOKENS": "25000",
+    "AWS_PROFILE": "cli-user",
+    "AWS_REGION": "us-east-2"
   },
   "permissions": {
     "allow": [
@@ -38,9 +55,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": {
-          "tools": ["Edit", "MultiEdit"]
-        },
+        "matcher": "Edit",
         "hooks": [
           {
             "type": "command",
@@ -49,22 +64,27 @@
         ]
       },
       {
-        "matcher": {
-          "tools": ["Bash"]
-        },
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
             "command": "npx claude-flow hooks pre-command --command \"${command}\" --validate-safety true --prepare-resources true"
           }
         ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx claude-flow hooks pre-task --description \"${description}\" --task-id ${id} --agent-id orchestrator"
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": {
-          "tools": ["Edit", "MultiEdit", "Write"]
-        },
+        "matcher": "Edit",
         "hooks": [
           {
             "type": "command",
@@ -73,29 +93,36 @@
         ]
       },
       {
-        "matcher": {
-          "tools": ["Bash"]
-        },
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx claude-flow hooks post-edit --file ${file} --format true --update-memory true --train-neural true"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
             "command": "npx claude-flow hooks post-command --command \"${command}\" --track-metrics true --store-results true"
           }
         ]
-      }
-    ],
-    "SessionStartHook": [
+      },
       {
+        "matcher": "Task",
         "hooks": [
           {
             "type": "command",
-            "command": "npx claude-flow hooks pre-task --description \"Session initialization\" --task-id session-init --agent-id orchestrator"
+            "command": "npx claude-flow hooks post-task --task-id ${id} --analyze-performance true"
           }
         ]
       }
     ],
-    "SessionEndHook": [
+    "Stop": [
       {
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
@@ -104,46 +131,5 @@
         ]
       }
     ]
-  },
-  "mcp": {
-    "autoRestoreSwarms": true,
-    "swarmConfigPath": ".claude/swarm-topology-config.json"
-  },
-  "mcpServers": {
-    "claude-flow": {
-      "command": "npx",
-      "args": [
-        "claude-flow",
-        "mcp",
-        "start"
-      ],
-      "env": {
-        "CLAUDE_FLOW_HOOKS_ENABLED": "true",
-        "CLAUDE_FLOW_TELEMETRY_ENABLED": "true",
-        "CLAUDE_FLOW_REMOTE_READY": "true",
-        "CLAUDE_FLOW_GITHUB_INTEGRATION": "true",
-        "CLAUDE_FLOW_AUTO_RESTORE_SWARMS": "true",
-        "CLAUDE_FLOW_SWARM_CONFIG_PATH": ".claude/swarm-topology-config.json"
-      }
-    }
-  },
-  "includeCoAuthoredBy": true,
-  "features": {
-    "autoTopologySelection": true,
-    "parallelExecution": true,
-    "neuralTraining": true,
-    "bottleneckAnalysis": true,
-    "smartAutoSpawning": true,
-    "selfHealingWorkflows": true,
-    "crossSessionMemory": true,
-    "githubIntegration": true
-  },
-  "performance": {
-    "maxAgents": 60,
-    "defaultTopology": "hierarchical",
-    "executionStrategy": "parallel",
-    "tokenOptimization": true,
-    "cacheEnabled": true,
-    "telemetryLevel": "detailed"
   }
 }
