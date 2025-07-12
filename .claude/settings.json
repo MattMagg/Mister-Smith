@@ -6,7 +6,8 @@
     "CLAUDE_FLOW_TELEMETRY_ENABLED": "true",
     "CLAUDE_FLOW_REMOTE_EXECUTION": "true",
     "CLAUDE_FLOW_GITHUB_INTEGRATION": "true",
-    "ANTHROPIC_CUSTOM_HEADERS": "anthropic-beta: interleaved-thinking-2025-05-14"
+    "ANTHROPIC_CUSTOM_HEADERS": "anthropic-beta: interleaved-thinking-2025-05-14",
+    "MAX_THINKING_TOKENS": "25000"
   },
   "permissions": {
     "allow": [
@@ -35,42 +36,74 @@
     ]
   },
   "hooks": {
-    "preEditHook": {
-      "command": "npx",
-      "args": ["claude-flow", "hooks", "pre-edit", "--file", "${file}", "--auto-assign-agents", "true", "--load-context", "true"],
-      "alwaysRun": false,
-      "outputFormat": "json"
-    },
-    "postEditHook": {
-      "command": "npx",
-      "args": ["claude-flow", "hooks", "post-edit", "--file", "${file}", "--format", "true", "--update-memory", "true", "--train-neural", "true"],
-      "alwaysRun": true,
-      "outputFormat": "json"
-    },
-    "preCommandHook": {
-      "command": "npx",
-      "args": ["claude-flow", "hooks", "pre-command", "--command", "${command}", "--validate-safety", "true", "--prepare-resources", "true"],
-      "alwaysRun": false,
-      "outputFormat": "json"
-    },
-    "postCommandHook": {
-      "command": "npx",
-      "args": ["claude-flow", "hooks", "post-command", "--command", "${command}", "--track-metrics", "true", "--store-results", "true"],
-      "alwaysRun": false,
-      "outputFormat": "json"
-    },
-    "sessionEndHook": {
-      "command": "npx",
-      "args": ["claude-flow", "hooks", "session-end", "--generate-summary", "true", "--persist-state", "true", "--export-metrics", "true"],
-      "alwaysRun": true,
-      "outputFormat": "json"
-    },
-    "sessionStartHook": {
-      "command": "npx",
-      "args": ["claude-flow", "hooks", "pre-task", "--description", "Session initialization", "--task-id", "session-init", "--agent-id", "orchestrator"],
-      "alwaysRun": true,
-      "outputFormat": "json"
-    }
+    "PreToolUse": [
+      {
+        "matcher": {
+          "tools": ["Edit", "MultiEdit"]
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx claude-flow hooks pre-edit --file ${file} --auto-assign-agents true --load-context true"
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "tools": ["Bash"]
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx claude-flow hooks pre-command --command \"${command}\" --validate-safety true --prepare-resources true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": {
+          "tools": ["Edit", "MultiEdit", "Write"]
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx claude-flow hooks post-edit --file ${file} --format true --update-memory true --train-neural true"
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "tools": ["Bash"]
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx claude-flow hooks post-command --command \"${command}\" --track-metrics true --store-results true"
+          }
+        ]
+      }
+    ],
+    "SessionStartHook": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx claude-flow hooks pre-task --description \"Session initialization\" --task-id session-init --agent-id orchestrator"
+          }
+        ]
+      }
+    ],
+    "SessionEndHook": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx claude-flow hooks session-end --generate-summary true --persist-state true --export-metrics true"
+          }
+        ]
+      }
+    ]
   },
   "mcp": {
     "autoRestoreSwarms": true,
@@ -106,7 +139,7 @@
     "githubIntegration": true
   },
   "performance": {
-    "maxAgents": 10,
+    "maxAgents": 60,
     "defaultTopology": "hierarchical",
     "executionStrategy": "parallel",
     "tokenOptimization": true,
