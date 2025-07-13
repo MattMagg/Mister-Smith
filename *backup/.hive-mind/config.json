@@ -3,7 +3,7 @@
   "initialized": "2025-07-11T08:27:24.338Z",
   "defaults": {
     "queenType": "strategic",
-    "maxWorkers": 100,
+    "maxWorkers": 8,
     "consensusAlgorithm": "majority",
     "memorySize": 100,
     "autoScale": true,
