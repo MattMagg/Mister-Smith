@@ -1,9 +1,0 @@
-# Ignore files with specific formatting requirements
-.augment-guidelines.md
-CLAUDE.md
-
-# Ignore report files that have special formatting
-CORE_ARCHITECTURE_INTEGRATION_EVIDENCE_REPORT.md
-
-# Ignore internal operations directory (contains specialized formatting)
-internal-operations/
