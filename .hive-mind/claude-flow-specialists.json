@@ -1,0 +1,184 @@
+{
+  "specialists": [
+    {
+      "id": "cf-typescript-core",
+      "name": "TypeScript Core Specialist",
+      "type": "specialist",
+      "capabilities": [
+        "typescript",
+        "cli-development",
+        "mcp-server",
+        "web-interface",
+        "node.js",
+        "express",
+        "websockets",
+        "terminal-emulation"
+      ],
+      "focus": "Claude-Flow CLI, MCP server implementation, Web UI development",
+      "expertise": "TypeScript architecture, CLI design patterns, ANSI terminal handling"
+    },
+    {
+      "id": "cf-rust-wasm",
+      "name": "Rust WASM Specialist",
+      "type": "specialist",
+      "capabilities": [
+        "rust",
+        "webassembly",
+        "neural-networks",
+        "qudag-foundation",
+        "performance-optimization",
+        "simd",
+        "memory-management",
+        "wasm-bindgen"
+      ],
+      "focus": "Neural models, WASM runtime, performance optimization",
+      "expertise": "Rust/WASM integration, neural network implementation, SIMD optimization"
+    },
+    {
+      "id": "cf-docker-container",
+      "name": "Docker/Container Specialist",
+      "type": "specialist",
+      "capabilities": [
+        "docker",
+        "kubernetes",
+        "containerization",
+        "docker-compose",
+        "container-registry",
+        "deployment",
+        "scaling",
+        "orchestration"
+      ],
+      "focus": "Containerization, Kubernetes deployment, Docker optimization",
+      "expertise": "Multi-stage builds, container security, K8s manifests, Helm charts"
+    },
+    {
+      "id": "cf-hive-mind",
+      "name": "Hive-Mind Architect",
+      "type": "architect",
+      "capabilities": [
+        "swarm-orchestration",
+        "sqlite",
+        "agent-coordination",
+        "consensus-algorithms",
+        "distributed-systems",
+        "queen-worker-pattern",
+        "collective-memory",
+        "fault-tolerance"
+      ],
+      "focus": "Hive-mind system architecture, swarm intelligence, agent coordination",
+      "expertise": "Distributed consensus, SQLite optimization, agent lifecycle management"
+    },
+    {
+      "id": "cf-mcp-protocol",
+      "name": "MCP Protocol Expert",
+      "type": "specialist",
+      "capabilities": [
+        "mcp-protocol",
+        "tool-development",
+        "stdio-communication",
+        "json-rpc",
+        "protocol-design",
+        "integration-patterns",
+        "error-handling",
+        "api-design"
+      ],
+      "focus": "MCP server development, tool integration, protocol optimization",
+      "expertise": "87+ MCP tools, stdio/HTTP servers, protocol extensions"
+    },
+    {
+      "id": "cf-testing-qa",
+      "name": "Testing/QA Engineer",
+      "type": "tester",
+      "capabilities": [
+        "jest",
+        "testing-strategies",
+        "test-coverage",
+        "benchmarking",
+        "performance-testing",
+        "integration-testing",
+        "e2e-testing",
+        "bug-tracking"
+      ],
+      "focus": "Test coverage improvement, bug fixes, performance benchmarking",
+      "expertise": "Jest configuration, test automation, CI/CD testing, regression testing"
+    },
+    {
+      "id": "cf-documentation",
+      "name": "Documentation Specialist",
+      "type": "documenter",
+      "capabilities": [
+        "technical-writing",
+        "api-documentation",
+        "architecture-diagrams",
+        "markdown",
+        "mermaid",
+        "examples",
+        "tutorials",
+        "reference-docs"
+      ],
+      "focus": "README files, API documentation, architecture guides, examples",
+      "expertise": "Technical writing, diagram creation, documentation automation"
+    },
+    {
+      "id": "cf-performance",
+      "name": "Performance Engineer",
+      "type": "optimizer",
+      "capabilities": [
+        "performance-profiling",
+        "wasm-optimization",
+        "metrics-collection",
+        "benchmarking",
+        "memory-profiling",
+        "cpu-optimization",
+        "latency-reduction",
+        "caching-strategies"
+      ],
+      "focus": "Performance optimization, WASM acceleration, metrics analysis",
+      "expertise": "Profiling tools, optimization techniques, performance monitoring"
+    },
+    {
+      "id": "cf-devops-ci",
+      "name": "DevOps/CI Specialist",
+      "type": "specialist",
+      "capabilities": [
+        "github-actions",
+        "ci-cd",
+        "npm-publishing",
+        "release-management",
+        "automated-testing",
+        "deployment-pipelines",
+        "version-control",
+        "semantic-versioning"
+      ],
+      "focus": "GitHub Actions workflows, npm releases, automated deployment",
+      "expertise": "CI/CD pipelines, release automation, dependency management"
+    },
+    {
+      "id": "cf-advanced-usage",
+      "name": "Advanced Usage Expert",
+      "type": "specialist",
+      "capabilities": [
+        "complex-workflows",
+        "best-practices",
+        "troubleshooting",
+        "debugging",
+        "pattern-recognition",
+        "use-case-analysis",
+        "optimization-strategies",
+        "claude-flow-mastery"
+      ],
+      "focus": "Complex workflow implementation, best practices, troubleshooting",
+      "expertise": "Advanced claude-flow patterns, debugging techniques, optimization"
+    }
+  ],
+  "swarm_config": {
+    "name": "Claude-Flow Development Swarm",
+    "objective": "Enhance, debug, and optimize the claude-flow repository",
+    "topology": "mesh",
+    "consensus": "weighted",
+    "max_workers": 10,
+    "auto_scale": true,
+    "memory_size": 200,
+    "specialization": "claude-flow-development"
+  }
+}

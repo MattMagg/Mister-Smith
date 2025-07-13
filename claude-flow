@@ -53,7 +53,7 @@
     
     // 3. NPX with latest alpha version (prioritized over global)
     async () => {
-      return spawn('npx', ['claude-flow@2.0.0-alpha.48', ...process.argv.slice(2)], { stdio: 'inherit' });
+      return spawn('npx', ['claude-flow@2.0.0-alpha.27', ...process.argv.slice(2)], { stdio: 'inherit' });
     }
   ];
 

@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "claude-flow": "^2.0.0-alpha.38"
+    "claude-flow": "^2.0.0-alpha.50",
+    "sqlite3": "^5.1.7"
   }
 }

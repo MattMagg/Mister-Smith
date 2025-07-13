@@ -1,0 +1,237 @@
+{
+  "summary": "Configuration mapping for claude-flow repository",
+  "timestamp": "2025-01-13T02:00:00Z",
+  "repository": "/Users/mac-main/Mister-Smith/claude-flow",
+  
+  "configuration_files": {
+    "root_level": {
+      "package_json": {
+        "path": "package.json",
+        "type": "npm",
+        "description": "Main npm configuration with dependencies, scripts, and metadata",
+        "key_settings": {
+          "version": "2.0.0-alpha.49",
+          "engines": "node >=20.0.0, npm >=9.0.0",
+          "main": "cli.mjs",
+          "bin": "bin/claude-flow"
+        }
+      },
+      "tsconfig": {
+        "main": "tsconfig.json",
+        "additional": ["tsconfig.cjs.json", "tsconfig.cli.json"],
+        "description": "TypeScript compiler configurations"
+      },
+      "jest_config": {
+        "path": "jest.config.js",
+        "type": "testing",
+        "description": "Jest test runner configuration"
+      },
+      "codecov": {
+        "path": "codecov.yml",
+        "type": "ci/cd",
+        "description": "Code coverage configuration"
+      }
+    },
+    
+    "source_configs": {
+      "config_manager": {
+        "path": "src/config/config-manager.ts",
+        "type": "runtime",
+        "description": "Main configuration management system",
+        "features": [
+          "Environment variable loading",
+          "File-based configuration",
+          "Validation",
+          "Default values"
+        ]
+      },
+      "ruv_swarm_config": {
+        "path": "src/config/ruv-swarm-config.ts",
+        "type": "runtime",
+        "description": "Specialized configuration for ruv-swarm integration"
+      }
+    },
+    
+    "docker_configs": {
+      "compose_files": [
+        "docker/docker-compose.hive-mind.yml",
+        "examples/flask-api-sparc/docker-compose.yml"
+      ],
+      "dockerfiles": [
+        "docker/Dockerfile.hive-mind",
+        "docker/Dockerfile.test"
+      ]
+    },
+    
+    "github_actions": {
+      "workflows": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/test.yml",
+        ".github/workflows/hive-mind-benchmarks.yml",
+        ".github/workflows/migration-tests.yml"
+      ],
+      "dependabot": ".github/dependabot.yml"
+    }
+  },
+  
+  "environment_variables": {
+    "claude_flow_specific": [
+      "CLAUDE_FLOW_MAX_AGENTS",
+      "CLAUDE_FLOW_TERMINAL_TYPE",
+      "CLAUDE_FLOW_MEMORY_BACKEND",
+      "CLAUDE_FLOW_MCP_TRANSPORT",
+      "CLAUDE_FLOW_MCP_PORT",
+      "CLAUDE_FLOW_LOG_LEVEL",
+      "CLAUDE_FLOW_RUV_SWARM_ENABLED",
+      "CLAUDE_FLOW_RUV_SWARM_TOPOLOGY",
+      "CLAUDE_FLOW_RUV_SWARM_MAX_AGENTS",
+      "CLAUDE_FLOW_LEGACY_MCP",
+      "CLAUDE_FLOW_ROOT",
+      "CLAUDE_FLOW_ENV",
+      "CLAUDE_SWARM_ID"
+    ],
+    "standard": [
+      "NODE_ENV",
+      "PORT",
+      "DEBUG",
+      "JWT_SECRET"
+    ],
+    "docker_compose": [
+      "HIVE_DB_PATH",
+      "HIVE_LOG_LEVEL",
+      "HIVE_MAX_AGENTS",
+      "HIVE_MCP_ENABLED",
+      "HIVE_API_KEY",
+      "MCP_MODE",
+      "MCP_PORT"
+    ]
+  },
+  
+  "configuration_patterns": {
+    "default_config_structure": {
+      "orchestrator": {
+        "maxConcurrentAgents": 10,
+        "taskQueueSize": 100,
+        "healthCheckInterval": 30000,
+        "shutdownTimeout": 30000
+      },
+      "terminal": {
+        "type": "auto|vscode|native",
+        "poolSize": 5,
+        "recycleAfter": 10,
+        "healthCheckInterval": 60000,
+        "commandTimeout": 300000
+      },
+      "memory": {
+        "backend": "sqlite|markdown|hybrid",
+        "cacheSizeMB": 100,
+        "syncInterval": 5000,
+        "conflictResolution": "crdt|timestamp|manual",
+        "retentionDays": 30
+      },
+      "coordination": {
+        "maxRetries": 3,
+        "retryDelay": 1000,
+        "deadlockDetection": true,
+        "resourceTimeout": 60000,
+        "messageTimeout": 30000
+      },
+      "mcp": {
+        "transport": "stdio|http|websocket",
+        "port": 3000,
+        "tlsEnabled": false
+      },
+      "logging": {
+        "level": "debug|info|warn|error",
+        "format": "json|text",
+        "destination": "console|file"
+      },
+      "ruvSwarm": {
+        "enabled": true,
+        "defaultTopology": "mesh|hierarchical|ring|star",
+        "maxAgents": 8,
+        "defaultStrategy": "balanced|specialized|adaptive",
+        "autoInit": true,
+        "enableHooks": true,
+        "enablePersistence": true,
+        "enableNeuralTraining": true,
+        "configPath": ".claude/ruv-swarm-config.json"
+      }
+    },
+    
+    "ruv_swarm_specific": {
+      "swarm": "Core swarm settings",
+      "agents": "Agent configuration",
+      "tasks": "Task orchestration settings",
+      "memory": "Memory and persistence settings",
+      "neural": "Neural capabilities configuration",
+      "monitoring": "Performance monitoring settings",
+      "integration": "Integration with Claude Code"
+    }
+  },
+  
+  "example_configurations": {
+    "development": "examples/01-configurations/development-config.json",
+    "production": "examples/01-configurations/advanced/production-config.json",
+    "minimal": "examples/01-configurations/minimal/minimal-config.json",
+    "research": "examples/01-configurations/specialized/research-config.json",
+    "testing": "examples/01-configurations/specialized/testing-config.json"
+  },
+  
+  "environment_files": {
+    "templates": [
+      "examples/05-swarm-apps/rest-api-advanced/.env.example",
+      "examples/05-swarm-apps/rest-api/.env.example",
+      "examples/blog-api/.env.example",
+      "examples/rest-api-simple/.env.example",
+      "examples/user-api/.env.example"
+    ],
+    "common_patterns": [
+      "Application settings (NODE_ENV, PORT)",
+      "Database connections (MongoDB, Redis)",
+      "Authentication (JWT_SECRET, SESSION_SECRET)",
+      "Security settings (CORS, Rate limiting)",
+      "External services (Email, AWS, Stripe)",
+      "Feature flags"
+    ]
+  },
+  
+  "key_findings": {
+    "configuration_management": [
+      "Centralized ConfigManager class handles all configuration",
+      "Support for file-based and environment variable configuration",
+      "Built-in validation for all configuration values",
+      "Default configurations with override capability"
+    ],
+    "ruv_swarm_integration": [
+      "Dedicated RuvSwarmConfigManager for swarm-specific settings",
+      "Configuration can be exported as CLI arguments",
+      "Persistent configuration storage in .claude directory"
+    ],
+    "docker_support": [
+      "Comprehensive docker-compose setup for different environments",
+      "Support for development, production, and testing profiles",
+      "Integrated monitoring with Prometheus and Grafana"
+    ],
+    "environment_setup": [
+      "Well-documented environment variables",
+      "Consistent naming convention (CLAUDE_FLOW_*)",
+      "Support for multiple deployment scenarios"
+    ]
+  },
+  
+  "recommendations": {
+    "best_practices": [
+      "Use development-config.json as starting point",
+      "Set environment variables for production overrides",
+      "Enable ruv-swarm for enhanced coordination",
+      "Use docker-compose for containerized deployments"
+    ],
+    "security": [
+      "Always change default JWT_SECRET in production",
+      "Enable TLS for MCP in production",
+      "Use environment variables for sensitive data",
+      "Implement proper access controls for API keys"
+    ]
+  }
+}

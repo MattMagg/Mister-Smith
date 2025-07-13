@@ -1,0 +1,311 @@
+{
+  "coordination_protocols": {
+    "version": "3.0.0",
+    "protocol_type": "hierarchical_mesh_hybrid",
+    "created_by": "Phase3_Swarm_Master_Coordinator",
+    "last_updated": "2025-07-13"
+  },
+  "batch_operation_protocols": {
+    "mandatory_batching": {
+      "description": "All related operations must be batched in single messages for optimal coordination",
+      "rules": {
+        "todo_write": {
+          "minimum_batch_size": 5,
+          "maximum_batch_size": 20,
+          "required_fields": ["id", "content", "status", "priority"],
+          "status_values": ["pending", "in_progress", "completed"],
+          "priority_values": ["low", "medium", "high", "critical"]
+        },
+        "task_spawning": {
+          "parallel_required": true,
+          "coordination_instructions_mandatory": true,
+          "hook_requirements": ["pre-task", "post-edit", "post-task"],
+          "memory_key_pattern": "phase3/{agent-type}/{step}"
+        },
+        "file_operations": {
+          "parallel_preferred": true,
+          "batch_read_operations": true,
+          "batch_write_operations": true,
+          "multiedit_for_single_file": true
+        }
+      },
+      "enforcement": "strict",
+      "violation_handling": "performance_degradation_warning"
+    }
+  },
+  "agent_communication_patterns": {
+    "hierarchical_coordination": {
+      "queen_coordinator": {
+        "role": "executive_decision_maker",
+        "communication_scope": "all_agents",
+        "decision_authority": "final",
+        "consensus_required_for": ["major_architecture_changes", "resource_allocation", "swarm_scaling"],
+        "coordination_frequency": "continuous",
+        "protocols": [
+          "strategic_planning",
+          "resource_allocation", 
+          "conflict_resolution",
+          "performance_optimization"
+        ]
+      },
+      "swarm_orchestrator": {
+        "role": "tactical_coordinator",
+        "communication_scope": "specialist_agents",
+        "responsibilities": ["task_distribution", "load_balancing", "topology_optimization"],
+        "coordination_frequency": "real_time",
+        "protocols": [
+          "agent_lifecycle_management",
+          "performance_monitoring",
+          "bottleneck_detection",
+          "auto_scaling_triggers"
+        ]
+      },
+      "specialist_agents": {
+        "communication_pattern": "mesh_within_domains",
+        "inter_domain_communication": "via_orchestrator",
+        "coordination_protocols": [
+          "domain_expertise_sharing",
+          "collaborative_problem_solving",
+          "peer_review_processes",
+          "knowledge_transfer"
+        ]
+      }
+    }
+  },
+  "memory_coordination": {
+    "namespace_hierarchy": {
+      "claude-flow-dev": "root_namespace",
+      "claude-flow-dev/coordination": "inter_agent_coordination_data",
+      "claude-flow-dev/agents": "agent_specific_state_and_decisions", 
+      "claude-flow-dev/neural": "neural_training_data_and_models",
+      "claude-flow-dev/tasks": "task_execution_context_and_results",
+      "claude-flow-dev/performance": "performance_metrics_and_analytics"
+    },
+    "memory_sharing_protocols": {
+      "decision_storage": {
+        "pattern": "claude-flow-dev/agents/{agent-id}/decisions/{decision-id}",
+        "required_fields": ["timestamp", "decision", "rationale", "impact", "dependencies"],
+        "retention_policy": "30_days_or_until_project_completion"
+      },
+      "coordination_state": {
+        "pattern": "claude-flow-dev/coordination/{context}/{state-id}",
+        "update_frequency": "after_each_major_step",
+        "synchronization": "eventual_consistency",
+        "conflict_resolution": "last_writer_wins_with_merge"
+      },
+      "knowledge_sharing": {
+        "pattern": "claude-flow-dev/knowledge/{domain}/{topic}",
+        "access_scope": "domain_specialists_and_coordinators",
+        "versioning": "enabled",
+        "collaborative_editing": "merge_based"
+      }
+    }
+  },
+  "neural_coordination": {
+    "training_protocols": {
+      "continuous_learning": {
+        "enabled": true,
+        "training_triggers": [
+          "task_completion",
+          "error_recovery",
+          "performance_bottleneck_detection",
+          "new_domain_knowledge_acquisition"
+        ],
+        "model_types": ["coordination", "optimization", "prediction", "ensemble"],
+        "training_data_sources": [
+          "agent_decision_logs",
+          "coordination_patterns",
+          "performance_metrics", 
+          "error_recovery_sequences"
+        ]
+      },
+      "knowledge_transfer": {
+        "cross_agent_learning": true,
+        "domain_expertise_propagation": true,
+        "pattern_recognition_sharing": true,
+        "adaptive_behavior_sync": true
+      },
+      "ensemble_coordination": {
+        "model_fusion": "weighted_voting",
+        "confidence_thresholds": {
+          "high_confidence": 0.95,
+          "medium_confidence": 0.75,
+          "low_confidence": 0.50
+        },
+        "fallback_strategies": [
+          "expert_agent_consultation",
+          "coordinator_escalation",
+          "human_intervention_request"
+        ]
+      }
+    }
+  },
+  "fault_tolerance_protocols": {
+    "circuit_breaker_pattern": {
+      "enabled": true,
+      "failure_threshold": 5,
+      "timeout_duration": "60_seconds",
+      "half_open_retry_interval": "30_seconds",
+      "recovery_verification": "health_check_based"
+    },
+    "agent_health_monitoring": {
+      "heartbeat_interval": "30_seconds",
+      "health_check_types": [
+        "responsiveness_check",
+        "memory_usage_check",
+        "task_completion_rate",
+        "error_rate_monitoring"
+      ],
+      "unhealthy_agent_handling": [
+        "graceful_task_redistribution",
+        "agent_restart_attempt",
+        "replacement_agent_spawning",
+        "coordinator_notification"
+      ]
+    },
+    "error_recovery": {
+      "retry_policies": {
+        "exponential_backoff": {
+          "initial_delay": "1_second",
+          "maximum_delay": "60_seconds",
+          "backoff_multiplier": 2,
+          "maximum_retries": 5
+        }
+      },
+      "graceful_degradation": {
+        "non_critical_agent_failure": "continue_with_reduced_capacity",
+        "coordination_agent_failure": "promote_backup_coordinator",
+        "memory_system_failure": "switch_to_local_caching"
+      }
+    }
+  },
+  "performance_optimization": {
+    "load_balancing": {
+      "algorithm": "weighted_round_robin",
+      "factors": [
+        "agent_current_load",
+        "domain_expertise_match",
+        "historical_performance",
+        "resource_availability"
+      ],
+      "rebalancing_triggers": [
+        "load_threshold_exceeded",
+        "performance_degradation_detected",
+        "new_agent_addition",
+        "agent_failure_recovery"
+      ]
+    },
+    "resource_optimization": {
+      "memory_management": {
+        "garbage_collection": "incremental",
+        "cache_eviction": "lru_with_priority",
+        "compression": "enabled_for_large_objects",
+        "deduplication": "content_based"
+      },
+      "computational_optimization": {
+        "task_parallelization": "automatic",
+        "batch_processing": "preferred_for_similar_tasks",
+        "lazy_evaluation": "enabled_for_non_critical_paths",
+        "result_caching": "enabled_with_ttl"
+      }
+    }
+  },
+  "security_protocols": {
+    "access_control": {
+      "agent_authentication": "capability_based",
+      "authorization_model": "role_based_with_domain_restrictions",
+      "privilege_escalation": "coordinator_approval_required",
+      "audit_logging": "comprehensive"
+    },
+    "data_protection": {
+      "memory_encryption": "at_rest_and_in_transit",
+      "sensitive_data_handling": "domain_isolation",
+      "data_retention": "policy_based_with_secure_deletion",
+      "backup_security": "encrypted_with_key_rotation"
+    }
+  },
+  "deployment_coordination": {
+    "initialization_sequence": {
+      "phase_1": "swarm_infrastructure_setup",
+      "phase_2": "coordination_agents_deployment",
+      "phase_3": "specialist_agents_parallel_deployment",
+      "phase_4": "memory_namespace_configuration",
+      "phase_5": "neural_training_initialization",
+      "phase_6": "health_verification_and_optimization"
+    },
+    "scaling_protocols": {
+      "auto_scaling": {
+        "enabled": true,
+        "scale_up_triggers": [
+          "high_task_queue_depth",
+          "response_time_degradation",
+          "resource_utilization_threshold"
+        ],
+        "scale_down_triggers": [
+          "low_task_utilization",
+          "idle_agent_detection",
+          "cost_optimization_periods"
+        ],
+        "scaling_policies": {
+          "minimum_agents": 10,
+          "maximum_agents": 50,
+          "scale_step_size": 2,
+          "cooldown_period": "300_seconds"
+        }
+      }
+    }
+  },
+  "integration_protocols": {
+    "claude_code_integration": {
+      "tool_coordination": {
+        "task_tool": "agent_spawning_with_coordination_instructions",
+        "todo_write": "batch_operations_mandatory_5_plus_items",
+        "file_operations": "parallel_batch_preferred",
+        "bash_commands": "grouped_for_efficiency"
+      },
+      "coordination_hooks": {
+        "pre_task": "context_loading_and_agent_assignment",
+        "post_edit": "progress_tracking_and_memory_update", 
+        "post_task": "result_analysis_and_learning_integration"
+      }
+    },
+    "mcp_tool_integration": {
+      "coordination_only": true,
+      "execution_delegation": "claude_code_native_tools",
+      "memory_management": "persistent_cross_session",
+      "neural_training": "continuous_background",
+      "performance_monitoring": "real_time_with_analytics"
+    }
+  },
+  "quality_assurance": {
+    "verification_protocols": {
+      "deployment_verification": [
+        "agent_count_validation",
+        "coordination_protocol_test",
+        "memory_system_connectivity",
+        "neural_model_initialization",
+        "fault_tolerance_verification"
+      ],
+      "operational_verification": [
+        "batch_operation_compliance",
+        "memory_coordination_effectiveness",
+        "neural_learning_progression",
+        "performance_target_achievement"
+      ]
+    },
+    "continuous_improvement": {
+      "performance_monitoring": "real_time_with_trend_analysis",
+      "bottleneck_identification": "automated_with_resolution_recommendations",
+      "protocol_optimization": "machine_learning_based",
+      "feedback_integration": "continuous_learning_loop"
+    }
+  },
+  "metadata": {
+    "protocol_maturity": "production_ready",
+    "compatibility": "claude_flow_2.0_plus",
+    "maintenance_mode": "self_optimizing_with_oversight",
+    "support_level": "enterprise_grade",
+    "documentation_completeness": "comprehensive",
+    "testing_coverage": "extensive_with_continuous_validation"
+  }
+}

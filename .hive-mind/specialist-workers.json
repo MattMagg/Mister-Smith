@@ -1,0 +1,105 @@
+{
+  "version": "1.0",
+  "specialistWorkers": {
+    "actor-systems": {
+      "capabilities": ["actor-model", "concurrency", "fault-tolerance", "message-passing", "supervision"],
+      "description": "Actor Systems specialist for Akka, Orleans, and distributed systems"
+    },
+    "nats-specialist": {
+      "capabilities": ["nats-streaming", "jetstream", "messaging", "event-sourcing", "microservices"],
+      "description": "NATS messaging and streaming specialist"
+    },
+    "postgresql-expert": {
+      "capabilities": ["postgresql", "query-optimization", "indexing", "partitioning", "replication"],
+      "description": "PostgreSQL database specialist"
+    },
+    "aws-migration": {
+      "capabilities": ["aws-services", "cloud-migration", "infrastructure", "cost-optimization", "scalability"],
+      "description": "AWS migration and cloud architecture specialist"
+    },
+    "kubernetes-expert": {
+      "capabilities": ["k8s", "orchestration", "helm", "operators", "networking"],
+      "description": "Kubernetes orchestration specialist"
+    },
+    "docker-specialist": {
+      "capabilities": ["containerization", "docker", "multi-stage-builds", "security", "optimization"],
+      "description": "Docker containerization specialist"
+    },
+    "microservices-architect": {
+      "capabilities": ["microservices", "service-mesh", "api-gateway", "distributed-systems", "patterns"],
+      "description": "Microservices architecture specialist"
+    },
+    "terraform-expert": {
+      "capabilities": ["terraform", "infrastructure-as-code", "cloud-provisioning", "state-management", "modules"],
+      "description": "Terraform infrastructure specialist"
+    },
+    "security-expert": {
+      "capabilities": ["security", "penetration-testing", "vulnerability-assessment", "compliance", "encryption"],
+      "description": "Cybersecurity and security testing specialist"
+    },
+    "devops-engineer": {
+      "capabilities": ["ci-cd", "automation", "monitoring", "deployment", "pipeline-optimization"],
+      "description": "DevOps and automation specialist"
+    },
+    "performance-engineer": {
+      "capabilities": ["performance-testing", "load-testing", "optimization", "profiling", "scalability"],
+      "description": "Performance engineering specialist"
+    },
+    "frontend-specialist": {
+      "capabilities": ["react", "vue", "angular", "typescript", "ui-ux", "responsive-design"],
+      "description": "Frontend development specialist"
+    },
+    "backend-specialist": {
+      "capabilities": ["nodejs", "python", "java", "api-design", "database-design", "caching"],
+      "description": "Backend development specialist"
+    },
+    "data-engineer": {
+      "capabilities": ["data-pipelines", "etl", "big-data", "spark", "kafka", "data-warehousing"],
+      "description": "Data engineering specialist"
+    },
+    "machine-learning": {
+      "capabilities": ["ml", "pytorch", "tensorflow", "model-training", "data-science", "ai"],
+      "description": "Machine learning and AI specialist"
+    },
+    "blockchain-expert": {
+      "capabilities": ["blockchain", "smart-contracts", "ethereum", "solidity", "defi", "web3"],
+      "description": "Blockchain and Web3 specialist"
+    },
+    "monitoring-specialist": {
+      "capabilities": ["prometheus", "grafana", "elk-stack", "observability", "alerting", "metrics"],
+      "description": "Monitoring and observability specialist"
+    },
+    "qa-automation": {
+      "capabilities": ["test-automation", "selenium", "cypress", "api-testing", "quality-assurance", "testing-strategy"],
+      "description": "QA automation specialist"
+    },
+    "network-specialist": {
+      "capabilities": ["networking", "vpn", "dns", "load-balancing", "firewalls", "network-security"],
+      "description": "Network engineering specialist"
+    },
+    "mobile-developer": {
+      "capabilities": ["react-native", "flutter", "ios", "android", "mobile-ui", "app-store"],
+      "description": "Mobile development specialist"
+    },
+    "api-specialist": {
+      "capabilities": ["rest-api", "graphql", "api-design", "documentation", "versioning", "rate-limiting"],
+      "description": "API design and development specialist"
+    },
+    "redis-expert": {
+      "capabilities": ["redis", "caching", "session-management", "pub-sub", "clustering", "performance"],
+      "description": "Redis caching and data structures specialist"
+    },
+    "elasticsearch-expert": {
+      "capabilities": ["elasticsearch", "search", "indexing", "aggregations", "elk-stack", "data-analysis"],
+      "description": "Elasticsearch search specialist"
+    },
+    "golang-specialist": {
+      "capabilities": ["golang", "concurrency", "microservices", "performance", "cloud-native", "grpc"],
+      "description": "Go programming language specialist"
+    },
+    "rust-specialist": {
+      "capabilities": ["rust", "systems-programming", "memory-safety", "performance", "webassembly", "cli-tools"],
+      "description": "Rust systems programming specialist"
+    }
+  }
+}
